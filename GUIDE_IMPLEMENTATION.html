@@ -1,0 +1,592 @@
+<!-- ============================================================================
+     GUIDE D'IMPLÉMENTATION — Comment enrichir vos 9 modules
+     
+     Ce guide explique EXACTEMENT les étapes à suivre pour chaque module.
+     ============================================================================ -->
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Guide d'implémentation — Enrichissement QCM DevOps</title>
+    <style>
+        * { margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI'; background: #f5f7fa; color: #333; line-height: 1.6; }
+        .container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+        
+        h1 { color: #667eea; border-bottom: 3px solid #667eea; padding-bottom: 10px; margin-bottom: 30px; }
+        h2 { color: #764ba2; margin-top: 40px; margin-bottom: 15px; border-left: 4px solid #764ba2; padding-left: 15px; }
+        h3 { color: #555; margin-top: 20px; margin-bottom: 10px; font-size: 1.05em; }
+        
+        .section { background: #fff; padding: 20px; margin: 20px 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .step { background: #e8f5e9; padding: 15px; margin: 10px 0; border-left: 4px solid #4caf50; border-radius: 4px; }
+        .warning { background: #fff3e0; padding: 15px; margin: 10px 0; border-left: 4px solid #ff9800; border-radius: 4px; }
+        .error { background: #ffebee; padding: 15px; margin: 10px 0; border-left: 4px solid #f44336; border-radius: 4px; }
+        .success { background: #e8f5e9; padding: 15px; margin: 10px 0; border-left: 4px solid #4caf50; border-radius: 4px; }
+        .info { background: #e3f2fd; padding: 15px; margin: 10px 0; border-left: 4px solid #2196f3; border-radius: 4px; }
+        
+        .code { background: #f5f5f5; border: 1px solid #ddd; padding: 12px; border-radius: 4px; font-family: 'Courier New'; font-size: 12px; overflow-x: auto; margin: 10px 0; }
+        .code-inline { background: #f5f5f5; padding: 2px 6px; border-radius: 3px; font-family: 'Courier New'; font-size: 12px; }
+        
+        .checklist { list-style: none; padding-left: 0; }
+        .checklist li { padding: 8px 0; padding-left: 30px; position: relative; }
+        .checklist li:before { content: '☐'; position: absolute; left: 0; font-size: 18px; color: #667eea; }
+        
+        .module-box { background: #f9f9f9; border-left: 4px solid; padding: 15px; margin: 15px 0; border-radius: 4px; }
+        .module-box.jenkins { border-color: #d32f2f; }
+        .module-box.kubernetes { border-color: #326ce5; }
+        .module-box.prometheus { border-color: #e6522c; }
+        .module-box.sonarqube { border-color: #4db6e9; }
+        .module-box.terraform { border-color: #7b42bc; }
+        .module-box.trivy { border-color: #1904da; }
+        .module-box.ia { border-color: #00c853; }
+        .module-box.aws { border-color: #ff9900; }
+        
+        .timeline { position: relative; padding: 20px 0; }
+        .timeline-item { margin-left: 40px; padding: 15px; background: #f5f5f5; border-radius: 4px; margin-bottom: 20px; }
+        .timeline-item:before { content: '▶'; position: absolute; left: 8px; color: #667eea; font-weight: bold; }
+        
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #f5f5f5; font-weight: 600; color: #333; }
+        tr:hover { background: #f9f9f9; }
+        
+        strong { color: #333; }
+        em { color: #666; font-style: italic; }
+        
+        .highlight { background: #fff9c4; padding: 2px 4px; }
+        
+        .icon { font-size: 24px; margin-right: 10px; vertical-align: middle; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+<!-- ==================== INTRO ==================== -->
+<div class="section">
+    <h1>📚 Guide d'implémentation — Enrichissement QCM DevOps</h1>
+    <p><strong>Objectif :</strong> Transformer vos 9 modules de <strong>6 questions → 15 questions minimum</strong> par leçon, avec concepts enrichis.</p>
+    <p><strong>Vous avez :</strong> 2 fichiers d'exemples (EXEMPLES_ENRICHISSEMENT_QCM.html + EXEMPLES_AUTRES_MODULES.html) montrant le format exact.</p>
+    <p><strong>Temps total estimé :</strong> 25-35 heures (ou parallélisable).</p>
+</div>
+
+<!-- ==================== OVERVIEW ==================== -->
+<div class="section">
+    <h2>🎯 Vue d'ensemble — Processus global</h2>
+    
+    <div class="timeline">
+        <div class="timeline-item">
+            <strong>Étape 1 :</strong> Ouvrir le fichier exemple (EXEMPLES_ENRICHISSEMENT_QCM.html) — comprendre structure
+        </div>
+        <div class="timeline-item">
+            <strong>Étape 2 :</strong> Pour chaque fichier module (Jenkins, Kubernetes, etc.) — pour chaque page/leçon
+        </div>
+        <div class="timeline-item">
+            <strong>Étape 3 :</strong> Appliquer le template Q7-Q15 au format exact
+        </div>
+        <div class="timeline-item">
+            <strong>Étape 4 :</strong> Valider + tester dans le navigateur
+        </div>
+        <div class="timeline-item">
+            <strong>Étape 5 :</strong> Enrichir concepts (2-3 paragraphes supplémentaires)
+        </div>
+    </div>
+</div>
+
+<!-- ==================== STEP 1: PREPARATION ==================== -->
+<div class="section">
+    <h2>📋 ÉTAPE 1 : Préparation (15 min)</h2>
+    
+    <h3>1.1 - Télécharger et lire les exemples</h3>
+    <div class="step">
+        ✅ Ouvrir <span class="code-inline">EXEMPLES_ENRICHISSEMENT_QCM.html</span> dans le navigateur<br>
+        ✅ Lire la section "JENKINS — Page 1 (Exemple complet 6→15)"<br>
+        ✅ Comprendre la structure : Q1-Q6 conservées, Q7-Q15 nouvelles
+    </div>
+    
+    <h3>1.2 - Préparer votre liste de fichiers</h3>
+    <div class="info">
+        Fichiers à enrichir (dans le dossier <span class="code-inline">c:\Users\modou\Downloads\Plateforme_Revision_DevOps\</span>):
+        <ul style="margin-top: 10px; padding-left: 20px;">
+            <li>✅ Jenkins_Revision_Plateforme_Modou_NDIAYE.html (17 pages)</li>
+            <li>✅ Kubernetes_Revision_Plateforme.html (3-5 pages)</li>
+            <li>✅ Prometheus_Grafana_Revision_Plateforme.html (2-3 pages)</li>
+            <li>✅ SonarQube_Revision_Plateforme.html (2-3 pages)</li>
+            <li>✅ Terraform_Revision_Plateforme.html (2-3 pages)</li>
+            <li>✅ Trivy_Revision_Plateforme.html (2-3 pages)</li>
+            <li>✅ IA_DevOps_Revision_Plateforme.html (2-3 pages)</li>
+            <li>✅ aws-revision_Partie2_ModouNDIAYE.html (3-5 pages)</li>
+            <li>❌ Dashboard_Revision_DevOps.html (SKIP — pas de QCM)</li>
+        </ul>
+    </div>
+
+    <h3>1.3 - Éditeur recommandé</h3>
+    <div class="warning">
+        Utiliser <span class="highlight">VS Code</span> (déjà ouvert) avec :
+        <ul style="margin-top: 10px; padding-left: 20px;">
+            <li>Plugin HTML (validation syntaxe)</li>
+            <li>Live Server pour preview en navigateur</li>
+            <li>Ctrl+H pour "Find and Replace" (très utile)</li>
+        </ul>
+    </div>
+</div>
+
+<!-- ==================== STEP 2: JENKINS DETAILED ==================== -->
+<div class="section">
+    <h2>🔧 ÉTAPE 2 : Enrichir Jenkins (Détaillé)</h2>
+    
+    <div class="warning">
+        <strong>⚠️ Attention :</strong> Jenkins a 17 pages (la plus volumineuse). Commencer par cette étape car elle couvre TOUS les patterns qui s'appliquent aux autres modules.
+    </div>
+    
+    <h3>2.1 - Ouvrir le fichier Jenkins</h3>
+    <div class="step">
+        ✅ Ouvrir <span class="code-inline">Jenkins_Revision_Plateforme_Modou_NDIAYE.html</span> dans VS Code<br>
+        ✅ Utiliser Ctrl+F pour chercher : <span class="code-inline">&lt;div class="qcm-question" data-page="p1"&gt;</span>
+    </div>
+    
+    <h3>2.2 - Pour chaque page (p1, p2, ... p17) :</h3>
+    
+    <div class="timeline">
+        <div class="timeline-item">
+            <strong>2.2.1 - Localiser les 6 questions existantes</strong>
+            <div style="margin-top: 10px; background: #f5f5f5; padding: 10px; border-radius: 4px; font-family: 'Courier New'; font-size: 11px;">
+Chercher : <span class="highlight">&lt;div class="qcm-question" data-page="p1"&gt;</span> (pour page 1)<br>
+Vous trouverez 6 blocs HTML (Q1-Q6) identiques dans structure.
+            </div>
+        </div>
+        
+        <div class="timeline-item">
+            <strong>2.2.2 - Copier le dernier bloc (Q6)</strong>
+            <div style="margin-top: 10px;">
+            Localiser la 6ème question. C'est la dernière avant &lt;/div&gt; qui ferme le qcm-grid.
+            </div>
+        </div>
+        
+        <div class="timeline-item">
+            <strong>2.2.3 - Coller 9 fois, modifier les IDs</strong>
+            <div style="margin-top: 10px;">
+Exemple pour Q7 :
+            <div class="code">
+&lt;div class="qcm-question" data-page="p1"&gt;
+  &lt;p class="q-text"&gt;7) Quel est le temps d'integration ideal...&lt;/p&gt;
+  &lt;div class="qcm-options"&gt;
+    &lt;div class="qcm-option"&gt;
+      &lt;input type="radio" name="<span class="highlight">q1-7</span>" value="a" id="<span class="highlight">q1-7a</span>"&gt;
+      ...
+    &lt;/div&gt;
+  &lt;/div&gt;
+  &lt;button class="btn-validate" onclick="checkAnswer('<span class="highlight">q1-7</span>','c',this,'p1')"&gt;
+  ...
+&lt;/div&gt;
+            </div>
+            
+            Points critiques à modifier :
+            <ul style="margin-top: 10px; padding-left: 20px;">
+                <li><span class="code-inline">name="q1-7"</span> (numéro question)</li>
+                <li><span class="code-inline">id="q1-7a"</span>, <span class="code-inline">id="q1-7b"</span>, etc.</li>
+                <li><span class="code-inline">checkAnswer('q1-7','c',this,'p1')</span> (bonne réponse)</li>
+                <li>Le texte question doit être différent (Q7 ≠ Q6)</li>
+            </ul>
+            </div>
+        </div>
+        
+        <div class="timeline-item">
+            <strong>2.2.4 - Ajuster le score affichage</strong>
+            <div style="margin-top: 10px;">
+            Chercher dans la page p1 :
+            <div class="code">
+&lt;span class="qcm-score-display" id="qcm-score-p1"&gt;Score: 0/<span class="highlight">6</span>&lt;/span&gt;
+            </div>
+            
+            Remplacer par :
+            <div class="code">
+&lt;span class="qcm-score-display" id="qcm-score-p1"&gt;Score: 0/<span class="highlight">15</span>&lt;/span&gt;
+            </div>
+            </div>
+        </div>
+        
+        <div class="timeline-item">
+            <strong>2.2.5 - Ajouter les 9 justifications au bloc JS</strong>
+            <div style="margin-top: 10px;">
+            À la fin du fichier, chercher :
+            <div class="code">
+const justifications = {
+    'q1-1': "CI signifie...",
+    'q1-2': "Sans CI...",
+    ...
+};
+            </div>
+            
+            Ajouter après la dernière justification (avant le <strong>}</strong> final) :
+            <div class="code">
+    'q1-7': "Le temps d'integration complet doit etre < 10 minutes...",
+    'q1-8': "Sans CI (et sans integration frequente), les branches divergent...",
+    ...
+    'q1-15': "Le choix GitHub Actions vs Jenkins depend principalement..."
+            </div>
+            </div>
+        </div>
+        
+        <div class="timeline-item">
+            <strong>2.2.6 - Enrichir les Concepts</strong>
+            <div style="margin-top: 10px;">
+            Localiser dans la page :
+            <div class="code">
+&lt;div class="concepts"&gt;
+  &lt;p&gt;...paragraphes existants...&lt;/p&gt;
+&lt;/div&gt;
+            </div>
+            
+            Ajouter 2-3 paragraphes supplémentaires AVANT la fermeture &lt;/div&gt;:
+            <div class="code">
+&lt;p&gt;&lt;strong&gt;Metriques de sante CI — tableau de bord :&lt;/strong&gt; 
+Pour savoir si votre CI fonctionne, surveillez 3 KPIs...&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Les 3 anti-patterns CI a absolument eviter :&lt;/strong&gt; 
+1) "Ignorer red builds"...&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;L'equation simple : ROI de CI&lt;/strong&gt; 
+Temps economise = ...&lt;/p&gt;
+            </div>
+            </div>
+        </div>
+        
+        <div class="timeline-item">
+            <strong>2.2.7 - Valider dans le navigateur</strong>
+            <div style="margin-top: 10px;">
+            ✅ Ouvrir Live Server (VS Code) ou ouvrir le fichier dans Firefox/Chrome<br>
+            ✅ Cliquer sur la page (ex: "1. CI/CD Intro")<br>
+            ✅ Aller au tab "QCM"<br>
+            ✅ Vérifier que le score affiche 0/15 (pas 0/6)<br>
+            ✅ Tester une réponse pour vérifier : console → pas d'erreur JS
+            </div>
+        </div>
+    </div>
+    
+    <h3>2.3 - Répéter pour toutes les 17 pages</h3>
+    <div class="info">
+        Le processus est identique pour p2, p3, ... p17. Seuls changent les IDs (q2-1, q2-2, ..., q2-15 pour page 2, etc.).
+    </div>
+</div>
+
+<!-- ==================== STEP 3: AUTRES MODULES ==================== -->
+<div class="section">
+    <h2>📦 ÉTAPE 3 : Enrichir les autres modules (Kubernetes, Prometheus, etc.)</h2>
+    
+    <h3>Le processus est identique à Jenkins !</h3>
+    <div class="success">
+        Une fois Jenkins terminé, vous maîtrisez le pattern. Appliquez le même processus pour chaque module.
+    </div>
+    
+    <table>
+        <tr>
+            <th>Module</th>
+            <th>Fichier</th>
+            <th>Pages estimées</th>
+            <th>Temps (par page)</th>
+            <th>Focus thématique</th>
+        </tr>
+        <tr>
+            <td><strong>Kubernetes</strong></td>
+            <td>Kubernetes_Revision_Plateforme.html</td>
+            <td>3-5</td>
+            <td>30 min</td>
+            <td>Resources, scaling, probes, troubleshooting, StatefulSet</td>
+        </tr>
+        <tr>
+            <td><strong>Prometheus</strong></td>
+            <td>Prometheus_Grafana_Revision_Plateforme.html</td>
+            <td>2-3</td>
+            <td>30 min</td>
+            <td>Alert SLA, cardinality, retention, MTTR</td>
+        </tr>
+        <tr>
+            <td><strong>SonarQube</strong></td>
+            <td>SonarQube_Revision_Plateforme.html</td>
+            <td>2-3</td>
+            <td>30 min</td>
+            <td>Quality gates, technical debt, issue lifecycle</td>
+        </tr>
+        <tr>
+            <td><strong>Terraform</strong></td>
+            <td>Terraform_Revision_Plateforme.html</td>
+            <td>2-3</td>
+            <td>30 min</td>
+            <td>State management, workspaces, credentials</td>
+        </tr>
+        <tr>
+            <td><strong>Trivy</strong></td>
+            <td>Trivy_Revision_Plateforme.html</td>
+            <td>2-3</td>
+            <td>30 min</td>
+            <td>CVE severity, scanning modes, remediation</td>
+        </tr>
+        <tr>
+            <td><strong>IA/ML DevOps</strong></td>
+            <td>IA_DevOps_Revision_Plateforme.html</td>
+            <td>2-3</td>
+            <td>30 min</td>
+            <td>Model serving, drift detection, feature store</td>
+        </tr>
+        <tr>
+            <td><strong>AWS P2</strong></td>
+            <td>aws-revision_Partie2_ModouNDIAYE.html</td>
+            <td>3-5</td>
+            <td>30 min</td>
+            <td>Cost optimization, IAM, multi-region</td>
+        </tr>
+    </table>
+    
+    <div class="warning">
+        <strong>⚠️ Adaptations par module :</strong> Bien que le processus HTML soit identique, les questions doivent être **spécifiques au module** (voir examples dans EXEMPLES_AUTRES_MODULES.html).
+    </div>
+</div>
+
+<!-- ==================== QUALITY CHECKLIST ==================== -->
+<div class="section">
+    <h2>✅ CHECKLIST — Qualité des questions</h2>
+    
+    <h3>Pour chaque question ajoutée (Q7-Q15) :</h3>
+    <ul class="checklist">
+        <li>Question est pertinente au sujet (pas de générique)</li>
+        <li>4 options A/B/C/D disponibles</li>
+        <li>UNE SEULE bonne réponse</li>
+        <li>Les autres options sont plausibles (piègent si mauvaise compréhension)</li>
+        <li>Justification couvre pourquoi bonne réponse (2-3 phrases)</li>
+        <li>Justification explique le piège de la mauvaise réponse</li>
+        <li>Question teste concept ou décision (pas juste "facts")</li>
+        <li>Réponse n'est pas évidente pour débutant (force réflexion)</li>
+        <li>IDs HTML uniques (q{page}-{num})</li>
+        <li>onclick checkAnswer correct (bonne réponse + page)</li>
+    </ul>
+    
+    <h3>Exemples de BONNES questions :</h3>
+    <div class="success">
+        <strong>Q7 (Concept avancé) :</strong> "Quel est le temps d'integration ideal..." (force apprentissage KPI)<br>
+        <strong>Q8 (Cas pratique) :</strong> "Vous avez 10 pods cassés..." (scenario real-world)<br>
+        <strong>Q9 (Piège) :</strong> "Lequel est un anti-pattern..." (teste connaissance des risques)<br>
+        <strong>Q14 (Scenario) :</strong> "Production issue + immediate action?" (decision-making)
+    </div>
+    
+    <h3>Exemples de MAUVAISES questions :</h3>
+    <div class="error">
+        <strong>❌ Q : "Quand Kubernetes a-t-il été créé?" </strong> (fact, pas concept)<br>
+        <strong>❌ Q : "Quel est le numéro de version actuel?" </strong> (date rapidement)<br>
+        <strong>❌ Q : "A, B, ou C?" </strong> (pas de structure, ambigü)<br>
+        <strong>❌ Q : 3 réponses correctes possibles</strong> (confus, mauvais QCM)
+    </div>
+</div>
+
+<!-- ==================== COMMON MISTAKES ==================== -->
+<div class="section">
+    <h2>⚠️ Pièges courants & Solutions</h2>
+    
+    <h3>Piège 1 : ID question mal formé</h3>
+    <div class="error">
+        ❌ FAUX : <span class="code-inline">name="q17"</span> (oubli page number)<br>
+        ✅ BON : <span class="code-inline">name="q1-7"</span> (page + numéro)
+    </div>
+    
+    <h3>Piège 2 : Oublier mise à jour du score</h3>
+    <div class="error">
+        ❌ FAUX : Score reste "0/6"<br>
+        ✅ BON : Augmenter à "0/15" pour chaque page
+    </div>
+    
+    <h3>Piège 3 : HTML mal fermé</h3>
+    <div class="error">
+        ❌ Copier Q6 mais oublier fermer les balises&lt;/div&gt;<br>
+        ✅ Solution : Utiliser VS Code "Beautify" (Alt+Shift+F) pour formater le code
+    </div>
+    
+    <h3>Piège 4 : JavaScript erreur en console</h3>
+    <div class="warning">
+        Si une question ne valide pas → ouvrir DevTools (F12) → Console → chercher erreur<br>
+        Causes courantes :
+        <ul style="margin-top: 10px; padding-left: 20px;">
+            <li>ID question manquante dans justifications</li>
+            <li>Guillemet mal échappé</li>
+            <li>Virgule manquante entre justifications</li>
+        </ul>
+    </div>
+    
+    <h3>Piège 5 : Questions trop faciles</h3>
+    <div class="warning">
+        Les questions DOIVENT demander de la réflexion. Si la réponse est "évidente", c'est un échec de QCM.<br>
+        Astuce : demander à un collègue de tester — si réponse en < 5 sec sans lire, question trop facile.
+    </div>
+</div>
+
+<!-- ==================== ADVANCED TIPS ==================== -->
+<div class="section">
+    <h2>💡 Astuces avancées</h2>
+    
+    <h3>1. Utiliser "Find and Replace" pour gain de temps</h3>
+    <div class="code">
+Ctrl+H → "Find and Replace" 
+
+Exemple : Changer q1-6 → q1-7 (et variantes a/b/c/d)
+
+Chercher : q1-6([a-d]?)
+Remplacer : q1-7$1
+
+Clic "Replace All" (avec regex activée)
+    </div>
+    
+    <h3>2. Template HTML réutilisable (snippets VS Code)</h3>
+    <div class="info">
+        Créer un snippet pour les questions QCM rapide :
+        <div class="code">
+File → Preferences → Configure User Snippets → html.json
+
+Ajouter :
+{
+  "QCM Question": {
+    "prefix": "qcm",
+    "body": [
+      "&lt;div class=\"qcm-question\" data-page=\"p$1\"&gt;&lt;p class=\"q-text\"&gt;$2) $3&lt;/p&gt;&lt;div class=\"qcm-options\"&gt;$0&lt;/div&gt;"
+    ]
+  }
+}
+        </div>
+    </div>
+    
+    <h3>3. Valider HTML en ligne</h3>
+    <div class="step">
+        Utiliser un validateur HTML : https://validator.w3.org/<br>
+        Copier le contenu, vérifier pas d'erreurs.
+    </div>
+    
+    <h3>4. Tester en parallèle (plusieurs fichiers)</h3>
+    <div class="step">
+        VS Code : Split screen (Ctrl+Alt+2) → moitié gauche = exemple, moitié droite = fichier à enrichir<br>
+        Plus facile de référencer le pattern.
+    </div>
+</div>
+
+<!-- ==================== FINAL VALIDATION ==================== -->
+<div class="section">
+    <h2>🎓 Validation finale</h2>
+    
+    <h3>Pour chaque fichier enrichi :</h3>
+    <ul class="checklist">
+        <li>Ouvrir dans navigateur (Live Server)</li>
+        <li>Naviguer à la première page de la leçon</li>
+        <li>Score affiche 0/15 (pas 0/6)</li>
+        <li>Cliquer sur QCM tab</li>
+        <li>Voir toutes 15 questions (scroller si besoin)</li>
+        <li>Tester 2-3 réponses (validation + feedback)</li>
+        <li>Ouvrir DevTools (F12) → Console → Pas d'erreurs rouges</li>
+        <li>Concepts enrichis sont visibles (3 paragraphes supplémentaires)</li>
+        <li>Points Cles tab encore présent et utile</li>
+        <li>Format visuel cohérent (pas cassé, spacing OK)</li>
+    </ul>
+    
+    <h3>Avant "go live" :</h3>
+    <div class="success">
+        ✅ Tester chaque fichier dans 2 navigateurs (Chrome + Firefox)<br>
+        ✅ Vérifier sur mobile (responsive design)<br>
+        ✅ Backup les fichiers originaux (git commit ou copie)<br>
+        ✅ Documenter où les questions viennent (source : exam prep, real scenarios, etc.)
+    </div>
+</div>
+
+<!-- ==================== TIMELINE ==================== -->
+<div class="section">
+    <h2>📅 Timeline recommandée</h2>
+    
+    <table>
+        <tr>
+            <th>Jour</th>
+            <th>Tâche</th>
+            <th>Durée</th>
+        </tr>
+        <tr>
+            <td>J1</td>
+            <td>Lire exemples + comprendre processus</td>
+            <td>1-2 h</td>
+        </tr>
+        <tr>
+            <td>J1-J2</td>
+            <td>Jenkins page 1-5 (test pattern)</td>
+            <td>2-3 h</td>
+        </tr>
+        <tr>
+            <td>J2-J3</td>
+            <td>Jenkins page 6-12 (production speed)</td>
+            <td>3-4 h</td>
+        </tr>
+        <tr>
+            <td>J3-J4</td>
+            <td>Jenkins page 13-17 (accélération)</td>
+            <td>2-3 h</td>
+        </tr>
+        <tr>
+            <td>J4-J5</td>
+            <td>Kubernetes + Prometheus (2 fichiers)</td>
+            <td>3-4 h</td>
+        </tr>
+        <tr>
+            <td>J5-J6</td>
+            <td>SonarQube + Terraform + Trivy (3 fichiers)</td>
+            <td>3-4 h</td>
+        </tr>
+        <tr>
+            <td>J6-J7</td>
+            <td>IA DevOps + AWS (2 fichiers)</td>
+            <td>3-4 h</td>
+        </tr>
+        <tr>
+            <td>J7</td>
+            <td>Validation finale + optimisations</td>
+            <td>1-2 h</td>
+        </tr>
+        <tr>
+            <td colspan="3"><strong>Total : ~20-28 heures</strong> (ou ~40 heures si perfectionniste)</td>
+        </tr>
+    </table>
+</div>
+
+<!-- ==================== SUPPORT ==================== -->
+<div class="section">
+    <h2>🆘 Aide & Support</h2>
+    
+    <h3>Si vous êtes bloqué :</h3>
+    <ul style="padding-left: 20px;">
+        <li><strong>Erreur HTML :</strong> Copier le problème dans VS Code Validator</li>
+        <li><strong>Question ne valide pas :</strong> Vérifier l'ID (q{page}-{num}) dans justifications JS</li>
+        <li><strong>Score pas à jour :</strong> Chercher "Score: 0/6" → "Score: 0/15"</li>
+        <li><strong>Format différent :</strong> Comparer avec l'exemple (EXAMPL ES_ENRICHISSEMENT_QCM.html) byte par byte</li>
+    </ul>
+    
+    <h3>Ressources documentaires :</h3>
+    <div class="info">
+        <ul style="padding-left: 20px;">
+            <li>📄 EXEMPLES_ENRICHISSEMENT_QCM.html — Exemple complet Jenkins</li>
+            <li>📄 EXEMPLES_AUTRES_MODULES.html — Patterns Kubernetes, Prometheus, etc.</li>
+            <li>📄 CE GUIDE — Processus étape par étape</li>
+            <li>🎓 Les questions DOIVENT couvrir : concepts, cas d'usage, pièges, troubleshooting, best practices</li>
+        </ul>
+    </div>
+</div>
+
+<!-- ==================== CONCLUSION ==================== -->
+<div class="section" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 8px;">
+    <h1 style="color: white; border-color: white;">✨ Conclusion</h1>
+    <p style="font-size: 1.05em;">
+        Vous avez maintenant tous les outils pour transformer vos <strong>9 modules de 6 → 15 questions</strong>.
+    </p>
+    <p style="margin-top: 15px;">
+        Le processus est systématique et reproductible. Une fois Jenkins fait, les autres modules deviennent faciles.
+    </p>
+    <p style="margin-top: 15px; font-weight: bold;">
+        🚀 Bon courage ! Vous créez une plateforme pédagogique d'excellence ! 🚀
+    </p>
+</div>
+
+</div>
+
+</body>
+</html>

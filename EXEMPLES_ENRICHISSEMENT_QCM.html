@@ -1,0 +1,403 @@
+<!-- ============================================================================
+     EXEMPLES D'ENRICHISSEMENT QCM — 6 → 15 QUESTIONS
+     
+     Ce fichier contient les exemples complets pour CHAQUE module DevOps,
+     montrant comment passer de 6 à 15 questions. Format prêt à copier-coller.
+     
+     Structure : 
+     - Sections avec id pour chaque fichier (jenkins, kubernetes, etc.)
+     - Format HTML identique au fichier d'origine
+     - Questions 1-6 : existantes (référence)
+     - Questions 7-15 : nouvelles (à ajouter)
+     
+     ============================================================================ -->
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Exemples Enrichissement QCM — Jenkins P1 (6→15 questions)</title>
+    <style>
+        body { font-family: Arial; margin: 20px; background: #f5f5f5; }
+        .section { background: #fff; padding: 20px; margin: 20px 0; border-radius: 8px; border-left: 4px solid #667eea; }
+        h1 { color: #667eea; border-bottom: 2px solid #667eea; padding-bottom: 10px; }
+        h2 { color: #555; margin-top: 30px; }
+        .code { background: #fafafa; border: 1px solid #ddd; padding: 15px; border-radius: 6px; font-family: 'Courier New'; font-size: 12px; overflow-x: auto; margin: 10px 0; line-height: 1.4; }
+        .note { background: #e3f2fd; padding: 12px; border-left: 3px solid #2196F3; margin: 10px 0; }
+        .tip { background: #f3e5f5; padding: 12px; border-left: 3px solid #9c27b0; margin: 10px 0; }
+        .new { background: #fff3e0; padding: 8px 12px; border-radius: 4px; color: #e65100; font-weight: bold; font-size: 11px; margin-left: 10px; }
+        strong { color: #333; }
+    </style>
+</head>
+<body>
+
+<!-- ==================== JENKINS PAGE 1 EXEMPLE COMPLET ==================== -->
+<div class="section" id="jenkins_p1">
+    <h1>📘 JENKINS — Page 1 : CI/CD Intro (Exemple complet 6→15 questions)</h1>
+    
+    <h2>1️⃣ QUESTIONS EXISTANTES (Q1-Q6) — À CONSERVER TELLES QUELLES</h2>
+    <div class="code">
+<!-- Copier ces 6 questions existantes depuis votre fichier -->
+&lt;div class="qcm-question" data-page="p1"&gt;
+  &lt;p class="q-text"&gt;1) Que signifie l'acronyme CI ?&lt;/p&gt;
+  &lt;div class="qcm-options"&gt;
+    &lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-1" value="a" id="q1-1a"&gt;&lt;label for="q1-1a"&gt;Container Infrastructure&lt;/label&gt;&lt;/div&gt;
+    &lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-1" value="b" id="q1-1b"&gt;&lt;label for="q1-1b"&gt;Code Integration&lt;/label&gt;&lt;/div&gt;
+    &lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-1" value="c" id="q1-1c"&gt;&lt;label for="q1-1c"&gt;Compiled Instructions&lt;/label&gt;&lt;/div&gt;
+    &lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-1" value="d" id="q1-1d"&gt;&lt;label for="q1-1d"&gt;Continuous Integration&lt;/label&gt;&lt;/div&gt;
+  &lt;/div&gt;
+  &lt;button class="btn-validate" onclick="checkAnswer('q1-1','d',this,'p1')"&gt;Valider&lt;/button&gt;
+  &lt;div class="feedback"&gt;&lt;/div&gt;
+&lt;/div&gt;
+
+[... Q2-Q6 à copier pareils ...]
+    </div>
+    
+    <h2>2️⃣ NOUVELLES QUESTIONS (Q7-Q15) — À AJOUTER</h2>
+    
+    <div class="note">
+        <strong>📝 Instructions :</strong>
+        <ul>
+            <li>Copier les 6 questions existantes du fichier Jenkins original (conserver l'ordre et structure)</li>
+            <li>AJOUTER les 9 nouvelles questions ci-dessous en continuant la numérotation</li>
+            <li>Augmenter le score affichage de "0/6" à "0/15" dans la ligne : &lt;span class="qcm-score-display"&gt;</li>
+            <li>Ajouter les 9 justifications dans le bloc JavaScript 'justifications' à la fin du fichier</li>
+        </ul>
+    </div>
+    
+    <h3>Q7 — Concepts avancés (Advanced CI Practices)</h3>
+    <div class="code">
+&lt;div class="qcm-question" data-page="p1"&gt;&lt;p class="q-text"&gt;7) Quel est le temps d'integration ideal pour une bonne CI selon les meilleures pratiques ?&lt;/p&gt;&lt;div class="qcm-options"&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-7" value="a" id="q1-7a"&gt;&lt;label for="q1-7a"&gt;Plus de 1 heure&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-7" value="b" id="q1-7b"&gt;&lt;label for="q1-7b"&gt;Entre 15-30 minutes&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-7" value="c" id="q1-7c"&gt;&lt;label for="q1-7c"&gt;Moins de 10 minutes&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-7" value="d" id="q1-7d"&gt;&lt;label for="q1-7d"&gt;Pas d'importance&lt;/label&gt;&lt;/div&gt;&lt;/div&gt;&lt;button class="btn-validate" onclick="checkAnswer('q1-7','c',this,'p1')"&gt;Valider&lt;/button&gt;&lt;div class="feedback"&gt;&lt;/div&gt;&lt;/div&gt;
+    </div>
+    <div class="note">
+        <strong>📚 Justification à ajouter au bloc JavaScript :</strong><br>
+        q1-7 : "Le temps d'integration complet (checkout+test+build) doit etre < 10 minutes pour que les devs ne fassent pas d'autres choses en attendant. Plus c'est court, plus vite on feedback. Ideal = 5 minutes."
+    </div>
+    
+    <h3>Q8 — Cas d'usage pratique</h3>
+    <div class="code">
+&lt;div class="qcm-question" data-page="p1"&gt;&lt;p class="q-text"&gt;8) Votre equipe commite du code 10 fois par jour. Sans CI, combien de fois debuggez-vous des conflits de merge ?&lt;/p&gt;&lt;div class="qcm-options"&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-8" value="a" id="q1-8a"&gt;&lt;label for="q1-8a"&gt;Presque jamais&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-8" value="b" id="q1-8b"&gt;&lt;label for="q1-8b"&gt;Peu frequents&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-8" value="c" id="q1-8c"&gt;&lt;label for="q1-8c"&gt;Tres frequents (daily nightmare)&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-8" value="d" id="q1-8d"&gt;&lt;label for="q1-8d"&gt;Zero, on commite pas souvent&lt;/label&gt;&lt;/div&gt;&lt;/div&gt;&lt;button class="btn-validate" onclick="checkAnswer('q1-8','c',this,'p1')"&gt;Valider&lt;/button&gt;&lt;div class="feedback"&gt;&lt;/div&gt;&lt;/div&gt;
+    </div>
+    <div class="note">
+        <strong>Justification :</strong> q1-8 : "Sans CI (et sans intégration fréquente), les branches divergent rapidement. 10 commits/jour sans merge = conflits massifs au moment d'integrer. C'est le probleme que CI resout."
+    </div>
+    
+    <h3>Q9 — Piège courant</h3>
+    <div class="code">
+&lt;div class="qcm-question" data-page="p1"&gt;&lt;p class="q-text"&gt;9) Quel est l'ERREUR courante des equipes debutantes en CI ?&lt;/p&gt;&lt;div class="qcm-options"&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-9" value="a" id="q1-9a"&gt;&lt;label for="q1-9a"&gt;Declencher les builds trop souvent&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-9" value="b" id="q1-9b"&gt;&lt;label for="q1-9b"&gt;Ne pas lancer les tests = "ci" incomplet&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-9" value="c" id="q1-9c"&gt;&lt;label for="q1-9c"&gt;Tests trop rigoureux&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-9" value="d" id="q1-9d"&gt;&lt;label for="q1-9d"&gt;Trop de notifications&lt;/label&gt;&lt;/div&gt;&lt;/div&gt;&lt;button class="btn-validate" onclick="checkAnswer('q1-9','b',this,'p1')"&gt;Valider&lt;/button&gt;&lt;div class="feedback"&gt;&lt;/div&gt;&lt;/div&gt;
+    </div>
+    <div class="note">
+        <strong>Justification :</strong> q1-9 : "Avoir un build qui compile ≠ CI. Il FAUT des tests automatises, sinon on integre du code casse. CI signifie Integration + Verification, pas juste Integration."
+    </div>
+    
+    <h3>Q10 — Troubleshooting</h3>
+    <div class="code">
+&lt;div class="qcm-question" data-page="p1"&gt;&lt;p class="q-text"&gt;10) Votre CI declenche 50 builds/jour. Le taux d'echec est 80%. Quel est le PREMIER probleme probable ?&lt;/p&gt;&lt;div class="qcm-options"&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-10" value="a" id="q1-10a"&gt;&lt;label for="q1-10a"&gt;Jenkins n'a pas assez de RAM&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-10" value="b" id="q1-10b"&gt;&lt;label for="q1-10b"&gt;Les tests ne sont pas stables&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-10" value="c" id="q1-10c"&gt;&lt;label for="q1-10c"&gt;Il y a des bugs dans le code&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-10" value="d" id="q1-10d"&gt;&lt;label for="q1-10d"&gt;Tout est normal&lt;/label&gt;&lt;/div&gt;&lt;/div&gt;&lt;button class="btn-validate" onclick="checkAnswer('q1-10','b',this,'p1')"&gt;Valider&lt;/button&gt;&lt;div class="feedback"&gt;&lt;/div&gt;&lt;/div&gt;
+    </div>
+    <div class="note">
+        <strong>Justification :</strong> q1-10 : "80% failures = symptome d'une CI brisee, pas de code pourri. Le PREMIER piege : les tests flaky (aleatoires). Remede : refactorer les tests avant de blamer le code."
+    </div>
+    
+    <h3>Q11 — Anti-patterns</h3>
+    <div class="code">
+&lt;div class="qcm-question" data-page="p1"&gt;&lt;p class="q-text"&gt;11) Lequel de ces comportements CASSE une CI (anti-pattern) ?&lt;/p&gt;&lt;div class="qcm-options"&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-11" value="a" id="q1-11a"&gt;&lt;label for="q1-11a"&gt;Ignorer volontairement les echecs de build&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-11" value="b" id="q1-11b"&gt;&lt;label for="q1-11b"&gt;Desactiver les tests en cas de deadline&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-11" value="c" id="q1-11c"&gt;&lt;label for="q1-11c"&gt;Commiter du code sans faire de tests locaux&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-11" value="d" id="q1-11d"&gt;&lt;label for="q1-11d"&gt;Toutes les reponses ci-dessus&lt;/label&gt;&lt;/div&gt;&lt;/div&gt;&lt;button class="btn-validate" onclick="checkAnswer('q1-11','d',this,'p1')"&gt;Valider&lt;/button&gt;&lt;div class="feedback"&gt;&lt;/div&gt;&lt;/div&gt;
+    </div>
+    <div class="note">
+        <strong>Justification :</strong> q1-11 : "Tous ces comportements transforment CI en 'illusion de CI'. CI signifie 'integration avec verification' — si on desactive checks, c'est juste du merge sans valeur."
+    </div>
+    
+    <h3>Q12 — Best practices</h3>
+    <div class="code">
+&lt;div class="qcm-question" data-page="p1"&gt;&lt;p class="q-text"&gt;12) Quelle est la meilleure strategie pour les branches en CI ?&lt;/p&gt;&lt;div class="qcm-options"&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-12" value="a" id="q1-12a"&gt;&lt;label for="q1-12a"&gt;Une branche par dev (isolation max)&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-12" value="b" id="q1-12b"&gt;&lt;label for="q1-12b"&gt;Tout sur main (risque de casse)&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-12" value="c" id="q1-12c"&gt;&lt;label for="q1-12c"&gt;Feature branches courtes + merge quotidien&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-12" value="d" id="q1-12d"&gt;&lt;label for="q1-12d"&gt;Une branche par environnement&lt;/label&gt;&lt;/div&gt;&lt;/div&gt;&lt;button class="btn-validate" onclick="checkAnswer('q1-12','c',this,'p1')"&gt;Valider&lt;/button&gt;&lt;div class="feedback"&gt;&lt;/div&gt;&lt;/div&gt;
+    </div>
+    <div class="note">
+        <strong>Justification :</strong> q1-12 : "Feature branches doivent etre courtes (1-3 jours max) et mergees quotidiennement. CI = integrer souvent, donc longues branches = echec de CI."
+    </div>
+    
+    <h3>Q13 — Examen certification</h3>
+    <div class="code">
+&lt;div class="qcm-question" data-page="p1"&gt;&lt;p class="q-text"&gt;13) Que mesurez-vous pour evaluer la SANTE d'une CI ?&lt;/p&gt;&lt;div class="qcm-options"&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-13" value="a" id="q1-13a"&gt;&lt;label for="q1-13a"&gt;Nombre de commits par jour uniquement&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-13" value="b" id="q1-13b"&gt;&lt;label for="q1-13b"&gt;Taux d'echec de builds + temps d'integration&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-13" value="c" id="q1-13c"&gt;&lt;label for="q1-13c"&gt;Nombre de plugins Jenkins&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-13" value="d" id="q1-13d"&gt;&lt;label for="q1-13d"&gt;RAM du serveur Jenkins&lt;/label&gt;&lt;/div&gt;&lt;/div&gt;&lt;button class="btn-validate" onclick="checkAnswer('q1-13','b',this,'p1')"&gt;Valider&lt;/button&gt;&lt;div class="feedback"&gt;&lt;/div&gt;&lt;/div&gt;
+    </div>
+    <div class="note">
+        <strong>Justification :</strong> q1-13 : "KPIs CI : 1) Taux echec (< 5% = bon) 2) Temps total build (< 10min = bon) 3) Frequence deployment (daily = bon). Ce sont les metriques d'examen certification CJE."
+    </div>
+    
+    <h3>Q14 — Scenario réaliste</h3>
+    <div class="code">
+&lt;div class="qcm-question" data-page="p1"&gt;&lt;p class="q-text"&gt;14) Votre app frontend se casse en prod car CSS cassee n'a pas ete detecte. Ou le probleme doit-il etre regle ?&lt;/p&gt;&lt;div class="qcm-options"&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-14" value="a" id="q1-14a"&gt;&lt;label for="q1-14a"&gt;Deployer un hotfix immediat&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-14" value="b" id="q1-14b"&gt;&lt;label for="q1-14b"&gt;Ajouter un test visual dans CI&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-14" value="c" id="q1-14c"&gt;&lt;label for="q1-14c"&gt;Arreter l'utilisation de CSS&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-14" value="d" id="q1-14d"&gt;&lt;label for="q1-14d"&gt;Bloquer le frontend de pusher&lt;/label&gt;&lt;/div&gt;&lt;/div&gt;&lt;button class="btn-validate" onclick="checkAnswer('q1-14','b',this,'p1')"&gt;Valider&lt;/button&gt;&lt;div class="feedback"&gt;&lt;/div&gt;&lt;/div&gt;
+    </div>
+    <div class="note">
+        <strong>Justification :</strong> q1-14 : "La reponse du probleme n'est pas un hotfix mais une CI amelioree. Il faut ajouter du linting CSS (StyleLint) ou tests visual (Percy, BackstopJS) dans le pipeline."
+    </div>
+    
+    <h3>Q15 — Décision architecturale</h3>
+    <div class="code">
+&lt;div class="qcm-question" data-page="p1"&gt;&lt;p class="q-text"&gt;15) Vous devez choisir entre GitHub Actions et Jenkins. Le criteria decisive est "infrastructure cloud vs on-premises". Quel outil choisissez-vous ?&lt;/p&gt;&lt;div class="qcm-options"&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-15" value="a" id="q1-15a"&gt;&lt;label for="q1-15a"&gt;GitHub Actions si on veut cloud, Jenkins si on-premises&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-15" value="b" id="q1-15b"&gt;&lt;label for="q1-15b"&gt;Toujours GitHub Actions&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-15" value="c" id="q1-15c"&gt;&lt;label for="q1-15c"&gt;Toujours Jenkins&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-15" value="d" id="q1-15d"&gt;&lt;label for="q1-15d"&gt;L'infrastructure ne change rien&lt;/label&gt;&lt;/div&gt;&lt;/div&gt;&lt;button class="btn-validate" onclick="checkAnswer('q1-15','a',this,'p1')"&gt;Valider&lt;/button&gt;&lt;div class="feedback"&gt;&lt;/div&gt;&lt;/div&gt;
+    </div>
+    <div class="note">
+        <strong>Justification :</strong> q1-15 : "Le choix GitHub Actions vs Jenkins depend principalement de l'infrastructure : Actions = cloud uniquement (peut tourner on-premises mais moins ideale). Jenkins = flexible, any infrastructure. C'est le premier critere architectural."
+    </div>
+    
+    <h2>3️⃣ MODIFICATIONS AU SCORE</h2>
+    <div class="tip">
+        <strong>⚡ À modifier :</strong><br>
+        &lt;span class="qcm-score-display" id="qcm-score-p1"&gt;Score: 0/<span style="color:red">6</span>&lt;/span&gt;
+        <br><br>
+        Changer en :<br>
+        &lt;span class="qcm-score-display" id="qcm-score-p1"&gt;Score: 0/<span style="color:green">15</span>&lt;/span&gt;
+    </div>
+    
+    <h2>4️⃣ JUSTIFICATIONS À AJOUTER AU BLOC JAVASCRIPT</h2>
+    <div class="code">
+const justifications = {
+    // Q1-Q6 : existantes (copier depuis fichier)
+    'q1-1': "CI signifie Continuous Integration...",
+    'q1-2': "Sans CI, les developpeurs integrent rarement...",
+    ...
+    
+    // NOUVELLES JUSTIFICATIONS Q7-Q15
+    'q1-7': "Le temps d'integration complet doit etre < 10 minutes pour que les devs ne fassent pas d'autres choses en attendant. Plus c'est court, plus vite on feedback. Ideal = 5 minutes.",
+    
+    'q1-8': "Sans CI (et sans integration frequente), les branches divergent rapidement. 10 commits/jour sans merge = conflits massifs au moment d'integrer. C'est le probleme que CI resout.",
+    
+    'q1-9': "Avoir un build qui compile ≠ CI. Il FAUT des tests automatises, sinon on integre du code casse. CI signifie Integration + Verification, pas juste Integration.",
+    
+    'q1-10': "80% failures = symptome d'une CI brisee, pas de code pourri. Le PREMIER piege : les tests flaky (aleatoires). Remede : refactorer les tests avant de blamer le code.",
+    
+    'q1-11': "Tous ces comportements transforment CI en 'illusion de CI'. CI signifie 'integration avec verification' — si on desactive checks, c'est juste du merge sans valeur.",
+    
+    'q1-12': "Feature branches doivent etre courtes (1-3 jours max) et mergees quotidiennement. CI = integrer souvent, donc longues branches = echec de CI.",
+    
+    'q1-13': "KPIs CI : 1) Taux echec (< 5% = bon) 2) Temps total build (< 10min = bon) 3) Frequence deployment (daily = bon). Ce sont les metriques d'examen certification CJE.",
+    
+    'q1-14': "La reponse du probleme n'est pas un hotfix mais une CI amelioree. Il faut ajouter du linting CSS (StyleLint) ou tests visual (Percy, BackstopJS) dans le pipeline.",
+    
+    'q1-15': "Le choix GitHub Actions vs Jenkins depend principalement de l'infrastructure : Actions = cloud uniquement. Jenkins = flexible, any infrastructure. C'est le premier critere architectural."
+};
+    </div>
+    
+    <h2>5️⃣ ENRICHISSEMENT CONCEPTS (Ajouter 2-3 paragraphes)</h2>
+    <div class="code">
+&lt;div class="concepts"&gt;
+  &lt;p&gt;... paragraphes existants ...&lt;/p&gt;
+  
+  &lt;p&gt;&lt;strong&gt;Metriques de sante CI — tableau de bord :&lt;/strong&gt; Pour savoir si votre CI fonctionne, surveillez 3 KPIs : 1) Build success rate (taux de reussite) doit etre > 95%. < 90% = symptome d'une equipe qui commite du code non teste. 2) Build duration (temps total) doit etre < 10 minutes idealement. Si > 30 min, les devs attendent trop et vont faire autre chose. 3) Deploy frequency : combien de fois par jour deployez-vous en prod ? Avec une bonne CI, c'est facile d'avoir 5-10 deploys/jour.&lt;/p&gt;
+  
+  &lt;p&gt;&lt;strong&gt;Les 3 anti-patterns CI a absolument eviter :&lt;/strong&gt; 1) "Ignorer red builds" : si le build echoue, le rendre vert rapidement (< 30 min). Sinon les devs construisent sur du sable. 2) "Branche long-lived" : les branches qui vivent > 1 semaine accumulent les conflits. Merger quotidiennement sinon. 3) "Tests manuels en CI" : si vous avez une checklist "tester a la main" apres le build, ce n'est pas de la CI, c'est du fake CI. Tous les tests doivent etre automatises.&lt;/p&gt;
+  
+  &lt;p&gt;&lt;strong&gt;L'equation simple : ROI de CI&lt;/strong&gt; Temps economise = (nombre de bugs detectes en dev au lieu de prod) × (cout reparation bug en prod). Une CI performante economise 20-40% du temps IT par an. L'investissement initial (setup Jenkins, ecrire tests) se rembourse en 3-6 mois sur une equipe de 10+ devs.&lt;/p&gt;
+&lt;/div&gt;
+    </div>
+
+</div>
+
+<!-- ==================== DIRECTIVES GENERIQUES POUR AUTRES FICHIERS ==================== -->
+<div class="section">
+    <h1>📋 DIRECTIVES GÉNÉRIQUES — Comment enrichir les autres 8 modules</h1>
+    
+    <h2>🎯 Objectif final pour chaque leçon/page</h2>
+    <ul>
+        <li><strong>Q1-Q6</strong> : Questions existantes (à conserver)</li>
+        <li><strong>Q7-Q10</strong> : Concepts avancés et cas d'usage (4 questions)</li>
+        <li><strong>Q11-Q13</strong> : Pièges courants, anti-patterns, troubleshooting (3 questions)</li>
+        <li><strong>Q14-Q15</strong> : Best practices et décisions architecturales (2 questions)</li>
+        <li><strong>Score</strong> : Augmenter de "0/6" à "0/15"</li>
+    </ul>
+    
+    <h2>📝 Template pour Q7-Q10 (Concepts avancés)</h2>
+    <div class="code">
+Q7 = Time/performance concept (timing ideal, duration limits, frequency)
+Q8 = Practical scenario (real-world use case, cause-effect)
+Q9 = Common pitfalls (what breaks, errors to avoid)
+Q10 = Troubleshooting (diagnosis, root cause analysis)
+    </div>
+    
+    <h2>📝 Template pour Q11-Q13 (Pièges & Best Practices)</h2>
+    <div class="code">
+Q11 = Anti-patterns (behaviors that break the tool/practice)
+Q12 = Best practices (recommended strategies, workflows)
+Q13 = Exam-like question (certification-style, metrics/KPIs)
+    </div>
+    
+    <h2>📝 Template pour Q14-Q15 (Décisions)</h2>
+    <div class="code">
+Q14 = Scenario réaliste (production issue, decision needed)
+Q15 = Architectural choice (tool comparison, trade-offs)
+    </div>
+    
+    <h2>🔍 Directives par module</h2>
+    
+    <h3>✅ Kubernetes (plusieurs pages)</h3>
+    <div class="code">
+Page 1 : Intro K8s (pods, deployments, services basics)
+  Q7 = Recommended pod resource limits (CPU/memory best practices)
+  Q8 = Scaling scenario (HPA, manual scaling trade-offs)
+  Q9 = Common K8s mistakes (InitialDelaySeconds too low, no resource limits)
+  Q10 = Troubleshooting pods (CrashLoopBackOff, Pending status)
+  Q11 = Anti-pattern: running stateful apps in K8s without persistence
+  Q12 = Best practice: always define resource requests/limits
+  Q13 = KPI: pod density, node utilization, deployment frequency
+  Q14 = Production scenario: sudden spike in traffic
+  Q15 = Tool choice: Helm vs Kustomize vs plain YAML
+
+Page 2-N : Répéter pattern similaire avec concepts spécifiques (Networking, Storage, RBAC, etc.)
+    </div>
+    
+    <h3>✅ Prometheus + Grafana (plusieurs pages)</h3>
+    <div class="code">
+Page 1 : Intro Monitoring
+  Q7 = Alert response time target (< 5 min ideal)
+  Q8 = Alert fatigue scenario (too many alerts breaks on-call)
+  Q9 = Common mistake: alerting on symptoms, not root cause
+  Q10 = Troubleshooting scrape failures
+  Q11 = Anti-pattern: single centralized Prometheus (no HA)
+  Q12 = Best practice: alert based on SLOs, not arbitrary thresholds
+  Q13 = Metric: MTTR (Mean Time To Recovery), alert volume per team
+  Q14 = Production: disk full in Prometheus, immediate action?
+  Q15 = Architecture: Prometheus + Thanos + remote storage trade-offs
+
+Page 2 : PromQL Advanced
+  Q7 = Aggregation operators (sum, avg, max, min use cases)
+  Q8 = Complex query performance (efficiency, cardinality explosion)
+  Q9 = Label explosion mistake (too many unique label values)
+  Q10 = Query debugging tools (format output, explain)
+  ... similar pattern
+    </div>
+    
+    <h3>✅ SonarQube (plusieurs pages)</h3>
+    <div class="code">
+Page 1 : Code Quality Intro
+  Q7 = Technical debt definition + calculation
+  Q8 = Quality gate blocking deployment (case study)
+  Q9 = Common mistake: setting thresholds too low
+  Q10 = Integrating SonarQube in CI pipeline (blocking vs warning)
+  Q11 = Anti-pattern: ignoring code quality, only chasing features
+  Q12 = Best practice: issue lifecycle (security hotspot → fixed → verified)
+  Q13 = KPI: code coverage %, debt ratio, issue density
+  Q14 = Scenario: 500 code smells in legacy codebase, prioritize what?
+  Q15 = Tool integration: SonarQube + Jira + Jenkins workflow
+
+Page 2-N : Specific topics (Security, Reliability, Maintainability rules)
+    </div>
+    
+    <h3>✅ Terraform (plusieurs pages)</h3>
+    <div class="code">
+Page 1 : IaC Intro
+  Q7 = State file disaster recovery importance
+  Q8 = Terraform apply scenario (planned → applied vs drift detection)
+  Q9 = Common mistake: credentials in code (hardcoded secrets)
+  Q10 = Troubleshooting lock files (concurrent applies)
+  Q11 = Anti-pattern: monolithic main.tf (not modular)
+  Q12 = Best practice: terraform workspace for multi-env
+  Q13 = KPI: resource cost, deployment time, rollback capability
+  Q14 = Production: state corruption detected, recovery steps?
+  Q15 = Architecture: local state vs remote state (Terraform Cloud)
+
+Page 2-N : Advanced topics (Modules, Testing, CI/CD)
+    </div>
+    
+    <h3>✅ Trivy (plusieurs pages)</h3>
+    <div class="code">
+Page 1 : Vulnerability Scanning Intro
+  Q7 = Severity levels (critical vs high) response SLA
+  Q8 = Scan timing (build-time vs runtime scanning)
+  Q9 = False positive handling, remediation workflow
+  Q10 = Troubleshooting: scanner offline, cache strategies
+  Q11 = Anti-pattern: blocking all vulnerabilities including low-risk
+  Q12 = Best practice: risk-based remediation (CVSS scoring)
+  Q13 = KPI: vulnerability density, time-to-remediation
+  Q14 = Scenario: critical 0-day CVE in production, action plan?
+  Q15 = Tool integration: Trivy + Jenkins + image registry gates
+
+Page 2-N : Scanning different artifacts (containers, filesystems, configs)
+    </div>
+    
+    <h3>✅ IA/ML DevOps (plusieurs pages)</h3>
+    <div class="code">
+Page 1 : Model Deployment Basics
+  Q7 = Model serving requirements (latency, throughput, accuracy SLA)
+  Q8 = A/B testing models in production (canary deployment)
+  Q9 = Common mistake: deploying model without version control
+  Q10 = Troubleshooting inference performance (inference lag)
+  Q11 = Anti-pattern: no monitoring of model accuracy drift
+  Q12 = Best practice: feature store + model registry + orchestration
+  Q13 = KPI: model latency, prediction accuracy, inference cost
+  Q14 = Scenario: model prediction accuracy drops 5%, investigate?
+  Q15 = Pipeline: data pipeline → training → serving → monitoring loop
+
+Page 2-N : Advanced (drift detection, retraining triggers, governance)
+    </div>
+    
+    <h3>✅ AWS P2 (plusieurs pages)</h3>
+    <div class="code">
+Page 1 : AWS Services Overview
+  Q7 = Service cost optimization (reserved instances vs on-demand)
+  Q8 = Multi-region deployment trade-offs (latency vs availability)
+  Q9 = Common mistake: no tagging strategy (cost allocation failure)
+  Q10 = Troubleshooting AWS API throttling
+  Q11 = Anti-pattern: hardcoded credentials in code/config
+  Q12 = Best practice: IAM roles over users, least privilege
+  Q13 = KPI: AWS spend per service, cost trend, waste detection
+  Q14 = Scenario: AWS bill spike 10x, root cause analysis?
+  Q15 = Architecture: AWS native vs hybrid vs multi-cloud strategy
+
+Page 2-N : Deep dives (IAM, VPC, Lambda, RDS best practices, cost optimization)
+    </div>
+
+</div>
+
+<!-- ==================== TEMPLATE JUSTIFICATION JAVASCRIPT ==================== -->
+<div class="section">
+    <h1>📜 Template — Bloc JavaScript justifications à étendre</h1>
+    
+    <h2>Structure attendue dans votre fichier HTML</h2>
+    <div class="code">
+&lt;script&gt;
+    const justifications = {
+        // Existantes (copier depuis fichier actuel)
+        'q1-1': "...",
+        'q1-2': "...",
+        'q1-3': "...",
+        'q1-4': "...",
+        'q1-5': "...",
+        'q1-6': "...",
+        
+        // NOUVELLES — à ajouter
+        'q1-7': "Concept avancé justification...",
+        'q1-8': "Cas pratique justification...",
+        'q1-9': "Piège courant justification...",
+        'q1-10': "Troubleshooting justification...",
+        'q1-11': "Anti-pattern justification...",
+        'q1-12': "Best practice justification...",
+        'q1-13': "KPI/Examen justification...",
+        'q1-14': "Scenario réaliste justification...",
+        'q1-15': "Décision architecturale justification..."
+    };
+&lt;/script&gt;
+    </div>
+
+</div>
+
+<!-- ==================== CHECKLIST FINALE ==================== -->
+<div class="section">
+    <h1>✅ CHECKLIST — Avant de valider chaque page enrichie</h1>
+    
+    <h2>Pour chaque fichier & chaque page/leçon :</h2>
+    <ul>
+        <li>☑️ Q1-Q6 conservées telles quelles</li>
+        <li>☑️ Q7-Q15 ajoutées (HTML valide, radio buttons OK)</li>
+        <li>☑️ ID des questions = q{page}-{num} (q1-7, q1-8, ... q1-15)</li>
+        <li>☑️ Bouton "Valider" onclick correct pour chaque question</li>
+        <li>☑️ Bonne réponse spécifiée (value a/b/c/d)</li>
+        <li>☑️ 9 justifications ajoutées au bloc JS (q1-7 à q1-15)</li>
+        <li>☑️ Score display : "0/6" → "0/15"</li>
+        <li>☑️ Concepts : +2-3 paragraphes supplémentaires (advanced topics)</li>
+        <li>☑️ HTML + CSS syntaxe valide (pas d'erreurs console)</li>
+        <li>☑️ Questions pertinentes et réalistes (pas de questions bidon)</li>
+        <li>☑️ Justifications claires (3-4 phrases explicatives)</li>
+    </ul>
+
+</div>
+
+</body>
+</html>

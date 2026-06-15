@@ -1,0 +1,249 @@
+<!-- ============================================================================
+     EXEMPLES COMPLETS — AUTRES MODULES (Kubernetes, Prometheus, SonarQube, etc.)
+     
+     Format : Pour chaque module, voici le HTML des 9 NOUVELLES QUESTIONS (Q7-Q15)
+     prêt à copier-coller APRÈS vos 6 questions existantes.
+     
+     ============================================================================ -->
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Exemples — Autres modules (Kubernetes, Prometheus, SonarQube, Terraform, Trivy, IA, AWS)</title>
+    <style>
+        body { font-family: Arial; margin: 20px; background: #f5f5f5; }
+        .module { background: #fff; padding: 25px; margin: 25px 0; border-radius: 8px; border-left: 5px solid; }
+        .module.kubernetes { border-color: #326ce5; }
+        .module.prometheus { border-color: #e6522c; }
+        .module.sonarqube { border-color: #4db6e9; }
+        .module.terraform { border-color: #7b42bc; }
+        .module.trivy { border-color: #1904da; }
+        .module.ia { border-color: #00c853; }
+        .module.aws { border-color: #ff9900; }
+        
+        h1 { margin-top: 0; color: #1a1a1a; }
+        h2 { color: #555; border-bottom: 2px solid #ddd; padding-bottom: 8px; margin-top: 25px; }
+        h3 { color: #666; font-size: 1em; margin: 15px 0 5px; }
+        .code { background: #f9f9f9; border: 1px solid #ddd; padding: 12px; border-radius: 4px; font-family: 'Courier New'; font-size: 11px; overflow-x: auto; margin: 8px 0; line-height: 1.3; }
+        .just { background: #f0f8ff; padding: 10px; border-left: 3px solid #2196F3; margin: 5px 0; font-size: 13px; }
+        ul { margin: 10px 0; padding-left: 20px; }
+        li { margin: 5px 0; }
+        .copy-tip { background: #fff3e0; padding: 10px; border-radius: 4px; color: #e65100; font-size: 12px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+
+<!-- ==================== KUBERNETES ==================== -->
+<div class="module kubernetes">
+    <h1>☸️ KUBERNETES — Page 1 (Intro K8s) — Q7-Q15</h1>
+    
+    <div class="copy-tip">
+        💡 <strong>Copier-coller :</strong> Ces 9 questions vont APRÈS vos 6 questions existantes. 
+        Augmenter le score de "0/6" à "0/15". Ajouter les justifications au bloc JS.
+    </div>
+    
+    <h3>Q7 — Resource limits avancé</h3>
+    <div class="code">
+&lt;div class="qcm-question" data-page="p1"&gt;&lt;p class="q-text"&gt;7) Quel est le risque si vous ne definissez PAS les resource requests et limits ?&lt;/p&gt;&lt;div class="qcm-options"&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-7" value="a" id="q1-7a"&gt;&lt;label for="q1-7a"&gt;Aucun risque&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-7" value="b" id="q1-7b"&gt;&lt;label for="q1-7b"&gt;Un pod peut consommer 100% des ressources node&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-7" value="c" id="q1-7c"&gt;&lt;label for="q1-7c"&gt;Les autres pods ont la priorite&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-7" value="d" id="q1-7d"&gt;&lt;label for="q1-7d"&gt;Performance amelioree&lt;/label&gt;&lt;/div&gt;&lt;/div&gt;&lt;button class="btn-validate" onclick="checkAnswer('q1-7','b',this,'p1')"&gt;Valider&lt;/button&gt;&lt;div class="feedback"&gt;&lt;/div&gt;&lt;/div&gt;
+    </div>
+    <div class="just">Requests définissent la garantie minimale, limits la limite max. Sans limits, un pod peut "noyer" les autres pods en mangeant toutes les ressources.</div>
+
+    <h3>Q8 — Cas pratique scaling</h3>
+    <div class="code">
+&lt;div class="qcm-question" data-page="p1"&gt;&lt;p class="q-text"&gt;8) Vous avez 3 replicas d'une app. Le trafic monte. HPA (Horizontal Pod Autoscaler) scale a 10 replicas. Quel PREMIER probleme peut survenir ?&lt;/p&gt;&lt;div class="qcm-options"&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-8" value="a" id="q1-8a"&gt;&lt;label for="q1-8a"&gt;Rien, c'est automatique&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-8" value="b" id="q1-8b"&gt;&lt;label for="q1-8b"&gt;10 replicas sur 1 node = resources epuisees&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-8" value="c" id="q1-8c"&gt;&lt;label for="q1-8c"&gt;Perte de donnees&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-8" value="d" id="q1-8d"&gt;&lt;label for="q1-8d"&gt;Deconnexion réseau&lt;/label&gt;&lt;/div&gt;&lt;/div&gt;&lt;button class="btn-validate" onclick="checkAnswer('q1-8','b',this,'p1')"&gt;Valider&lt;/button&gt;&lt;div class="feedback"&gt;&lt;/div&gt;&lt;/div&gt;
+    </div>
+    <div class="just">HPA scale horizontalement mais il faut avoir des nodes disponibles. Si le cluster est deja plein, il faut Cluster Autoscaler pour ajouter des nodes.</div>
+
+    <h3>Q9 — Piège courant</h3>
+    <div class="code">
+&lt;div class="qcm-question" data-page="p1"&gt;&lt;p class="q-text"&gt;9) Vous deployez un pod sans probe (livenessProbe). Le pod freeze mais Kubernetes ne le detecte pas. Pourquoi ?&lt;/p&gt;&lt;div class="qcm-options"&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-9" value="a" id="q1-9a"&gt;&lt;label for="q1-9a"&gt;Kubernetes verifie TCP/HTTP automatiquement&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-9" value="b" id="q1-9b"&gt;&lt;label for="q1-9b"&gt;Le pod a l'air "Running" bien qu'il soit pris (deadlock)&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-9" value="c" id="q1-9c"&gt;&lt;label for="q1-9c"&gt;Kubernetes relance le pod automatiquement&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-9" value="d" id="q1-9d"&gt;&lt;label for="q1-9d"&gt;Les probes ne sont pas importantes&lt;/label&gt;&lt;/div&gt;&lt;/div&gt;&lt;button class="btn-validate" onclick="checkAnswer('q1-9','b',this,'p1')"&gt;Valider&lt;/button&gt;&lt;div class="feedback"&gt;&lt;/div&gt;&lt;/div&gt;
+    </div>
+    <div class="just">Kubernetes ne peut pas deviner si un pod fonctionne vraiment. Il faut liveness probe (execute la commande /health toutes les 10s) pour detecter les situations bloquees (deadlock, infinite loop).</div>
+
+    <h3>Q10 — Troubleshooting</h3>
+    <div class="code">
+&lt;div class="qcm-question" data-page="p1"&gt;&lt;p class="q-text"&gt;10) Un pod est en etat "Pending" depuis 10 minutes. Premiere etape de diagnostic ?&lt;/p&gt;&lt;div class="qcm-options"&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-10" value="a" id="q1-10a"&gt;&lt;label for="q1-10a"&gt;Redemarrer le pod&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-10" value="b" id="q1-10b"&gt;&lt;label for="q1-10b"&gt;kubectl describe pod (voir events et conditions)&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-10" value="c" id="q1-10c"&gt;&lt;label for="q1-10c"&gt;Augmenter les resources CPU/RAM&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-10" value="d" id="q1-10d"&gt;&lt;label for="q1-10d"&gt;Verifier l'image Docker&lt;/label&gt;&lt;/div&gt;&lt;/div&gt;&lt;button class="btn-validate" onclick="checkAnswer('q1-10','b',this,'p1')"&gt;Valider&lt;/button&gt;&lt;div class="feedback"&gt;&lt;/div&gt;&lt;/div&gt;
+    </div>
+    <div class="just">kubectl describe affiche exactement POURQUOI le pod est pending (insufficient resources, node selector mismatch, image pull error). C'est le reflexe numero 1.</div>
+
+    <h3>Q11 — Anti-pattern</h3>
+    <div class="code">
+&lt;div class="qcm-question" data-page="p1"&gt;&lt;p class="q-text"&gt;11) Lequel est un ANTI-PATTERN en K8s ?&lt;/p&gt;&lt;div class="qcm-options"&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-11" value="a" id="q1-11a"&gt;&lt;label for="q1-11a"&gt;Deployer une base de donnees stateful avec Deployment&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-11" value="b" id="q1-11b"&gt;&lt;label for="q1-11b"&gt;Utiliser ClusterIP pour tout&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-11" value="c" id="q1-11c"&gt;&lt;label for="q1-11c"&gt;Hardcoder les secrets dans YAML&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-11" value="d" id="q1-11d"&gt;&lt;label for="q1-11d"&gt;Toutes les reponses ci-dessus&lt;/label&gt;&lt;/div&gt;&lt;/div&gt;&lt;button class="btn-validate" onclick="checkAnswer('q1-11','d',this,'p1')"&gt;Valider&lt;/button&gt;&lt;div class="feedback"&gt;&lt;/div&gt;&lt;/div&gt;
+    </div>
+    <div class="just">Tous sont dangereux : 1) DB avec Deployment = data loss si pod relance. Utiliser StatefulSet. 2) ClusterIP everywhere = pas d'externe access. 3) Secrets en clair = breach. Utiliser Secret resource.</div>
+
+    <h3>Q12 — Best practice</h3>
+    <div class="code">
+&lt;div class="qcm-question" data-page="p1"&gt;&lt;p class="q-text"&gt;12) Quelle est la best practice pour les probes de sante ?&lt;/p&gt;&lt;div class="qcm-options"&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-12" value="a" id="q1-12a"&gt;&lt;label for="q1-12a"&gt;Utiliser uniquement readinessProbe&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-12" value="b" id="q1-12b"&gt;&lt;label for="q1-12b"&gt;Liveness (restart pod) + Readiness (remove from LB)&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-12" value="c" id="q1-12c"&gt;&lt;label for="q1-12c"&gt;Les deux sont optionnels&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-12" value="d" id="q1-12d"&gt;&lt;label for="q1-12d"&gt;Utiliser uniquement livenessProbe&lt;/label&gt;&lt;/div&gt;&lt;/div&gt;&lt;button class="btn-validate" onclick="checkAnswer('q1-12','b',this,'p1')"&gt;Valider&lt;/button&gt;&lt;div class="feedback"&gt;&lt;/div&gt;&lt;/div&gt;
+    </div>
+    <div class="just">Liveness = "es-tu vivant?" (restart si failed). Readiness = "peux-tu servir du trafic?" (remove du LB si failed). Les deux ensemble = observabilite complete.</div>
+
+    <h3>Q13 — KPI examen</h3>
+    <div class="code">
+&lt;div class="qcm-question" data-page="p1"&gt;&lt;p class="q-text"&gt;13) Quel KPI mesure-t-on pour evaluer la QUALITE de K8s ?&lt;/p&gt;&lt;div class="qcm-options"&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-13" value="a" id="q1-13a"&gt;&lt;label for="q1-13a"&gt;Nombre de pods&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-13" value="b" id="q1-13b"&gt;&lt;label for="q1-13b"&gt;Pod density, node utilization, deployment frequency&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-13" value="c" id="q1-13c"&gt;&lt;label for="q1-13c"&gt;Nombre de nodes&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-13" value="d" id="q1-13d"&gt;&lt;label for="q1-13d"&gt;Uptime en %&lt;/label&gt;&lt;/div&gt;&lt;/div&gt;&lt;button class="btn-validate" onclick="checkAnswer('q1-13','b',this,'p1')"&gt;Valider&lt;/button&gt;&lt;div class="feedback"&gt;&lt;/div&gt;&lt;/div&gt;
+    </div>
+    <div class="just">KPIs K8s : 1) Pod density (max pods par node, target = 85% pour elasticite) 2) Node utilization (CPU/memory usage) 3) Deploy frequency (combien par jour) 4) Incident response time.</div>
+
+    <h3>Q14 — Scenario réaliste</h3>
+    <div class="code">
+&lt;div class="qcm-question" data-page="p1"&gt;&lt;p class="q-text"&gt;14) Vous avez 10 pods, tous en "CrashLoopBackOff". Quelle est la PREMIERE hypothese ?&lt;/p&gt;&lt;div class="qcm-options"&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-14" value="a" id="q1-14a"&gt;&lt;label for="q1-14a"&gt;Image Docker corrompue&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-14" value="b" id="q1-14b"&gt;&lt;label for="q1-14b"&gt;ConfigMap/Secret non-trouvés&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-14" value="c" id="q1-14c"&gt;&lt;label for="q1-14c"&gt;Kubernetes down&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-14" value="d" id="q1-14d"&gt;&lt;label for="q1-14d"&gt;Reseau down&lt;/label&gt;&lt;/div&gt;&lt;/div&gt;&lt;button class="btn-validate" onclick="checkAnswer('q1-14','b',this,'p1')"&gt;Valider&lt;/button&gt;&lt;div class="feedback"&gt;&lt;/div&gt;&lt;/div&gt;
+    </div>
+    <div class="just">10 pods simultanément = probleme partagé (config, deploys cassés). Premier check : kubectl logs pour voir l'erreur exacte. Souvent = ConfigMap/Secret manquants, variables d'env cassées.</div>
+
+    <h3>Q15 — Décision architecturale</h3>
+    <div class="code">
+&lt;div class="qcm-question" data-page="p1"&gt;&lt;p class="q-text"&gt;15) Vous devez choisir : Deployment vs StatefulSet. Critere decisive ?&lt;/p&gt;&lt;div class="qcm-options"&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-15" value="a" id="q1-15a"&gt;&lt;label for="q1-15a"&gt;Nombre de replicas&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-15" value="b" id="q1-15b"&gt;&lt;label for="q1-15b"&gt;Stateful (persistence) ou Stateless ?&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-15" value="c" id="q1-15c"&gt;&lt;label for="q1-15c"&gt;CPU/memory requirements&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-15" value="d" id="q1-15d"&gt;&lt;label for="q1-15d"&gt;Type de base de donnees&lt;/label&gt;&lt;/div&gt;&lt;/div&gt;&lt;button class="btn-validate" onclick="checkAnswer('q1-15','b',this,'p1')"&gt;Valider&lt;/button&gt;&lt;div class="feedback"&gt;&lt;/div&gt;&lt;/div&gt;
+    </div>
+    <div class="just">Deployment = stateless apps (web servers, APIs) : scaling simple. StatefulSet = stateful apps (DB, caches) : noms stables, volumes persistants, ordre de scaling. Le critere decisive = besoins de persistance.</div>
+
+</div>
+
+<!-- ==================== PROMETHEUS ==================== -->
+<div class="module prometheus">
+    <h1>📈 PROMETHEUS + GRAFANA — Page 1 (Monitoring Intro) — Q7-Q15</h1>
+    
+    <h3>Q7 — Performance SLA</h3>
+    <div class="code">
+&lt;div class="qcm-question" data-page="p1"&gt;&lt;p class="q-text"&gt;7) Quel est le temps d'alerte IDEAL une fois qu'une metrique depasse le seuil ?&lt;/p&gt;&lt;div class="qcm-options"&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-7" value="a" id="q1-7a"&gt;&lt;label for="q1-7a"&gt;> 30 minutes&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-7" value="b" id="q1-7b"&gt;&lt;label for="q1-7b"&gt;< 5 minutes&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-7" value="c" id="q1-7c"&gt;&lt;label for="q1-7c"&gt;Entre 10-15 minutes&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-7" value="d" id="q1-7d"&gt;&lt;label for="q1-7d"&gt;Pas de limite de temps&lt;/label&gt;&lt;/div&gt;&lt;/div&gt;&lt;button class="btn-validate" onclick="checkAnswer('q1-7','b',this,'p1')"&gt;Valider&lt;/button&gt;&lt;div class="feedback"&gt;&lt;/div&gt;&lt;/div&gt;
+    </div>
+    <div class="just">< 5 min c'est l'ideal pour on-call : detecter rapidement et agir avant impact client. Prometheus default eval 1min, donc alerte arrive en ~2-3 min. OK.</div>
+
+    <h3>Q8 — Cas pratique</h3>
+    <div class="code">
+&lt;div class="qcm-question" data-page="p1"&gt;&lt;p class="q-text"&gt;8) Vous recevez 500 alertes par jour. L'equipe les ignore. Quel est le VRAI probleme ?&lt;/p&gt;&lt;div class="qcm-options"&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-8" value="a" id="q1-8a"&gt;&lt;label for="q1-8a"&gt;Prometheus ne marche pas&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-8" value="b" id="q1-8b"&gt;&lt;label for="q1-8b"&gt;Alert fatigue : seuils trop bas (false positives)&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-8" value="c" id="q1-8c"&gt;&lt;label for="q1-8c"&gt;L'equipe n'a pas le temps&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-8" value="d" id="q1-8d"&gt;&lt;label for="q1-8d"&gt;Le systeme est trop big&lt;/label&gt;&lt;/div&gt;&lt;/div&gt;&lt;button class="btn-validate" onclick="checkAnswer('q1-8','b',this,'p1')"&gt;Valider&lt;/button&gt;&lt;div class="feedback"&gt;&lt;/div&gt;&lt;/div&gt;
+    </div>
+    <div class="just">500 alerts/jour = ~30 par heure. C'est alarm fatigue : seuils trop bas, trop de faux positifs. Les alertes utiles sont ignorees. Solution : relancer les seuils, base sur SLOs, pas sur values brutes.</div>
+
+    <h3>Q9 — Piège courant</h3>
+    <div class="code">
+&lt;div class="qcm-question" data-page="p1"&gt;&lt;p class="q-text"&gt;9) Vous alertez sur "if CPU > 80%". Quel piege ?&lt;/p&gt;&lt;div class="qcm-options"&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-9" value="a" id="q1-9a"&gt;&lt;label for="q1-9a"&gt;CPU n'est pas une bonne metrique&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-9" value="b" id="q1-9b"&gt;&lt;label for="q1-9b"&gt;Vous alertez sur symptome, pas root cause&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-9" value="c" id="q1-9c"&gt;&lt;label for="q1-9c"&gt;80% est trop bas&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-9" value="d" id="q1-9d"&gt;&lt;label for="q1-9d"&gt;Seuils fixes ne marchent jamais&lt;/label&gt;&lt;/div&gt;&lt;/div&gt;&lt;button class="btn-validate" onclick="checkAnswer('q1-9','b',this,'p1')"&gt;Valider&lt;/button&gt;&lt;div class="feedback"&gt;&lt;/div&gt;&lt;/div&gt;
+    </div>
+    <div class="just">CPU > 80% n'est pas une alerte valide. Que ca veut dire? Peut etre c'est normal (pic de charge). Mieux : alerter sur latency > 500ms OU error rate > 5% (symptoms clients).</div>
+
+    <h3>Q10 — Troubleshooting</h3>
+    <div class="code">
+&lt;div class="qcm-question" data-page="p1"&gt;&lt;p class="q-text"&gt;10) Un exporteur Prometheus scrape timeout. Comment debugger ?&lt;/p&gt;&lt;div class="qcm-options"&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-10" value="a" id="q1-10a"&gt;&lt;label for="q1-10a"&gt;Redemarrer Prometheus&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-10" value="b" id="q1-10b"&gt;&lt;label for="q1-10b"&gt;curl http://exporteur:port/metrics directement&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-10" value="c" id="q1-10c"&gt;&lt;label for="q1-10c"&gt;Augmenter timeout Prometheus&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-10" value="d" id="q1-10d"&gt;&lt;label for="q1-10d"&gt;Changer le scrape interval&lt;/label&gt;&lt;/div&gt;&lt;/div&gt;&lt;button class="btn-validate" onclick="checkAnswer('q1-10','b',this,'p1')"&gt;Valider&lt;/button&gt;&lt;div class="feedback"&gt;&lt;/div&gt;&lt;/div&gt;
+    </code>
+    <div class="just">First step = tester directement l'endpoint avec curl. Si timeout : probleme reseau ou l'exporteur est down. Si 500 error : le code de l'exporteur casse.</div>
+
+    <h3>Q11 — Anti-pattern</h3>
+    <div class="code">
+&lt;div class="qcm-question" data-page="p1"&gt;&lt;p class="q-text"&gt;11) Lequel est un anti-pattern monitoring ?&lt;/p&gt;&lt;div class="qcm-options"&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-11" value="a" id="q1-11a"&gt;&lt;label for="q1-11a"&gt;Un seul Prometheus centralisé sans HA&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-11" value="b" id="q1-11b"&gt;&lt;label for="q1-11b"&gt;Stocker des metriques pendant 1 an sur une machine&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-11" value="c" id="q1-11c"&gt;&lt;label for="q1-11c"&gt;Pas de backup du Prometheus database&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-11" value="d" id="q1-11d"&gt;&lt;label for="q1-11d"&gt;Toutes les reponses ci-dessus&lt;/label&gt;&lt;/div&gt;&lt;/div&gt;&lt;button class="btn-validate" onclick="checkAnswer('q1-11','d',this,'p1')"&gt;Valider&lt;/button&gt;&lt;div class="feedback"&gt;&lt;/div&gt;&lt;/div&gt;
+    </div>
+    <div class="just">Tous dangereux : 1) Single point of failure. 2) Disk explosion. 3) Perte de donnees si crash. Solution : multi-replica Prometheus + Thanos + remote storage.</div>
+
+    <h3>Q12 — Best practice</h3>
+    <div class="code">
+&lt;div class="qcm-question" data-page="p1"&gt;&lt;p class="q-text"&gt;12) Quelle est la best practice pour les seuils d'alerte ?&lt;/p&gt;&lt;div class="qcm-options"&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-12" value="a" id="q1-12a"&gt;&lt;label for="q1-12a"&gt;Seuils arbitraires (80, 90%...&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-12" value="b" id="q1-12b"&gt;&lt;label for="q1-12b"&gt;Base sur SLOs (Service Level Objectives)&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-12" value="c" id="q1-12c"&gt;&lt;label for="q1-12c"&gt;Seuils fixes identiques pour tous les services&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-12" value="d" id="q1-12d"&gt;&lt;label for="q1-12d"&gt;Pas d'alerte warning, juste critical&lt;/label&gt;&lt;/div&gt;&lt;/div&gt;&lt;button class="btn-validate" onclick="checkAnswer('q1-12','b',this,'p1')"&gt;Valider&lt;/button&gt;&lt;div class="feedback"&gt;&lt;/div&gt;&lt;/div&gt;
+    </code>
+    <div class="just">SLO-based alerting : "si error rate > 1% pour 5min, alerte" = pas assez d'erreurs mais trop pour le SLO. Cela alerte AVANT que l'utilisateur ne remarque.</div>
+
+    <h3>Q13 — KPI</h3>
+    <div class="code">
+&lt;div class="qcm-question" data-page="p1"&gt;&lt;p class="q-text"&gt;13) Le KPI numero 1 du monitoring — MTTR (Mean Time To Recovery) — signifie ?&lt;/p&gt;&lt;div class="qcm-options"&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-13" value="a" id="q1-13a"&gt;&lt;label for="q1-13a"&gt;Temps moyen avant detection&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-13" value="b" id="q1-13b"&gt;&lt;label for="q1-13b"&gt;Temps moyen pour reparation apres detection&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-13" value="c" id="q1-13c"&gt;&lt;label for="q1-13c"&gt;Temps entre 2 incidents&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-13" value="d" id="q1-13d"&gt;&lt;label for="q1-13d"&gt;Total uptime par mois&lt;/label&gt;&lt;/div&gt;&lt;/div&gt;&lt;button class="btn-validate" onclick="checkAnswer('q1-13','b',this,'p1')"&gt;Valider&lt;/button&gt;&lt;div class="feedback"&gt;&lt;/div&gt;&lt;/div&gt;
+    </div>
+    <div class="just">MTTR = detection + diagnosis + fix + deploy. Exemple : alerte a 14:00, fix deploy a 14:30 = MTTR 30 min. Bon MTTR = < 15 min. Excellent = < 5 min.</div>
+
+    <h3>Q14 — Scenario</h3>
+    <div class="code">
+&lt;div class="qcm-question" data-page="p1"&gt;&lt;p class="q-text"&gt;14) Grafana montre error_rate = 15% (normal 1%). Logs vides. Quoi checker IMMEDIATEMENT ?&lt;/p&gt;&lt;div class="qcm-options"&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-14" value="a" id="q1-14a"&gt;&lt;label for="q1-14a"&gt;Redemarrer les services&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-14" value="b" id="q1-14b"&gt;&lt;label for="q1-14b"&gt;Metrics de dependances externes (DB, API externe)&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-14" value="c" id="q1-14c"&gt;&lt;label for="q1-14c"&gt;Reinitialiser Prometheus&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-14" value="d" id="q1-14d"&gt;&lt;label for="q1-14d"&gt;Changer les seuils d'alerte&lt;/label&gt;&lt;/div&gt;&lt;/div&gt;&lt;button class="btn-validate" onclick="checkAnswer('q1-14','b',this,'p1')"&gt;Valider&lt;/button&gt;&lt;div class="feedback"&gt;&lt;/div&gt;&lt;/div&gt;
+    </code>
+    <div class="just">Erreurs sans logs locales = probleme external. Checker DB latency, dependance API (timeout?), certs expirées. Les logs "vides" signifient : les erreurs viennent de dehors, pas du code.</div>
+
+    <h3>Q15 — Architecture</h3>
+    <div class="code">
+&lt;div class="qcm-question" data-page="p1"&gt;&lt;p class="q-text"&gt;15) Vous avez 1 an de data Prometheus. Quel est le PREMIER probleme ?&lt;/p&gt;&lt;div class="qcm-options"&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-15" value="a" id="q1-15a"&gt;&lt;label for="q1-15a"&gt;L'instance Prometheus marche bien&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-15" value="b" id="q1-15b"&gt;&lt;label for="q1-15b"&gt;Disque sature (1-2 TB), coutes enormes&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-15" value="c" id="q1-15c"&gt;&lt;label for="q1-15c"&gt;Queries lentes&lt;/label&gt;&lt;/div&gt;&lt;div class="qcm-option"&gt;&lt;input type="radio" name="q1-15" value="d" id="q1-15d"&gt;&lt;label for="q1-15d"&gt;Performance Grafana cassee&lt;/label&gt;&lt;/div&gt;&lt;/div&gt;&lt;button class="btn-validate" onclick="checkAnswer('q1-15','b',this,'p1')"&gt;Valider&lt;/button&gt;&lt;div class="feedback"&gt;&lt;/div&gt;&lt;/div&gt;
+    </code>
+    <div class="just">1 an de high-cardinality metrics = disque explosion. Prometheus retention par defaut = 15j. Solution : Thanos (object storage), ou retention downsampling (1h older data).</div>
+
+</div>
+
+<!-- ==================== AUTRES MODULES (COMPACT) ==================== -->
+<div class="module sonarqube">
+    <h1>🔍 SONARQUBE — Page 1 — Q7-Q15 (COMPACT)</h1>
+    <p><strong>Pattern identique :</strong> Q7=concept avancé, Q8=cas pratique, Q9=piège, Q10=troubleshooting, Q11=anti-pattern, Q12=best practice, Q13=KPI, Q14=scenario, Q15=architecture</p>
+    <p><strong>Q7-Q10 focus :</strong> Quality gates, issue lifecycle, technical debt calculation, integration CI workflow</p>
+    <p><strong>Q11-Q15 focus :</strong> Ignoring findings, proper thresholds, coverage ratio %, legacy codebase priority, SonarQube + Jira flow</p>
+    <p class="copy-tip">💾 Voir le fichier EXEMPLES_ENRICHISSEMENT_QCM.html pour le template complet. Adapter les termes à SonarQube.</p>
+</div>
+
+<div class="module terraform">
+    <h1>🏗️ TERRAFORM — Page 1 — Q7-Q15 (COMPACT)</h1>
+    <p><strong>Focus areas :</strong> State file management, workspace strategy, credential handling, lock mechanism</p>
+    <p><strong>Q7-Q10 :</strong> State disaster recovery, apply vs drift detection, secrets in code, concurrent apply locks</p>
+    <p><strong>Q11-Q15 :</strong> Monolithic vs modular, local vs remote state, cost tracking, corruption recovery, Terraform Cloud</p>
+    <p class="copy-tip">💾 Adapter le pattern Jenkins → concepts Terraform spécifiques (state, modules, workspaces)</p>
+</div>
+
+<div class="module trivy">
+    <h1>🛡️ TRIVY — Page 1 — Q7-Q15 (COMPACT)</h1>
+    <p><strong>Focus :</strong> CVE severity levels, scan timing (build vs runtime), false positives, offline scanning</p>
+    <p><strong>Q7-Q10 :</strong> CVSS thresholds, image vs filesystem vs config scanning, remediation SLA, cache strategies</p>
+    <p><strong>Q11-Q15 :</strong> Blocking all vulns (too strict), risk-based approach, vulnerability density metrics, 0-day response, gate integration</p>
+    <p class="copy-tip">💾 Mettre en avant : severity classification, remediation workflow, production scenarios</p>
+</div>
+
+<div class="module ia">
+    <h1>🤖 IA/ML DEVOPS — Page 1 — Q7-Q15 (COMPACT)</h1>
+    <p><strong>Focus :</strong> Model serving latency, A/B testing models, version control, inference performance monitoring</p>
+    <p><strong>Q7-Q10 :</strong> SLA (latency, throughput, accuracy), canary deployment, model registry, lag troubleshooting</p>
+    <p><strong>Q11-Q15 :</strong> No drift monitoring (anti-pattern), feature store + model registry, model accuracy KPI, drift detection, ML pipeline orchestration</p>
+    <p class="copy-tip">💾 Unique : ajouter questions sur model versioning, drift detection, retraining triggers, feature governance</p>
+</div>
+
+<div class="module aws">
+    <h1>☁️ AWS P2 — Page 1 — Q7-Q15 (COMPACT)</h1>
+    <p><strong>Focus :</strong> Cost optimization, multi-region strategy, tagging governance, API throttling, credential management</p>
+    <p><strong>Q7-Q10 :</strong> Reserved instances vs on-demand, latency vs cost trade-offs, tagging fail scenario, throttling diagnosis</p>
+    <p><strong>Q11-Q15 :</strong> Hardcoded secrets (anti), IAM roles + least privilege, bill spike root cause, cost per service KPI, multi-cloud architecture</p>
+    <p class="copy-tip">💾 Emphasis : cost, security, best practices. Ajouter scenarios AWS réalistes (bill spikes, VPC mistakes, IAM misconfig)</p>
+</div>
+
+<!-- ==================== FINAL SUMMARY ==================== -->
+<div class="module" style="border-left: 5px solid #333;">
+    <h1>✅ RÉSUMÉ FINAL</h1>
+    
+    <h2>Fichiers à créer/modifier</h2>
+    <ul>
+        <li><strong>EXEMPLES_ENRICHISSEMENT_QCM.html</strong> ✅ — Exemple complet Jenkins (6→15)</li>
+        <li><strong>EXEMPLES_AUTRES_MODULES.html</strong> ✅ — Exemples Kubernetes + Prometheus détaillés + directives</li>
+        <li><strong>Fichiers à enrichir (9 total) :</strong>
+            <ul>
+                <li>Dashboard_Revision_DevOps.html → SKIP (pas de QCM)</li>
+                <li>Jenkins_Revision_Plateforme_Modou_NDIAYE.html → 17 pages × 9 nouvelles Q</li>
+                <li>Kubernetes_Revision_Plateforme.html → N pages × 9 nouvelles Q</li>
+                <li>Prometheus_Grafana_Revision_Plateforme.html → N pages × 9 nouvelles Q</li>
+                <li>SonarQube_Revision_Plateforme.html → N pages × 9 nouvelles Q</li>
+                <li>Terraform_Revision_Plateforme.html → N pages × 9 nouvelles Q</li>
+                <li>Trivy_Revision_Plateforme.html → N pages × 9 nouvelles Q</li>
+                <li>IA_DevOps_Revision_Plateforme.html → N pages × 9 nouvelles Q</li>
+                <li>aws-revision_Partie2_ModouNDIAYE.html → N pages × 9 nouvelles Q</li>
+            </ul>
+        </li>
+    </ul>
+
+    <h2>Processus pour enrichir chaque page</h2>
+    <ol>
+        <li>Identifier la page/leçon (ex: p1, p2, ...)</li>
+        <li>Copier les 6 questions existantes (conserver structure + ID)</li>
+        <li>Ajouter 9 nouvelles questions (Q7-Q15) en suivant template</li>
+        <li>Augmenter score "0/6" → "0/15"</li>
+        <li>Ajouter 9 justifications au bloc JS</li>
+        <li>Enrichir 2-3 paragraphes Concepts (nouveaux sujets avancés)</li>
+        <li>Valider HTML syntax (pas d'erreurs console)</li>
+    </ol>
+
+    <h2>Temps estimé</h2>
+    <ul>
+        <li>Jenkins (17 pages) : ~8-10 heures (30 min par page)</li>
+        <li>Kubernetes (3-5 pages) : ~2-3 heures</li>
+        <li>Prometheus (2-3 pages) : ~1-2 heures</li>
+        <li>SonarQube, Terraform, Trivy, IA, AWS (2-3 pages each) : ~2 heures each</li>
+        <li><strong>Total : ~25-35 heures</strong> (ou équivalent avec assistance)</li>
+    </ul>
+
+</div>
+
+</body>
+</html>
