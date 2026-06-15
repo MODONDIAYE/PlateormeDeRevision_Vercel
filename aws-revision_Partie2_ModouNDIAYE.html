@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Plateforme de Revision AWS - Partie 2 | Modou NDIAYE</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --navy:#1a1a2e;--navy2:#16213e;--navy3:#0f3460;
+    --aws:#FF9900;--white:#ffffff;--gray:#f7f8fa;
+    --border:#ebebeb;--text:#1a1a2e;--muted:#7a8499;
+    --success:#2e7d32;--error:#c62828;
+  }
+  body{font-family:'Plus Jakarta Sans',sans-serif;background:#fff;color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+
+  header{background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 55%,var(--navy3) 100%);padding:24px 28px 18px;box-shadow:0 2px 20px rgba(0,0,0,.18)}
+  .header-top{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+  .logo{background:var(--aws);border-radius:10px;width:46px;height:46px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;flex-shrink:0;color:#fff;box-shadow:0 2px 8px rgba(255,153,0,.4)}
+  .header-title{font-size:20px;font-weight:800;color:#fff;letter-spacing:-.4px}
+  .header-sub{font-size:12px;color:#8fa3c0;margin-top:2px}
+  .header-author{font-size:11px;color:#FF9900;margin-top:4px;font-weight:600}
+  #search{width:100%;padding:10px 16px;border-radius:10px;border:none;background:rgba(255,255,255,.1);color:#fff;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;outline:none;backdrop-filter:blur(8px)}
+  #search::placeholder{color:#8fa3c0}
+  #search:focus{background:rgba(255,255,255,.18)}
+
+  .layout{display:flex;flex:1;overflow:hidden;height:calc(100vh - 130px)}
+
+  aside{width:260px;flex-shrink:0;border-right:1px solid var(--border);overflow-y:auto;background:#fafafa}
+  .lesson-item{padding:13px 16px;cursor:pointer;border-bottom:1px solid var(--border);border-left:4px solid transparent;transition:all .15s;display:flex;align-items:center;gap:10px}
+  .lesson-item:hover{background:#f0f4ff}
+  .lesson-item.active{background:#fff;border-bottom-color:var(--border)}
+  .lesson-icon{font-size:19px;flex-shrink:0}
+  .lesson-name{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
+  .lesson-score{font-size:11px;margin-top:2px;font-weight:600}
+  .sidebar-section{padding:10px 16px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;background:#f0f0f0;border-bottom:1px solid var(--border)}
+
+  main{flex:1;overflow-y:auto;padding:0}
+  .welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:40px;text-align:center}
+  .welcome-emoji{font-size:60px;margin-bottom:16px}
+  .welcome h2{font-size:20px;font-weight:800;color:var(--text)}
+  .welcome p{color:var(--muted);margin-top:8px;max-width:300px;font-size:14px;line-height:1.6}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:24px;justify-content:center;max-width:520px}
+  .chip{padding:7px 14px;border-radius:20px;cursor:pointer;font-size:12px;font-weight:700;display:flex;align-items:center;gap:5px;transition:transform .12s}
+  .chip:hover{transform:scale(1.05)}
+
+  .content{padding:28px 32px;max-width:860px}
+  .lesson-header{display:flex;align-items:center;gap:14px;margin-bottom:22px}
+  .lesson-badge{border-radius:12px;width:52px;height:52px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0}
+  .lesson-h2{font-size:21px;font-weight:800;color:var(--text)}
+  .tabs{display:flex;gap:6px;margin-top:8px}
+  .tab-btn{padding:5px 14px;border-radius:20px;border:none;cursor:pointer;font-size:12px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;transition:all .15s}
+
+  .concept-card{display:flex;gap:13px;margin-bottom:13px;padding:16px 18px;background:#f8faff;border-radius:12px;border-left:4px solid currentColor;align-items:flex-start}
+  .concept-num{border-radius:50%;width:24px;height:24px;min-width:24px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;flex-shrink:0;margin-top:1px}
+  .concept-text{font-size:13.5px;line-height:1.7;color:#2d3748}
+
+  .kp-card{display:flex;align-items:flex-start;gap:12px;padding:14px 18px;background:#fff;border-radius:12px;border:1px solid;box-shadow:0 2px 8px rgba(0,0,0,.05);margin-bottom:10px}
+  .kp-text{font-size:13.5px;line-height:1.5;color:var(--text);font-weight:500}
+  .kp-detail{font-size:12px;line-height:1.6;color:var(--muted);margin-top:4px;font-weight:400}
+
+  .quiz-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+  .score-badge{padding:5px 14px;border-radius:20px;font-size:13px;font-weight:700}
+  .q-card{margin-bottom:20px;padding:18px 20px;background:#fff;border-radius:14px;border:1px solid var(--border);box-shadow:0 2px 8px rgba(0,0,0,.04)}
+  .q-text{font-size:14px;font-weight:700;color:var(--text);line-height:1.55;margin-bottom:14px}
+  .q-num{margin-right:8px;font-weight:800}
+  .options{display:flex;flex-direction:column;gap:8px}
+  .option{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;border:1px solid var(--border);cursor:pointer;font-size:13px;color:#444;background:#f8f8f8;transition:all .12s;text-align:left;width:100%;font-family:'Plus Jakarta Sans',sans-serif}
+  .option:hover:not(.locked){background:#f0f4ff;border-color:#c7d7ff}
+  .option.selected{background:var(--sel-bg,#f0f4ff);border-color:var(--sel-border,#c7d7ff);color:var(--sel-color,#3366ff)}
+  .option.correct{background:#e8f5e9!important;border-color:#4caf50!important;color:#2e7d32!important}
+  .option.wrong{background:#ffebee!important;border-color:#ef5350!important;color:#c62828!important}
+  .opt-letter{font-weight:800;min-width:18px}
+  .opt-icon{margin-left:auto;flex-shrink:0}
+  .validate-btn{margin-top:12px;padding:8px 20px;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;color:#fff;transition:opacity .12s}
+  .validate-btn:hover{opacity:.88}
+  .feedback{margin-top:10px;font-size:12px;font-weight:600}
+  .justification{margin-top:8px;padding:12px 16px;border-radius:8px;font-size:12.5px;line-height:1.7;color:#37474f;border-left:3px solid}
+  .justification strong{display:block;margin-bottom:4px;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+
+  .bonus-section{padding:28px 32px;max-width:900px}
+  .bonus-title{font-size:20px;font-weight:800;margin-bottom:8px;color:var(--text)}
+  .bonus-subtitle{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6}
+  .db-table{width:100%;border-collapse:collapse;font-size:12.5px;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08)}
+  .db-table thead{background:linear-gradient(135deg,var(--navy) 0%,var(--navy3) 100%)}
+  .db-table th{padding:12px 14px;color:#fff;text-align:left;font-weight:700;font-size:11.5px;text-transform:uppercase;letter-spacing:.5px}
+  .db-table td{padding:10px 14px;border-bottom:1px solid #f0f0f0;vertical-align:top;line-height:1.5}
+  .db-table tbody tr:hover{background:#f8faff}
+  .tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;margin:1px 2px}
+  .tag-rel{background:#e3f2fd;color:#1565c0}
+  .tag-nosql{background:#fff3e0;color:#e65100}
+  .tag-cache{background:#e8f5e9;color:#2e7d32}
+  .tag-dw{background:#fce4ec;color:#c62828}
+
+  section.panel{display:none}
+  section.panel.active{display:block}
+
+  @media(max-width:640px){
+    .layout{flex-direction:column;height:auto}
+    aside{width:100%;height:180px;border-right:none;border-bottom:1px solid var(--border);display:flex;flex-direction:row;overflow-x:auto;overflow-y:hidden}
+    .lesson-item{min-width:160px;flex-direction:column;align-items:flex-start;border-left:none;border-bottom:3px solid transparent}
+    .lesson-item.active{border-bottom-color:var(--acc)}
+    .content{padding:18px 16px}
+    .bonus-section{padding:18px 16px}
+    .db-table{font-size:11px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <div class="logo">&#9729;</div>
+    <div>
+      <div class="header-title">Plateforme de Revision AWS - Partie 2</div>
+      <div class="header-sub">10 lecons &middot; Concepts &middot; Points Cles Enrichis &middot; 10 QCM/lecon avec Justifications</div>
+      <div class="header-author">Modou NDIAYE</div>
+    </div>
+  </div>
+  <input id="search" type="text" placeholder="&#128269;  Rechercher une lecon..." oninput="filterLessons(this.value)"/>
+</header>
+
+<div class="layout">
+  <aside id="sidebar"></aside>
+  <main id="main">
+    <div class="welcome" id="welcome">
+      <div class="welcome-emoji">&#9729;&#65039;</div>
+      <h2>Selectionnez une lecon</h2>
+      <p>Choisissez un module dans le menu de gauche pour acceder aux concepts, points cles enrichis et 10 QCM avec justifications detaillees par lecon.</p>
+      <div class="chips" id="chips"></div>
+    </div>
+    <div class="content" id="content" style="display:none"></div>
+    <div class="bonus-section" id="bonus" style="display:none"></div>
+  </main>
+</div>
+
+<script>
+const lessons = [
+  {
+    id:1, title:"Elastic Load Balancing", icon:"⚖️", color:"#FF9900",
+    concepts:[
+      "L'Elastic Load Balancing (ELB) distribue automatiquement le trafic entrant entre plusieurs cibles (EC2, conteneurs, IP) dans une ou plusieurs zones de disponibilite. Il agit comme un point d'entree unique pour les clients.",
+      "Il existe 3 types de load balancers : Application Load Balancer (ALB, couche 7 HTTP/HTTPS avec routage avance), Network Load Balancer (NLB, couche 4 TCP/UDP pour performances ultra-elevees), et Gateway Load Balancer (GWLB, pour les appliances virtuelles de securite).",
+      "Un ecouteur (listener) verifie les demandes de connexion selon un protocole et un port configures. Chaque ecouteur possede des regles qui determinent comment le trafic est achemine vers des groupes cibles (target groups).",
+      "Les health checks permettent au load balancer de detecter les instances defaillantes et de les retirer du pool de distribution automatiquement.",
+      "ELB est hautement disponible par nature : il deploie des noeuds dans plusieurs AZ, s'integre avec Auto Scaling et offre un certificat SSL/TLS gratuit via ACM."
+    ],
+    keyPoints:[
+      {text:"ALB = HTTP/HTTPS (couche 7) - ideal pour les applications web", detail:"Routage base sur l'URL, l'en-tete host, les parametres. Supporte WebSocket, HTTP/2, et l'authentification integree (OIDC, Cognito)."},
+      {text:"NLB = TCP/UDP (couche 4) - performances extremes", detail:"Millions de requetes/seconde, latence <1ms. IP statique par AZ et preserve l'adresse IP source du client."},
+      {text:"Ecouteur -> regles -> groupe cible -> instances", detail:"L'ecouteur recoit, les regles evaluent les conditions, le trafic est route au target group qui distribue aux instances saines."},
+      {text:"Health checks = detection automatique des pannes", detail:"Configurable : protocole, port, chemin, seuils de succes/echec, intervalle."},
+      {text:"ELB + Auto Scaling = haute disponibilite et elasticite", detail:"ELB distribue le trafic, Auto Scaling ajuste le nombre d'instances."},
+      {text:"Cross-Zone Load Balancing : distribution equitable entre AZ", detail:"Repartit equitablement le trafic entre toutes les instances de toutes les AZ."}
+    ],
+    quiz:[
+      {q:"Quel type de Load Balancer opere au niveau de la couche applicative (HTTP/HTTPS) ?",opts:["Network Load Balancer","Application Load Balancer","Gateway Load Balancer","Classic Load Balancer"],a:1,
+       justification:"L'ALB opere a la couche 7 (application) du modele OSI, ce qui lui permet d'inspecter le contenu HTTP/HTTPS et de router selon l'URL, les en-tetes ou les methodes. Le NLB fonctionne en couche 4 (transport)."},
+      {q:"Qu'est-ce qu'un ecouteur (listener) dans ELB ?",opts:["Un service de surveillance des couts","Un processus qui verifie les connexions entrantes selon protocole et port","Un groupe d'instances EC2","Un systeme de journalisation"],a:1,
+       justification:"Un listener est le composant d'ELB qui ecoute sur un port et protocole specifiques (ex: HTTPS port 443). Il evalue les regles pour determiner vers quel target group router chaque requete."},
+      {q:"A quoi servent les health checks dans ELB ?",opts:["A mesurer la latence reseau","A chiffrer le trafic","A detecter les instances defaillantes et arreter de leur envoyer du trafic","A equilibrer les couts"],a:2,
+       justification:"Les health checks envoient des requetes periodiques aux instances. Si une instance ne repond pas correctement, ELB la marque 'unhealthy' et cesse de lui envoyer du trafic."},
+      {q:"Quel Load Balancer est le plus adapte pour des performances ultra-elevees sur TCP/UDP ?",opts:["ALB","GWLB","NLB","ELB Classic"],a:2,
+       justification:"Le NLB est optimise pour la couche 4. Il gere des millions de requetes/seconde avec une latence <1ms, ideal pour gaming, IoT, streaming."},
+      {q:"ELB peut distribuer le trafic sur combien de zones de disponibilite ?",opts:["Une seule","Exactement deux","Une ou plusieurs","Maximum trois"],a:2,
+       justification:"ELB fonctionne sur une ou plusieurs AZ dans une region. Pas de limite a 2 ou 3, on peut activer toutes les AZ disponibles (3 a 6 selon la region)."},
+      {q:"Quel est le role du Gateway Load Balancer (GWLB) ?",opts:["Accelerer les requetes HTTP","Gerer les appliances virtuelles de securite tierces","Remplacer Route 53","Stocker des logs"],a:1,
+       justification:"Le GWLB est concu pour deployer, dimensionner et gerer des appliances virtuelles tierces (firewalls, IDS/IPS, deep packet inspection). Il opere aux couches 3/4 et redirige le trafic de maniere transparente."},
+      {q:"Qu'est-ce que le Cross-Zone Load Balancing ?",opts:["La replication de donnees entre regions","La distribution equitable du trafic entre toutes les instances de toutes les AZ","Un mecanisme de failover DNS","La synchronisation des health checks"],a:1,
+       justification:"Sans Cross-Zone LB, le trafic est reparti equitablement entre les AZ (pas entre les instances). Avec, le trafic est distribue uniformement entre TOUTES les instances, meme si les AZ ont un nombre inegal d'instances."},
+      {q:"Quel service AWS fournit des certificats SSL/TLS gratuits pour ELB ?",opts:["AWS IAM","AWS Certificate Manager (ACM)","AWS Secrets Manager","AWS KMS"],a:1,
+       justification:"ACM (AWS Certificate Manager) fournit gratuitement des certificats SSL/TLS publics renouveles automatiquement. Ils s'integrent directement avec ELB, CloudFront et API Gateway pour le chiffrement HTTPS."},
+      {q:"Qu'est-ce qu'un Target Group dans ELB ?",opts:["Un ensemble d'utilisateurs IAM","Un groupe de regles de securite","Un ensemble de cibles (instances, IP, Lambda) recevant le trafic","Une collection de metriques CloudWatch"],a:2,
+       justification:"Un Target Group est un ensemble logique de cibles (instances EC2, adresses IP, fonctions Lambda, ou autres ALB) vers lesquelles ELB achemine le trafic. Chaque target group a ses propres health checks et parametres."},
+      {q:"Quelle fonctionnalite ALB permet de router selon le chemin URL (ex: /api vs /images) ?",opts:["IP-based routing","Path-based routing","Protocol routing","Port routing"],a:1,
+       justification:"Le path-based routing (routage par chemin) est une fonctionnalite de l'ALB qui permet de diriger /api/* vers un target group de serveurs backend et /images/* vers un autre. C'est possible car l'ALB inspecte le contenu HTTP (couche 7)."}
+    ]
+  },
+  {
+    id:2, title:"Amazon EC2 Auto Scaling", icon:"📈", color:"#E8431C",
+    concepts:[
+      "EC2 Auto Scaling ajoute ou supprime automatiquement des instances EC2 en fonction de la demande, assurant haute disponibilite et optimisation des couts.",
+      "Un groupe Auto Scaling definit : capacite minimale (min), souhaitee (desired) et maximale (max) d'instances.",
+      "Les politiques de mise a l'echelle : simple, par etapes (step), par suivi de cible (target tracking), ou planifiee (scheduled).",
+      "Les Launch Templates definissent le blueprint de l'instance : AMI, type, security groups, user data, roles IAM.",
+      "Auto Scaling remplace automatiquement les instances defaillantes pour maintenir la capacite souhaitee (self-healing)."
+    ],
+    keyPoints:[
+      {text:"Min / Desired / Max - les 3 parametres fondamentaux", detail:"Min = plancher garanti. Desired = cible actuelle. Max = plafond absolu. Exemple: Min=2, Desired=4, Max=10."},
+      {text:"Scale out = ajouter | Scale in = supprimer", detail:"Scale out repond aux pics. Scale in optimise les couts. Cooldown period evite les oscillations."},
+      {text:"Target Tracking = politique la plus simple et recommandee", detail:"Comme un thermostat : definir CPU 60% et Auto Scaling ajuste automatiquement."},
+      {text:"Launch Template = blueprint de l'instance", detail:"Supporte le versionnement, les instances mixtes (On-Demand + Spot), et les types multiples."},
+      {text:"Integration native avec ELB et CloudWatch", detail:"CloudWatch fournit les metriques, ELB les health checks, Auto Scaling ajuste la capacite."},
+      {text:"Predictive Scaling : anticipe les pics via ML", detail:"Analyse les patterns historiques pour pre-provisionner avant le pic."}
+    ],
+    quiz:[
+      {q:"Que signifie 'scale out' dans Auto Scaling ?",opts:["Supprimer des instances","Ajouter des instances","Arreter le groupe","Modifier le type d'instance"],a:1,
+       justification:"Scale OUT = ajouter des instances horizontalement pour absorber plus de charge. Scale IN = retirer des instances. Ne pas confondre avec Scale UP (augmenter la taille d'une instance = scaling vertical)."},
+      {q:"Qu'est-ce que la capacite 'desired' dans un groupe Auto Scaling ?",opts:["Le nombre maximum d'instances autorisees","Le nombre minimum d'instances actives","Le nombre d'instances que le groupe cherche a maintenir","Le nombre d'instances en cours de demarrage"],a:2,
+       justification:"'Desired capacity' = nombre d'instances qu'Auto Scaling cherche a maintenir. Si une tombe, il en lance une nouvelle pour revenir au desired. Les politiques de scaling modifient cette valeur entre min et max."},
+      {q:"Quelle politique maintient automatiquement une metrique a une valeur cible (ex: CPU 60%) ?",opts:["Step Scaling","Scheduled Scaling","Target Tracking","Simple Scaling"],a:2,
+       justification:"Target Tracking fonctionne comme un thermostat. Step Scaling necessite des seuils manuels, Scheduled est base sur l'heure, et Simple Scaling ne repond qu'a une seule alarme."},
+      {q:"Que contient un Launch Template ?",opts:["Les regles de facturation AWS","La configuration de l'instance (AMI, type, securite...)","Les politiques IAM du compte","Les regles de routage reseau"],a:1,
+       justification:"Un Launch Template specifie l'AMI, le type d'instance, les security groups, la key pair, le user data, le profil IAM, et les volumes EBS. C'est le blueprint utilise pour lancer chaque nouvelle instance."},
+      {q:"Que fait Auto Scaling si une instance EC2 devient defaillante ?",opts:["Il envoie juste une alerte email","Il arrete tout le groupe","Il la remplace automatiquement","Il reduit la capacite desiree"],a:2,
+       justification:"Auto Scaling detecte les instances defaillantes, les termine, puis en lance de nouvelles pour maintenir la desired capacity. Ce self-healing garantit la stabilite sans intervention humaine."},
+      {q:"Avec quel service Auto Scaling s'integre-t-il pour detecter les instances defaillantes ?",opts:["Amazon S3","Elastic Load Balancing","Amazon RDS","AWS IAM"],a:1,
+       justification:"ELB effectue des health checks sur les instances. Quand une echoue, Auto Scaling peut la remplacer. Cette integration ELB + Auto Scaling est le pattern de base pour la haute disponibilite."},
+      {q:"Qu'est-ce que le 'cooldown period' dans Auto Scaling ?",opts:["Le temps de demarrage d'une instance","Une periode ou Auto Scaling n'effectue pas de nouveau scaling","Le delai avant suppression d'une instance","Le temps de propagation DNS"],a:1,
+       justification:"Le cooldown period (defaut 300s) empeche Auto Scaling d'effectuer des actions de scaling supplementaires avant que les instances precedemment lancees soient operationnelles et les metriques stabilisees. Cela evite les oscillations."},
+      {q:"Quelle est la difference entre un Launch Template et un Launch Configuration ?",opts:["Ils sont identiques","Le Launch Template supporte le versionnement et les instances mixtes, pas la Launch Configuration","La Launch Configuration est plus recente","Le Launch Template ne supporte pas les Spot instances"],a:1,
+       justification:"Le Launch Template est la version moderne et recommandee. Il supporte le versionnement, les instances mixtes (On-Demand + Spot), les types multiples, et les configurations reseau avancees. La Launch Configuration est deprecie et ne supporte qu'un seul type."},
+      {q:"Quel type de scaling permet de planifier une augmentation de capacite a une heure precise ?",opts:["Target Tracking","Step Scaling","Scheduled Scaling","Predictive Scaling"],a:2,
+       justification:"Scheduled Scaling permet de definir des actions planifiees (ex: augmenter a 10 instances tous les lundis a 8h). Ideal pour les charges previsibles. Predictive Scaling utilise le ML pour anticiper, Target Tracking est reactif."},
+      {q:"Auto Scaling peut-il fonctionner sur plusieurs zones de disponibilite ?",opts:["Non, une seule AZ par groupe","Oui, et il repartit les instances equitablement entre les AZ","Oui, mais uniquement avec un NLB","Seulement dans 2 AZ maximum"],a:1,
+       justification:"Auto Scaling repartit les instances equitablement entre les AZ configurees pour le groupe. Si une AZ tombe, il relance les instances dans les AZ restantes. C'est essentiel pour la haute disponibilite multi-AZ."}
+    ]
+  },
+  {
+    id:3, title:"Amazon Route 53", icon:"🌐", color:"#8C4FFF",
+    concepts:[
+      "Route 53 est le service DNS d'AWS, hautement disponible (100% SLA). Le nom '53' fait reference au port TCP/UDP du protocole DNS.",
+      "Politiques de routage : simple, pondere, latence, geolocalisation, basculement (failover), et multi-valeurs.",
+      "Le failover routing bascule automatiquement vers une ressource secondaire si la primaire echoue au health check.",
+      "Les health checks surveillent la disponibilite des endpoints (HTTP, HTTPS, TCP) et peuvent declencher des basculements.",
+      "Route 53 gere des domaines publics et prives (VPC), permet l'enregistrement de domaines et supporte DNSSEC."
+    ],
+    keyPoints:[
+      {text:"DNS + Enregistrement + Health checks = 3 fonctions principales", detail:"Resolution DNS, registrar (achat de domaines), et monitoring de sante des endpoints."},
+      {text:"Failover routing = redirection automatique en cas de panne", detail:"Primaire + secondaire. Si le health check du primaire echoue, basculement automatique. RTO ~60s (TTL)."},
+      {text:"Latency routing = region AWS la plus rapide", detail:"Route 53 mesure la latence et retourne l'IP de la region offrant le meilleur temps de reponse."},
+      {text:"Weighted routing = repartition % du trafic", detail:"Distribuer le trafic selon des poids (ex: 70%/30%). Utile pour blue/green et tests A/B."},
+      {text:"TTL = duree de mise en cache DNS", detail:"Court (60s) = basculement rapide mais plus de requetes. Long (86400s) = moins de charge mais changements lents."},
+      {text:"Alias Record : specifique AWS, gratuit, apex domain", detail:"Pointe vers des ressources AWS (ELB, CloudFront, S3) sans cout. Fonctionne au sommet de zone contrairement au CNAME."}
+    ],
+    quiz:[
+      {q:"Que signifie DNS ?",opts:["Dynamic Network Service","Domain Name System","Distributed Node Security","Data Network Scaling"],a:1,
+       justification:"DNS = Domain Name System. Il traduit les noms de domaine (www.example.com) en adresses IP (93.184.216.34). C'est l'annuaire d'Internet."},
+      {q:"Quelle politique Route 53 redirige le trafic vers une ressource secondaire en cas de panne ?",opts:["Weighted Routing","Latency Routing","Failover Routing","Geolocation Routing"],a:2,
+       justification:"Failover Routing utilise des health checks pour surveiller la ressource primaire et redirige automatiquement vers la secondaire si la primaire tombe. C'est un pattern actif/passif."},
+      {q:"A quoi servent les health checks dans Route 53 ?",opts:["A chiffrer les donnees DNS","A surveiller la disponibilite des ressources et rediriger si necessaire","A mesurer le cout des requetes","A authentifier les utilisateurs"],a:1,
+       justification:"Les health checks envoient des requetes periodiques aux endpoints. Si un endpoint ne repond pas, Route 53 le retire des reponses DNS et redirige le trafic vers les ressources saines."},
+      {q:"Quelle politique dirige les utilisateurs vers la region offrant la meilleure latence ?",opts:["Simple Routing","Geolocation Routing","Weighted Routing","Latency Routing"],a:3,
+       justification:"Latency-Based Routing mesure la latence entre l'utilisateur et chaque region AWS, puis retourne l'IP de la region la plus rapide. Geolocation route par pays/continent, pas par performance."},
+      {q:"Que signifie TTL dans le contexte DNS ?",opts:["Time To Load","Transfer Traffic Limit","Time To Live - duree de mise en cache DNS","Total Traffic Level"],a:2,
+       justification:"TTL (Time To Live) indique en secondes combien de temps un resolveur DNS peut mettre en cache un enregistrement avant de re-interroger le serveur autoritaire."},
+      {q:"Pourquoi le service s'appelle-t-il Route '53' ?",opts:["Il a ete le 53e service AWS lance","Le port standard du protocole DNS est 53","Il supporte 53 types d'enregistrements","Il est disponible dans 53 regions"],a:1,
+       justification:"Le nom Route 53 fait reference au port 53, qui est le port standard utilise par le protocole DNS pour les communications TCP et UDP. C'est un clin d'oeil technique au protocole qu'il implemente."},
+      {q:"Qu'est-ce qu'un Alias Record dans Route 53 ?",opts:["Un CNAME classique","Un type d'enregistrement specifique AWS pointant vers des ressources AWS","Un enregistrement MX pour les emails","Un record de delegation"],a:1,
+       justification:"L'Alias Record est une extension DNS proprietaire AWS. Contrairement au CNAME, il est gratuit, fonctionne au sommet de zone (apex), et pointe nativement vers des services AWS (ELB, CloudFront, S3, etc.)."},
+      {q:"Quelle politique de routage permet de distribuer 70% du trafic vers un serveur et 30% vers un autre ?",opts:["Simple Routing","Failover Routing","Weighted Routing","Latency Routing"],a:2,
+       justification:"Weighted Routing distribue le trafic selon des poids numeriques. Avec des poids de 70 et 30, 70% du trafic ira vers la premiere ressource et 30% vers la seconde. Ideal pour les migrations progressives et tests A/B."},
+      {q:"Route 53 peut-il gerer des domaines prives accessibles uniquement dans un VPC ?",opts:["Non, uniquement des domaines publics","Oui, via les Private Hosted Zones","Oui, mais uniquement avec CloudFront","Non, il faut utiliser un serveur DNS interne"],a:1,
+       justification:"Les Private Hosted Zones de Route 53 permettent de resoudre des noms DNS uniquement au sein d'un ou plusieurs VPC (ex: db.internal.company -> IP privee). C'est invisible depuis Internet."},
+      {q:"Quel type d'enregistrement DNS ne peut PAS etre cree au sommet de zone (apex) ?",opts:["A Record","Alias Record","CNAME Record","AAAA Record"],a:2,
+       justification:"Le CNAME ne peut pas etre utilise au sommet de zone (ex: example.com) selon la norme DNS RFC. Seuls les enregistrements A, AAAA, et Alias (specifique AWS) fonctionnent a l'apex. C'est pourquoi AWS a cree l'Alias Record."}
+    ]
+  },
+  {
+    id:4, title:"Amazon CloudFront", icon:"⚡", color:"#1A9C3E",
+    concepts:[
+      "CloudFront est le CDN d'AWS avec plus de 450 edge locations dans le monde, rapprochant le contenu des utilisateurs pour reduire la latence.",
+      "Il met en cache le contenu statique et accelere le contenu dynamique via des connexions optimisees vers l'origine.",
+      "CloudFront s'integre avec S3, EC2, ELB, API Gateway. L'Origin Access Control (OAC) securise l'acces entre CloudFront et S3.",
+      "Protection DDoS native via AWS Shield Standard (gratuit), combinable avec WAF pour filtrer les requetes malveillantes.",
+      "Supporte les domaines personnalises, SSL/TLS via ACM, geo-restriction, Lambda@Edge et CloudFront Functions."
+    ],
+    keyPoints:[
+      {text:"Edge Location = point de presence mondial pour le cache", detail:"450+ PoPs dans 90+ villes. Contenu servi depuis l'edge la plus proche, reduisant la latence de 60-80%."},
+      {text:"Origin = source d'origine du contenu", detail:"Serveur maitre du contenu (S3, EC2, ELB). Acces uniquement lors d'un cache miss. Origin Groups pour le failover."},
+      {text:"Cache = reduit latence et couts", detail:"Cache-Control et TTL determinent la duree. Cache Hit Ratio optimal > 90%. Invalidation pour forcer le rafraichissement."},
+      {text:"AWS Shield = protection DDoS automatique", detail:"Shield Standard gratuit (couches 3/4). Shield Advanced payant (couche 7 + support 24/7)."},
+      {text:"HTTPS natif via ACM", detail:"Certificats SSL/TLS gratuits, renouveles automatiquement. TLS 1.3 supporte."},
+      {text:"Lambda@Edge et CloudFront Functions : logique au edge", detail:"CF Functions : JavaScript, <1ms. Lambda@Edge : Node.js/Python, plus puissant."}
+    ],
+    quiz:[
+      {q:"Qu'est-ce qu'un CDN ?",opts:["Un service de base de donnees distribuee","Un reseau de distribution de contenu qui reduit la latence","Un service de conteneurs","Un systeme de sauvegarde cloud"],a:1,
+       justification:"CDN = Content Delivery Network. Reseau de serveurs geographiquement distribues mettant en cache le contenu au plus pres des utilisateurs, reduisant la latence et la charge sur l'origine."},
+      {q:"Qu'est-ce qu'une 'edge location' dans CloudFront ?",opts:["Une zone de disponibilite AWS","Un point de presence mondial qui met en cache le contenu","Un serveur de base de donnees","Une region AWS"],a:1,
+       justification:"Une edge location est un PoP du reseau CloudFront, distinct des regions et AZ. Plus de 450 dans le monde pour maximiser la proximite avec les utilisateurs. Son role : mettre en cache et servir du contenu."},
+      {q:"Quel service offre une protection DDoS integree a CloudFront ?",opts:["AWS IAM","AWS Shield","Amazon GuardDuty","AWS Config"],a:1,
+       justification:"AWS Shield Standard est automatiquement integre a CloudFront sans cout. Il protege contre les attaques DDoS volumetriques (couches 3/4). GuardDuty detecte mais ne bloque pas."},
+      {q:"Quel type de contenu CloudFront met-il principalement en cache ?",opts:["Uniquement les bases de donnees","Uniquement le contenu dynamique","Le contenu statique (images, videos, JS, CSS)","Uniquement les emails"],a:2,
+       justification:"CloudFront excelle pour le contenu statique (images, videos, JS, CSS) car il ne change pas entre les requetes. Le contenu dynamique est accelere via des connexions optimisees mais generalement pas mis en cache."},
+      {q:"Comment CloudFront utilise-t-il HTTPS avec un domaine personnalise ?",opts:["Via Amazon Cognito","Via AWS Certificate Manager (ACM)","Via AWS IAM","Ce n'est pas possible"],a:1,
+       justification:"ACM fournit gratuitement des certificats SSL/TLS publics pour CloudFront. Le certificat doit etre cree dans us-east-1. Cognito gere l'authentification utilisateur, pas les certificats."},
+      {q:"Qu'est-ce que l'Origin Access Control (OAC) ?",opts:["Un mecanisme de failover entre origines","Un controle qui empeche l'acces direct au bucket S3 en passant obligatoirement par CloudFront","Un systeme de cache avance","Un outil de monitoring"],a:1,
+       justification:"OAC remplace l'ancien OAI (Origin Access Identity). Il permet de restreindre l'acces au bucket S3 pour que seul CloudFront puisse y acceder, empechant les utilisateurs de contourner le CDN en accedant directement a l'URL S3."},
+      {q:"Qu'est-ce qu'une invalidation CloudFront ?",opts:["La suppression d'une distribution","Le forcage de la suppression du cache pour rafraichir le contenu","La revocation d'un certificat SSL","La desactivation d'une edge location"],a:1,
+       justification:"L'invalidation force CloudFront a supprimer le contenu mis en cache aux edge locations avant l'expiration du TTL. Utile apres un deploiement pour servir immediatement la nouvelle version. Cout : premieres 1000 invalidations gratuites/mois."},
+      {q:"Quelle est la difference entre CloudFront Functions et Lambda@Edge ?",opts:["Ils sont identiques","CF Functions = leger/rapide (JS, <1ms), Lambda@Edge = plus puissant (Node.js/Python, jusqu'a 30s)","Lambda@Edge est gratuit, pas CF Functions","CF Functions fonctionne uniquement avec S3"],a:1,
+       justification:"CloudFront Functions sont ultra-legeres (JavaScript pur, <1ms, 2Mo de memoire) pour les manipulations simples (en-tetes, redirections). Lambda@Edge est plus puissant (Node.js/Python, 128-10240Mo, jusqu'a 30s) pour la personnalisation complexe, l'authentification, etc."},
+      {q:"Qu'est-ce qu'un Origin Group dans CloudFront ?",opts:["Un ensemble de buckets S3 dans la meme region","Un groupe d'origines avec failover automatique si l'origine primaire echoue","Un groupe de securite pour les edge locations","Un ensemble d'utilisateurs autorises"],a:1,
+       justification:"Un Origin Group configure un failover automatique entre une origine primaire et une secondaire. Si l'origine primaire retourne une erreur (ex: 5xx), CloudFront bascule automatiquement sur l'origine secondaire sans impact utilisateur."},
+      {q:"Dans quelle region doit etre cree un certificat ACM pour l'utiliser avec CloudFront ?",opts:["La region la plus proche de l'utilisateur","us-east-1 (N. Virginia)","eu-west-1 (Ireland)","N'importe quelle region"],a:1,
+       justification:"Les certificats ACM pour CloudFront DOIVENT etre crees dans us-east-1 (N. Virginia). C'est une contrainte technique car CloudFront est un service global qui utilise cette region comme point de reference pour les certificats SSL/TLS."}
+    ]
+  },
+  {
+    id:5, title:"AWS Lambda", icon:"λ", color:"#FF6B35",
+    concepts:[
+      "AWS Lambda execute du code en reponse a des evenements sans gerer de serveurs. AWS gere le provisionnement, le scaling, la HA et la maintenance.",
+      "Facturation au temps d'execution reel (milliseconde) + nombre de requetes. Free tier : 1M requetes + 400K Go-secondes/mois.",
+      "Declencheurs : S3, DynamoDB, API Gateway, SNS, SQS, CloudWatch Events, Kinesis, et 200+ sources.",
+      "Timeout max 15 minutes. Memoire : 128 Mo a 10 Go (CPU proportionnel). Ideale pour taches courtes et evenementielles.",
+      "Langages : Python, Node.js, Java, Go, Ruby, .NET. Runtimes personnalises via Lambda Layers."
+    ],
+    keyPoints:[
+      {text:"Serverless = 0 serveur a gerer", detail:"Pas de provisionnement, pas de patches, pas de scaling manuel. HA automatique multi-AZ."},
+      {text:"Paiement a l'utilisation : duree (ms) + requetes", detail:"$0.20/million requetes + $0.0000166667/Go-seconde. Zero cout quand inactif."},
+      {text:"Triggers = evenements qui lancent la fonction", detail:"200+ sources. Synchrone (API Gateway), asynchrone (S3/SNS), event source mapping (SQS/Kinesis)."},
+      {text:"Timeout max = 15 minutes", detail:"Au-dela : Step Functions, AWS Batch, ou ECS/Fargate."},
+      {text:"Integration native avec presque tous les services AWS", detail:"Lambda est le ciment de l'architecture serverless. Pattern : API GW -> Lambda -> DynamoDB."},
+      {text:"Cold Start : latence au premier appel", detail:"Provisioned Concurrency elimine les cold starts. Python/Node.js = rapide, Java/.NET = plus lent."}
+    ],
+    quiz:[
+      {q:"Que signifie 'serverless' pour AWS Lambda ?",opts:["Il n'y a aucun serveur physique","L'utilisateur n'a pas a gerer ou provisionner de serveurs","Le code s'execute localement","Lambda n'utilise pas de reseau"],a:1,
+       justification:"Serverless ne signifie PAS 'sans serveur'. Des serveurs existent dans AWS. Cela signifie que l'utilisateur n'a pas a s'en occuper : pas de provisionnement, maintenance OS, ou scaling manuel."},
+      {q:"Quelle est la duree maximale d'execution d'une fonction Lambda ?",opts:["5 minutes","1 heure","15 minutes","30 minutes"],a:2,
+       justification:"Limite de 15 minutes (900 secondes). Pour les traitements plus longs : Step Functions (orchestration), AWS Batch (compute long), ou ECS/Fargate (conteneurs)."},
+      {q:"Sur quelle base est facture AWS Lambda ?",opts:["Par heure meme inactive","Par instance EC2 associee","Par duree d'execution (ms) et nombre de requetes","Par Mo de stockage"],a:2,
+       justification:"Deux dimensions : nombre de requetes ($0.20/million) + Go-secondes (memoire x temps). Facturation a la milliseconde. Zero cout quand non invoquee = avantage economique majeur du serverless."},
+      {q:"Quel service peut declencher une fonction Lambda ?",opts:["Uniquement API Gateway","Uniquement S3","De nombreux services : S3, DynamoDB, API Gateway, SNS, etc.","Uniquement CloudWatch"],a:2,
+       justification:"Lambda a 200+ sources d'evenements : S3, API Gateway, DynamoDB Streams, SQS, SNS, CloudWatch Events, Kinesis, Cognito, IoT Core, etc. C'est le service le plus interconnecte d'AWS."},
+      {q:"Lequel de ces langages est supporte nativement par Lambda ?",opts:["COBOL","Pascal","Python","Fortran"],a:2,
+       justification:"Lambda supporte nativement : Python, Node.js, Java, Go, Ruby, .NET (C#/PowerShell). Python est parmi les plus populaires pour son cold start rapide et son ecosysteme riche."},
+      {q:"Qu'est-ce qu'un 'cold start' dans Lambda ?",opts:["Une erreur de timeout","La latence supplementaire lors de la premiere invocation d'une fonction","Un probleme de memoire insuffisante","Un bug du code deploye"],a:1,
+       justification:"Cold start = temps d'initialisation du conteneur d'execution lors de la premiere invocation (ou apres inactivite). Inclut : telechargement du code, demarrage du runtime, initialisation. Dure 100ms a 10s selon le langage et la taille du package."},
+      {q:"Comment eliminer les cold starts dans Lambda ?",opts:["En augmentant la memoire","En utilisant Provisioned Concurrency","En reduisant le timeout","En utilisant un VPC"],a:1,
+       justification:"Provisioned Concurrency maintient un nombre defini d'instances Lambda pre-chauffees (initialisees). Elles sont pretes a repondre instantanement sans cold start. Cout supplementaire, mais essentiel pour les applications sensibles a la latence."},
+      {q:"Quelle est la memoire maximale configurable pour une fonction Lambda ?",opts:["512 Mo","3 Go","10 Go","16 Go"],a:2,
+       justification:"Lambda supporte de 128 Mo a 10 240 Mo (10 Go) de memoire. Le CPU est alloue proportionnellement (a 1769 Mo = 1 vCPU complet). Plus de memoire = plus de CPU = execution plus rapide, mais cout plus eleve par milliseconde."},
+      {q:"Qu'est-ce qu'une Lambda Layer ?",opts:["Une couche de securite reseau","Un package de code/librairies partage entre plusieurs fonctions","Un type de trigger","Un mecanisme de logging"],a:1,
+       justification:"Les Lambda Layers sont des archives ZIP contenant du code supplementaire (librairies, runtimes, dependances) montees dans /opt au demarrage. Elles permettent de partager du code entre fonctions sans le dupliquer dans chaque package de deploiement."},
+      {q:"Quel est l'avantage de deployer Lambda dans un VPC ?",opts:["Meilleures performances","Acces aux ressources privees (RDS, ElastiCache) du VPC","Reduction des cold starts","Cout reduit"],a:1,
+       justification:"Deployer Lambda dans un VPC lui permet d'acceder aux ressources privees (RDS, ElastiCache, endpoints prives). Sans VPC, Lambda ne peut acceder qu'aux services publics. Note : cela ajoutait des cold starts, mais AWS a resolu ce probleme avec les Hyperplane ENIs."}
+    ]
+  },
+  {
+    id:6, title:"Amazon API Gateway", icon:"🔗", color:"#0073BB",
+    concepts:[
+      "API Gateway permet de creer, publier, maintenir, surveiller et securiser des API REST, HTTP et WebSocket a n'importe quelle echelle.",
+      "Porte d'entree unique pour acceder aux backends (Lambda, EC2, services AWS, endpoints HTTP).",
+      "Gere le throttling, l'autorisation (IAM, Cognito, Lambda Authorizers), la mise en cache, la surveillance et le versionnement.",
+      "Integration native avec Lambda pour des backends serverless complets.",
+      "API publiques ou privees (VPC endpoints). Supporte OAuth 2.0, JWT, IAM pour l'autorisation."
+    ],
+    keyPoints:[
+      {text:"Porte d'entree unique pour toutes les API", detail:"Centralise authentification, rate limiting, CORS, monitoring. Pattern standard des architectures microservices."},
+      {text:"3 types : REST, HTTP (moins cher), WebSocket", detail:"REST = complet. HTTP = 70% moins cher, ideal pour Lambda. WebSocket = bidirectionnel temps reel."},
+      {text:"Throttling = limitation des requetes/seconde", detail:"10K req/s par compte, 5K/methode. Protege les backends. Retourne HTTP 429 quand depasse."},
+      {text:"API Gateway + Lambda = serverless classique", detail:"Client -> API GW (routing, auth) -> Lambda (logique) -> DynamoDB (stockage). Zero infra."},
+      {text:"Stages = environnements de deploiement", detail:"Chaque stage a sa propre URL et config. Canary deployments et rollback instantane."},
+      {text:"Usage Plans + API Keys pour le controle d'acces", detail:"Quotas et throttling par client. Ideal pour monetiser une API (free/pro/enterprise)."}
+    ],
+    quiz:[
+      {q:"Quel est le role principal d'Amazon API Gateway ?",opts:["Stocker des fichiers statiques","Creer et gerer des API pour acceder aux backends","Gerer des bases de donnees","Configurer des reseaux VPC"],a:1,
+       justification:"API Gateway est dedie a la creation et gestion d'API. Il expose des endpoints que les clients utilisent pour acceder aux services backend. Il ne stocke rien (S3), ne gere pas de BDD (RDS), ni de reseau (VPC)."},
+      {q:"Qu'est-ce que le 'throttling' dans API Gateway ?",opts:["Le chiffrement des donnees","La limitation du nombre de requetes par seconde","La mise en cache des reponses","La surveillance des logs"],a:1,
+       justification:"Le throttling plafonne les requetes acceptees par seconde. Au-dela, HTTP 429 est retourne. Cela protege les backends contre les surcharges ou les abus."},
+      {q:"Quelle combinaison represente une architecture serverless classique ?",opts:["EC2 + RDS","S3 + CloudFront","API Gateway + Lambda","ELB + Auto Scaling"],a:2,
+       justification:"API Gateway + Lambda = pattern serverless de reference. API GW recoit les requetes HTTP et declenche Lambda. Aucun serveur a gerer. EC2+RDS et ELB+Auto Scaling necessitent des serveurs."},
+      {q:"Quels types d'API supporte API Gateway ?",opts:["Uniquement REST","REST, HTTP et WebSocket","Uniquement WebSocket","REST et GraphQL"],a:1,
+       justification:"3 types : REST API (complet), HTTP API (simplifie, moins cher), WebSocket API (bidirectionnel). GraphQL n'est PAS supporte nativement - il faut AWS AppSync pour ca."},
+      {q:"Que sont les 'stages' dans API Gateway ?",opts:["Des types de requetes HTTP","Des niveaux de securite","Des environnements de deploiement (dev, test, prod)","Des regions AWS"],a:2,
+       justification:"Les stages sont des environnements separes avec leur propre URL (/dev/users, /prod/users), variables de configuration, et parametres de caching/throttling. Permet de tester sans impacter la prod."},
+      {q:"Qu'est-ce qu'un Lambda Authorizer dans API Gateway ?",opts:["Un role IAM pour Lambda","Une fonction Lambda qui valide les tokens d'authentification avant de passer la requete au backend","Un mecanisme de logging","Un type de throttling"],a:1,
+       justification:"Un Lambda Authorizer (ex-Custom Authorizer) est une fonction Lambda invoquee par API Gateway pour valider le token du client (JWT, OAuth). Si valide, la requete est acheminee au backend. Sinon, HTTP 401/403 est retourne."},
+      {q:"Quelle est la difference entre REST API et HTTP API dans API Gateway ?",opts:["Ils sont identiques","HTTP API est 70% moins cher et plus rapide mais avec moins de fonctionnalites","REST API est deprecated","HTTP API ne supporte pas Lambda"],a:1,
+       justification:"HTTP API est plus recent, ~70% moins cher, latence reduite, mais sans certaines fonctionnalites : pas de caching, WAF natif, validation de requete avancee. REST API est plus complet. Choisir HTTP API si on n'a pas besoin de ces fonctionnalites avancees."},
+      {q:"Comment API Gateway peut-il mettre en cache les reponses ?",opts:["Via ElastiCache uniquement","En activant le caching integre sur un stage (REST API)","Via CloudFront uniquement","Ce n'est pas possible"],a:1,
+       justification:"REST API supporte un caching integre (basee sur API GW managed cache, 0.5 a 237 Go). Les reponses sont mises en cache selon la cle de requete, evitant d'appeler le backend a chaque fois. Reduit la latence et les couts Lambda. Non disponible sur HTTP API."},
+      {q:"Qu'est-ce qu'un canary deployment dans API Gateway ?",opts:["Un deploiement dans plusieurs regions","L'envoi d'un pourcentage du trafic vers une nouvelle version pour la tester","Un rollback automatique","Un type de monitoring"],a:1,
+       justification:"Le canary deployment route un petit pourcentage du trafic (ex: 10%) vers la nouvelle version du stage, le reste vers l'ancienne. Si les metriques sont bonnes, on promote a 100%. Si probleme, rollback instantane sans impact pour 90% des utilisateurs."},
+      {q:"Comment securiser une API privee accessible uniquement depuis un VPC ?",opts:["En utilisant uniquement des API Keys","En creant un endpoint prive (VPC Endpoint) avec une resource policy","En la deployant dans une region isolee","En desactivant HTTPS"],a:1,
+       justification:"Une API privee n'est accessible que via un VPC Interface Endpoint (powered by PrivateLink). La resource policy definit quels VPC/endpoints peuvent y acceder. Le trafic ne traverse jamais Internet public."}
+    ]
+  },
+  {
+    id:7, title:"AWS Step Functions", icon:"🔄", color:"#E91E8C",
+    concepts:[
+      "Step Functions orchestre plusieurs services AWS en workflows visuels appeles machines d'etat (state machines).",
+      "Utilise Amazon States Language (ASL) base sur JSON. Etapes : Task, Choice, Wait, Parallel, Map, Pass, Succeed, Fail.",
+      "Gestion d'erreurs integree : Retry (backoff exponentiel) et Catch (redirection vers un etat alternatif).",
+      "Standard Workflows (1 an max, exactly-once) vs Express Workflows (5 min max, haute frequence, at-least-once).",
+      "Integration directe avec 220+ services AWS via SDK integrations, sans Lambda intermediaire."
+    ],
+    keyPoints:[
+      {text:"Machine d'etat = workflow visuel compose d'etapes", detail:"Console AWS affiche le diagramme interactif en temps reel (vert/rouge/bleu). Facilite le debugging."},
+      {text:"Standard = 1 an max, exactly-once", detail:"Chaque etape executee une seule fois. Ideal pour processus critiques. ~$0.025/1000 transitions."},
+      {text:"Express = 5 min max, haute frequence", detail:"At-least-once, >100K executions/s. Pour IoT, streaming, transformations. Cout base sur la duree."},
+      {text:"Retry/Catch = gestion d'erreurs simplifiee", detail:"Retry avec backoff configurable. Catch redirige en cas d'echec definitif. Elimine 80% du code d'erreur."},
+      {text:"Visualisation graphique en temps reel", detail:"Input/output de chaque etat, duree, erreurs traces. Ideal pour debugger des workflows complexes."},
+      {text:"SDK Integrations = appel direct sans Lambda", detail:"Appeler DynamoDB, SQS, SNS directement. Reduit couts, latence et complexite."}
+    ],
+    quiz:[
+      {q:"Quel est l'objectif principal d'AWS Step Functions ?",opts:["Stocker des donnees","Orchestrer et coordonner plusieurs services AWS en workflows","Distribuer du contenu web","Gerer les utilisateurs IAM"],a:1,
+       justification:"Step Functions est un ORCHESTRATEUR qui coordonne l'execution de services AWS dans un ordre defini, avec conditions, paralleles et gestion d'erreurs. Il ne stocke pas de donnees, ne distribue pas de contenu, ne gere pas les identites."},
+      {q:"Quelle est la duree maximale d'un Standard Workflow ?",opts:["15 minutes","24 heures","1 an","30 jours"],a:2,
+       justification:"Standard Workflow peut durer jusqu'a 1 AN (365 jours). Adapte aux processus metier longs : approbations humaines, workflows de commande multi-etapes, conformite. Express Workflow est limite a 5 minutes."},
+      {q:"Quel type de workflow est adapte pour les executions haute frequence de courte duree ?",opts:["Standard Workflow","Long Workflow","Express Workflow","Batch Workflow"],a:2,
+       justification:"Express Workflow est optimise pour les executions courtes (<5 min) a tres haute frequence (>100K/s). Moins cher que Standard pour ce type de charge. 'Long Workflow' et 'Batch Workflow' n'existent pas dans Step Functions."},
+      {q:"Quel langage definit les workflows Step Functions ?",opts:["YAML uniquement","Amazon States Language (ASL) base sur JSON","Python","XML"],a:1,
+       justification:"ASL (Amazon States Language) est un langage declaratif JSON specifique a Step Functions. Il definit les etats, transitions, et regles d'erreur. Ce n'est ni du code executable ni du YAML/XML."},
+      {q:"Quelle fonctionnalite simplifie la gestion des erreurs ?",opts:["Les Lambda Layers","Les VPC endpoints","Les mecanismes Retry et Catch integres","Les CloudWatch Alarms"],a:2,
+       justification:"Retry re-execute un etat en echec (avec backoff exponentiel configurable). Catch redirige vers un etat alternatif si toutes les tentatives echouent. Natif dans ASL, elimine le code d'erreur complexe."},
+      {q:"Quelle est la semantique d'execution d'un Standard Workflow ?",opts:["At-most-once","At-least-once","Exactly-once","Best-effort"],a:2,
+       justification:"Standard Workflow garantit 'exactly-once' : chaque etape est executee exactement une fois, meme en cas de retry interne par le service. Express Workflow est 'at-least-once' (une etape peut etre rejouee). Crucial pour les operations financieres et les mutations de donnees."},
+      {q:"Qu'est-ce qu'un etat 'Choice' dans ASL ?",opts:["Un etat qui execute du code","Un etat conditionnel qui branche le workflow selon des conditions","Un etat qui attend un signal externe","Un etat terminal"],a:1,
+       justification:"L'etat Choice est l'equivalent d'un if/else dans ASL. Il evalue des conditions (comparaisons de variables) et dirige le flux vers differentes branches. Exemple : si montant > 1000 -> approbation manuelle, sinon -> approbation automatique."},
+      {q:"Qu'est-ce que l'etat 'Map' dans Step Functions ?",opts:["Un etat qui affiche une carte geographique","Un etat qui itere sur un tableau et execute des etapes pour chaque element","Un etat qui transforme les donnees en cle-valeur","Un etat de mapping reseau"],a:1,
+       justification:"L'etat Map est l'equivalent d'une boucle for-each. Il prend un tableau en input et execute un sous-workflow pour chaque element, potentiellement en parallele (concurrence configurable). Exemple : traiter chaque commande d'une liste."},
+      {q:"Qu'est-ce qu'une SDK Integration dans Step Functions ?",opts:["Un SDK a installer dans Lambda","Un appel direct a un service AWS sans passer par Lambda","Une librairie JavaScript","Un outil de monitoring"],a:1,
+       justification:"Les SDK Integrations permettent a Step Functions d'appeler directement les API AWS (DynamoDB PutItem, SQS SendMessage, etc.) sans fonction Lambda intermediaire. Reduit les couts, la latence, et la complexite du workflow."},
+      {q:"Step Functions peut-il executer des etapes en parallele ?",opts:["Non, uniquement sequentiel","Oui, via l'etat Parallel qui execute plusieurs branches simultanement","Uniquement avec Express Workflow","Uniquement avec Lambda"],a:1,
+       justification:"L'etat Parallel execute plusieurs branches de workflow simultanement et attend que toutes soient terminees avant de continuer. Ideal pour les traitements independants (ex: envoyer un email ET mettre a jour une BDD en meme temps)."}
+    ]
+  },
+  {
+    id:8, title:"Amazon Redshift", icon:"🔴", color:"#DC143C",
+    concepts:[
+      "Redshift est un data warehouse cloud pour l'analyse de grandes quantites de donnees (petaoctets). Optimise pour OLAP.",
+      "Stockage en colonnes (columnar) + architecture MPP (Massively Parallel Processing) pour des requetes analytiques ultra-rapides.",
+      "Redshift Spectrum interroge directement les donnees dans S3 sans les charger dans Redshift.",
+      "Compatible SQL (PostgreSQL 8.0.2). S'integre avec Tableau, Power BI, QuickSight via JDBC/ODBC.",
+      "Architecture : noeud leader (planification) + noeuds de calcul (execution parallele). Distribution : KEY, ALL, EVEN, AUTO."
+    ],
+    keyPoints:[
+      {text:"Data Warehouse != base transactionnelle -> ANALYSE (OLAP)", detail:"OLTP (RDS/Aurora) = transactions rapides. OLAP (Redshift) = analyses complexes, agregations sur millions de lignes."},
+      {text:"Columnar storage = lecture rapide pour l'analytique", detail:"Seules les colonnes necessaires sont lues. 'SELECT AVG(prix)' sur 100 colonnes = seule 'prix' est lue."},
+      {text:"MPP = traitement parallele massif", detail:"Requete decomposee et executee sur tous les noeuds simultanement. Plus de noeuds = plus rapide."},
+      {text:"Redshift Spectrum = requetes sur S3 sans ingestion", detail:"Joindre donnees Redshift (chaudes) avec S3 (froides) dans une seule requete SQL."},
+      {text:"Compatible SQL / PostgreSQL", detail:"Analystes et data engineers productifs immediatement. Window functions, CTE, vues materialisees supportes."},
+      {text:"Redshift Serverless : sans gestion de cluster", detail:"Pas de noeuds a dimensionner. Paiement a l'utilisation (RPU-heures). Ideal pour charges intermittentes."}
+    ],
+    quiz:[
+      {q:"Amazon Redshift est principalement concu pour :",opts:["Les transactions OLTP en temps reel","L'analyse de grandes quantites de donnees (OLAP)","Le stockage de fichiers multimedia","L'hebergement de sites web"],a:1,
+       justification:"Redshift est un data warehouse OLAP pour les requetes analytiques complexes sur des petaoctets. OLTP = RDS/Aurora. Stockage fichiers = S3. Hebergement web = EC2/Lambda."},
+      {q:"Que signifie MPP dans le contexte de Redshift ?",opts:["Multi-Protocol Processing","Massively Parallel Processing","Managed PostgreSQL Platform","Maximum Performance Policy"],a:1,
+       justification:"MPP = Massively Parallel Processing. Les donnees et calculs sont distribues sur plusieurs noeuds travaillant en parallele. C'est ce qui permet d'analyser des petaoctets en secondes."},
+      {q:"Quel avantage offre le stockage en colonnes ?",opts:["Meilleures insertions ligne par ligne","Lecture plus rapide pour les requetes analytiques ne ciblant que certaines colonnes","Meilleure compatibilite MongoDB","Reduction de la latence transactionnelle"],a:1,
+       justification:"Le stockage columnaire lit uniquement les colonnes necessaires. Pour une requete SUM sur 1 colonne d'une table de 100 colonnes = 99% d'I/O economise. Par contre, les insertions unitaires sont plus lentes (utiliser COPY en masse)."},
+      {q:"Que permet Redshift Spectrum ?",opts:["Chiffrer les donnees","Interroger directement des donnees dans S3 sans les charger dans Redshift","Connecter a des bases NoSQL","Creer des graphiques"],a:1,
+       justification:"Spectrum etend Redshift au data lake S3. On peut interroger des exaoctets dans S3 (Parquet, ORC, JSON, CSV) avec du SQL standard, sans ETL ni chargement. Les donnees restent dans S3 (couts faibles)."},
+      {q:"Avec quel langage Redshift est-il compatible ?",opts:["MongoDB Query Language","SQL / PostgreSQL","GraphQL","NoSQL"],a:1,
+       justification:"Redshift utilise SQL base sur PostgreSQL 8.0.2. Toute application compatible PostgreSQL (JDBC/ODBC) se connecte a Redshift. SQL est universel pour l'analyse de donnees."},
+      {q:"Quel est le role du noeud leader dans un cluster Redshift ?",opts:["Stocker les donnees","Recevoir les requetes SQL, planifier et coordonner l'execution sur les noeuds de calcul","Gerer la securite IAM","Sauvegarder les snapshots"],a:1,
+       justification:"Le noeud leader est le point d'entree du cluster. Il recoit les requetes SQL des clients, cree le plan d'execution optimal, distribue les sous-taches aux noeuds de calcul (compute nodes), et agrege les resultats finaux."},
+      {q:"Qu'est-ce que Redshift Serverless ?",opts:["Redshift deploye sur Lambda","Un data warehouse sans cluster a gerer, paiement a l'utilisation","Redshift gratuit","Un mode de backup automatique"],a:1,
+       justification:"Redshift Serverless elimine la gestion de cluster (pas de noeuds a dimensionner ou a gerer). AWS ajuste automatiquement la capacite. Paiement en RPU-heures (Redshift Processing Units). Ideal pour les equipes d'analyse ad-hoc et les charges intermittentes."},
+      {q:"Quelle commande est recommandee pour charger massivement des donnees dans Redshift ?",opts:["INSERT INTO ... VALUES","La commande COPY depuis S3","UPDATE en masse","LOAD DATA INFILE"],a:1,
+       justification:"COPY est la methode recommandee car elle charge en parallele depuis S3, exploitant le MPP. Les INSERT individuels sont tres lents sur un stockage columnaire. COPY peut charger des millions de lignes en secondes depuis S3, DynamoDB ou un serveur distant."},
+      {q:"Qu'est-ce qu'un style de distribution dans Redshift ?",opts:["La methode de replication des backups","La facon dont les lignes sont reparties entre les noeuds de calcul","Le format de compression des colonnes","Le protocole reseau entre les noeuds"],a:1,
+       justification:"Le style de distribution (KEY, ALL, EVEN, AUTO) determine comment les lignes sont reparties entre les noeuds. KEY distribue selon une colonne (bon pour les JOINs), ALL copie la table sur tous les noeuds, EVEN distribue uniformement, AUTO laisse Redshift choisir."},
+      {q:"Quelle est la capacite de stockage maximale d'un cluster Redshift ?",opts:["1 To","100 To","Petaoctets (+ illimite via Spectrum/S3)","10 Go"],a:2,
+       justification:"Un cluster Redshift peut stocker des petaoctets de donnees compressees. Avec Redshift Spectrum, la capacite est virtuellement illimitee car on peut interroger des exaoctets dans S3. Les noeuds RA3 separent aussi stockage (S3 manage) et compute."}
+    ]
+  },
+  {
+    id:9, title:"Amazon Aurora", icon:"✨", color:"#6A0DAD",
+    concepts:[
+      "Aurora est un moteur relationnel cloud-native AWS, compatible MySQL et PostgreSQL, offrant des performances 5x (MySQL) a 3x (PostgreSQL) superieures.",
+      "Stockage distribue : 6 copies dans 3 AZ. Tolere la perte de 2 copies en ecriture et 3 en lecture.",
+      "Aurora Serverless v2 ajuste automatiquement la capacite de calcul (0.5 a 128 ACU) selon la charge.",
+      "Aurora Global Database : replication dans 5 regions secondaires, latence <1 seconde, promotion <1 minute.",
+      "Failover automatique <30s, jusqu'a 15 replicas en lecture, stockage auto-extensible jusqu'a 128 To."
+    ],
+    keyPoints:[
+      {text:"Compatible MySQL ET PostgreSQL - migration facile", detail:"Memes drivers, ORMs, outils. Utiliser pg_dump/mysqldump ou DMS pour migrer."},
+      {text:"6 copies sur 3 AZ = durabilite maximale", detail:"Tolere perte d'une AZ + 1 copie en ecriture. 11 neufs de durabilite. Auto-reparation."},
+      {text:"Aurora Serverless = capacite automatique", detail:"V2 ajuste les ACU en temps reel. Peut descendre a 0 ACU (pause, zero cout compute)."},
+      {text:"Aurora Global DB = multi-regions < 1 seconde", detail:"Replication physique au niveau stockage. 5 regions secondaires, promotion <1 min pour DR."},
+      {text:"Failover automatique < 30 secondes", detail:"Stockage partage = nouveau primaire operationnel immediatement. Cluster endpoint DNS mis a jour automatiquement."},
+      {text:"Stockage auto-extensible : 10 Go a 128 To", detail:"Croit par increments de 10 Go sans impact. Pas de pre-provisionnement. Paie uniquement l'utilise."}
+    ],
+    quiz:[
+      {q:"Avec quels moteurs Amazon Aurora est-il compatible ?",opts:["Oracle et SQL Server","MySQL et PostgreSQL","MongoDB et Cassandra","DynamoDB et Redis"],a:1,
+       justification:"Aurora est compatible MySQL (5.7, 8.0) et PostgreSQL (11-16). Les applications existantes fonctionnent sans modification de code, beneficiant de performances 3-5x superieures grace a l'architecture cloud-native."},
+      {q:"Sur combien de copies Aurora replique-t-il les donnees ?",opts:["2 copies dans 2 AZ","3 copies dans 1 AZ","6 copies dans 3 AZ","4 copies dans 2 AZ"],a:2,
+       justification:"Aurora ecrit TOUJOURS 6 copies dans 3 AZ (2 par AZ). Tolere perte d'une AZ + 1 copie en ecriture. Bien plus resilient que RDS Multi-AZ standard (2 copies, 2 AZ). Durabilite de 11 neufs incluse sans surcout."},
+      {q:"Qu'est-ce qu'Aurora Serverless ?",opts:["Une version sans base de donnees","Aurora qui adapte automatiquement sa capacite de calcul a la charge","Aurora deploye sur Lambda","Un service de cache pour Aurora"],a:1,
+       justification:"Aurora Serverless ajuste les ACU (Aurora Capacity Units) en temps reel selon la charge. Plus de requetes = scale up. Moins de charge = scale down (jusqu'a 0). Pas lie a Lambda."},
+      {q:"Quelle fonctionnalite permet la replication dans plusieurs regions ?",opts:["Aurora Multi-AZ","Aurora Replicas","Aurora Global Database","Aurora Serverless"],a:2,
+       justification:"Aurora Global Database = replication INTER-REGIONS. Multi-AZ = HA dans UNE region. Replicas = lecture dans la meme region. Serverless = compute auto, pas la replication geographique."},
+      {q:"En combien de temps Aurora effectue-t-il un failover ?",opts:["5 minutes","Moins de 30 secondes","2 minutes","1 heure"],a:1,
+       justification:"Failover en <30 secondes (souvent 15-20s). Possible grace au decouplage stockage/compute : le stockage partage est immediatement accessible par le nouveau primaire. RDS standard prend 60-120s."},
+      {q:"Combien de replicas en lecture Aurora supporte-t-il ?",opts:["5 replicas","10 replicas","15 replicas","Illimite"],a:2,
+       justification:"Aurora supporte jusqu'a 15 replicas en lecture (contre 5 pour RDS standard). Ils partagent le meme volume de stockage (pas de replication lag pour les donnees). Chaque replica peut etre promu en primaire lors d'un failover."},
+      {q:"Quel est le stockage maximal d'Aurora ?",opts:["16 To","64 To","128 To","1 Po"],a:2,
+       justification:"Le volume de stockage Aurora peut atteindre 128 To et croit automatiquement par increments de 10 Go. Pas de pre-provisionnement. On ne paie que l'espace utilise. C'est bien plus que le max RDS (64 To)."},
+      {q:"Qu'est-ce que le cluster endpoint dans Aurora ?",opts:["Un endpoint de monitoring","Le point d'entree DNS unique qui pointe toujours vers l'instance primaire actuelle","Un endpoint de backup","Un VPC endpoint"],a:1,
+       justification:"Le cluster endpoint est un DNS gere par Aurora qui pointe toujours vers l'instance primaire en ecriture. Lors d'un failover, Aurora met a jour ce DNS automatiquement vers le nouveau primaire. Les applications n'ont pas besoin de changer leur configuration."},
+      {q:"En quoi Aurora differe-t-il de RDS MySQL/PostgreSQL standard ?",opts:["Aurora est NoSQL","Aurora a une architecture de stockage cloud-native separee du compute, offrant de meilleures performances et disponibilite","Aurora ne supporte pas SQL","Il n'y a aucune difference"],a:1,
+       justification:"La difference fondamentale est l'architecture : Aurora decouple stockage (distribue, auto-replique sur 6 copies/3 AZ) et compute. Cela donne 3-5x de performances, un failover plus rapide, un stockage auto-extensible, et une meilleure durabilite par rapport a RDS standard."},
+      {q:"Quelle est la latence de replication d'Aurora Global Database ?",opts:["10-30 secondes","Moins de 1 seconde","5 minutes","Temps reel (0ms)"],a:1,
+       justification:"Aurora Global Database replique les donnees entre regions avec une latence typique inferieure a 1 seconde. C'est une replication physique au niveau stockage (pas logique), ce qui la rend beaucoup plus rapide que la replication binlog classique (secondes a minutes)."}
+    ]
+  },
+  {
+    id:10, title:"AWS DMS", icon:"🔀", color:"#00897B",
+    concepts:[
+      "AWS DMS migre des bases de donnees vers AWS avec un temps d'arret minimal. La base source reste operationnelle pendant la migration.",
+      "Migrations homogenes (meme moteur, DMS direct) et heterogenes (moteurs differents, SCT + DMS).",
+      "CDC (Change Data Capture) capture les changements en temps reel via les journaux de transactions pour un quasi-zero downtime.",
+      "Utilise une instance de replication (EC2 geree) qui lit, transforme et ecrit les donnees.",
+      "Sources : Oracle, SQL Server, MySQL, PostgreSQL, MongoDB, SAP, S3. Cibles : RDS, Aurora, Redshift, DynamoDB, S3, OpenSearch."
+    ],
+    keyPoints:[
+      {text:"Migration homogene = meme moteur -> DMS direct", detail:"MySQL->MySQL, Oracle->Oracle. Schema compatible, pas de conversion. Plus simple et rapide."},
+      {text:"Migration heterogene = moteurs differents -> SCT + DMS", detail:"SCT convertit le schema (types, procedures), puis DMS migre les donnees. SCT signale le code incompatible."},
+      {text:"CDC = replication continue (quasi-zero arret)", detail:"Apres full load, CDC replique INSERT/UPDATE/DELETE en temps reel. Basculement avec quelques secondes de downtime."},
+      {text:"Instance de replication = coeur du service", detail:"EC2 geree qui execute les taches. Dimensionner selon volume et taux de changements. Multi-AZ disponible."},
+      {text:"Source : on-premises, AWS ou autre cloud", detail:"Fonctionne avec datacenter local (VPN/Direct Connect), Azure, GCP, ou deja dans AWS."},
+      {text:"Validation des donnees : verification d'integrite", detail:"Compare source et cible apres migration : nombre de lignes, checksums. Detecte les divergences."}
+    ],
+    quiz:[
+      {q:"Que signifie DMS dans le contexte AWS ?",opts:["Data Management System","Database Migration Service","Distributed Messaging Service","Dynamic Memory Storage"],a:1,
+       justification:"DMS = Database Migration Service. Role unique : migrer des bases de donnees vers AWS avec minimum de downtime. Pas un systeme de gestion generique, ni de messagerie (SQS/SNS), ni de stockage memoire (ElastiCache)."},
+      {q:"Quelle est la difference entre migration homogene et heterogene ?",opts:["Homogene = meme region, heterogene = regions differentes","Homogene = meme moteur de BDD, heterogene = moteurs differents","Homogene = BDD petite, heterogene = BDD grande","Il n'y a pas de difference"],a:1,
+       justification:"Homogene = MEME moteur source et cible (MySQL->MySQL). Schema compatible. Heterogene = MOTEURS DIFFERENTS (Oracle->PostgreSQL). Necessite SCT pour convertir le schema avant la migration DMS."},
+      {q:"Quel outil est necessaire pour une migration heterogene ?",opts:["AWS CloudFormation","AWS Schema Conversion Tool (SCT)","AWS Config","AWS Glue"],a:1,
+       justification:"SCT convertit le schema (tables, vues, procedures stockees, triggers) au format cible. CloudFormation = infrastructure as code. Config = audit de conformite. Glue = ETL."},
+      {q:"Que signifie CDC dans le contexte DMS ?",opts:["Cloud Data Configuration","Change Data Capture - replication continue des changements","Continuous Database Cleansing","Certified Data Center"],a:1,
+       justification:"CDC = Change Data Capture. Lit les journaux de transactions (redo logs, WAL, binlog) pour capturer chaque INSERT, UPDATE, DELETE en temps reel et les appliquer sur la cible."},
+      {q:"Quel est l'avantage principal de CDC ?",opts:["Reduire les couts de stockage","Permettre une migration avec un temps d'arret minimal","Ameliorer les performances de requete","Chiffrer automatiquement les donnees"],a:1,
+       justification:"CDC permet un near-zero downtime : la source reste operationnelle pendant la migration. Une fois le lag proche de 0, on bascule avec quelques secondes/minutes d'arret. Sans CDC, il faudrait arreter la source pendant tout le transfert."},
+      {q:"Qu'est-ce qu'une instance de replication dans DMS ?",opts:["Un replica de la base source","Une instance EC2 geree par AWS qui execute les taches de migration","Un snapshot de la base cible","Un service serverless"],a:1,
+       justification:"L'instance de replication est une EC2 geree par AWS qui orchestre la migration : elle se connecte a la source, lit les donnees, applique les transformations, et ecrit dans la cible. Son dimensionnement impacte directement la vitesse de migration."},
+      {q:"DMS peut-il migrer depuis une base on-premises ?",opts:["Non, uniquement entre services AWS","Oui, via VPN ou AWS Direct Connect","Uniquement depuis Oracle on-premises","Non, il faut d'abord copier dans S3"],a:1,
+       justification:"DMS supporte des sources on-premises connectees via VPN site-to-site ou AWS Direct Connect. C'est un cas d'usage majeur : migrer les bases de donnees de son datacenter vers AWS (RDS, Aurora) avec un minimum de downtime."},
+      {q:"Vers quels services AWS DMS peut-il migrer des donnees ?",opts:["Uniquement RDS","Uniquement Aurora","RDS, Aurora, Redshift, DynamoDB, S3, OpenSearch, Kinesis, Neptune","Uniquement les bases relationnelles"],a:2,
+       justification:"DMS supporte de nombreuses cibles : RDS/Aurora (relationnel), Redshift (analytics), DynamoDB (NoSQL), S3 (data lake), OpenSearch (recherche), Kinesis (streaming), Neptune (graphe). Cette flexibilite permet des migrations vers le service le plus adapte au workload."},
+      {q:"Qu'est-ce que la validation de donnees dans DMS ?",opts:["Le test du code de l'application","La comparaison automatique des donnees source et cible apres migration","La verification des permissions IAM","Le test de performance de la cible"],a:1,
+       justification:"La validation de donnees compare source et cible pour verifier l'integrite : nombre de lignes, checksums de valeurs. Elle detecte automatiquement les divergences (lignes manquantes, valeurs differentes) et les rapporte pour correction avant le basculement."},
+      {q:"Que fait AWS SCT en plus de convertir le schema ?",opts:["Il migre les donnees","Il signale le code SQL incompatible qui necessite une reecriture manuelle","Il provisionne les instances RDS","Il configure le reseau VPC"],a:1,
+       justification:"SCT ne fait pas que convertir : il analyse le code SQL (procedures stockees, triggers, vues) et genere un rapport d'evaluation indiquant quel pourcentage peut etre converti automatiquement et quel code necessite une reecriture manuelle par les developpeurs."}
+    ]
+  }
+];
+
+const bonusPages = [
+  {
+    id:"db", title:"Comparatif BDD AWS", icon:"🗂️", color:"#FF9900"
+  },
+  {
+    id:"serverless", title:"Architectures Serverless", icon:"⚡", color:"#FF6B35"
+  },
+  {
+    id:"lb", title:"Comparatif Load Balancers", icon:"⚖️", color:"#0073BB"
+  },
+  {
+    id:"ha", title:"Patterns Haute Disponibilite", icon:"🛡️", color:"#1A9C3E"
+  },
+  {
+    id:"migration", title:"Strategies de Migration", icon:"🔀", color:"#00897B"
+  }
+];
+
+let currentBonusPage = "db";
+
+let currentLesson = null;
+let currentTab = 'concepts';
+let showBonus = false;
+const quizAnswers = {};
+const quizSubmitted = {};
+const scores = {};
+
+function hex2rgba(hex, alpha) {
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function renderSidebar(filter='') {
+  const sb = document.getElementById('sidebar');
+  sb.innerHTML = '';
+  const sectionTitle = document.createElement('div');
+  sectionTitle.className = 'sidebar-section';
+  sectionTitle.textContent = 'Lecons';
+  sb.appendChild(sectionTitle);
+
+  const filtered = lessons.filter(l => l.title.toLowerCase().includes(filter.toLowerCase()));
+  if (filtered.length === 0) {
+    sb.innerHTML += '<div style="padding:24px;text-align:center;color:#94a3b8;font-size:13px">Aucune lecon trouvee</div>';
+  } else {
+    filtered.forEach(l => {
+      const sc = scores[l.id] || {correct:0,total:0};
+      const item = document.createElement('div');
+      item.className = 'lesson-item' + (currentLesson?.id === l.id && !showBonus ? ' active' : '');
+      if (currentLesson?.id === l.id && !showBonus) item.style.borderLeftColor = l.color;
+      item.innerHTML = `
+        <span class="lesson-icon">${l.icon}</span>
+        <div style="flex:1;min-width:0">
+          <div class="lesson-name">${l.title}</div>
+          ${sc.total > 0 ? `<div class="lesson-score" style="color:${l.color}">${sc.correct}/${sc.total} · ${Math.round(sc.correct/sc.total*100)}%</div>` : ''}
+        </div>`;
+      item.onclick = () => selectLesson(l);
+      sb.appendChild(item);
+    });
+  }
+
+  const bonusSection = document.createElement('div');
+  bonusSection.className = 'sidebar-section';
+  bonusSection.textContent = 'Bonus';
+  sb.appendChild(bonusSection);
+
+  bonusPages.forEach(bp => {
+    const bonusItem = document.createElement('div');
+    bonusItem.className = 'lesson-item' + (showBonus && currentBonusPage === bp.id ? ' active' : '');
+    if (showBonus && currentBonusPage === bp.id) bonusItem.style.borderLeftColor = bp.color;
+    bonusItem.innerHTML = `
+      <span class="lesson-icon">${bp.icon}</span>
+      <div style="flex:1;min-width:0">
+        <div class="lesson-name">${bp.title}</div>
+      </div>`;
+    bonusItem.onclick = () => selectBonus(bp.id);
+    sb.appendChild(bonusItem);
+  });
+}
+
+function renderChips() {
+  const c = document.getElementById('chips');
+  c.innerHTML = '';
+  lessons.forEach(l => {
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.style.background = hex2rgba(l.color, .12);
+    chip.style.border = `1px solid ${hex2rgba(l.color, .3)}`;
+    chip.style.color = l.color;
+    chip.innerHTML = `<span>${l.icon}</span>${l.title}`;
+    chip.onclick = () => selectLesson(l);
+    c.appendChild(chip);
+  });
+  bonusPages.forEach(bp => {
+    const bonusChip = document.createElement('div');
+    bonusChip.className = 'chip';
+    bonusChip.style.background = hex2rgba(bp.color, .12);
+    bonusChip.style.border = `1px solid ${hex2rgba(bp.color, .3)}`;
+    bonusChip.style.color = bp.color;
+    bonusChip.innerHTML = `<span>${bp.icon}</span>${bp.title}`;
+    bonusChip.onclick = () => selectBonus(bp.id);
+    c.appendChild(bonusChip);
+  });
+}
+
+function selectLesson(l) {
+  showBonus = false;
+  currentLesson = l;
+  currentTab = 'concepts';
+  document.getElementById('welcome').style.display = 'none';
+  document.getElementById('content').style.display = 'block';
+  document.getElementById('bonus').style.display = 'none';
+  renderSidebar(document.getElementById('search').value);
+  renderContent();
+}
+
+function selectBonus(pageId) {
+  showBonus = true;
+  currentBonusPage = pageId || 'db';
+  currentLesson = null;
+  document.getElementById('welcome').style.display = 'none';
+  document.getElementById('content').style.display = 'none';
+  document.getElementById('bonus').style.display = 'block';
+  renderSidebar(document.getElementById('search').value);
+  renderBonus();
+}
+
+function setTab(tab) {
+  currentTab = tab;
+  renderContent();
+}
+
+function renderContent() {
+  const l = currentLesson;
+  if (!l) return;
+  const el = document.getElementById('content');
+  const tabs = [
+    {id:'concepts', label:'📚 Concepts'},
+    {id:'keypoints', label:'⭐ Points Cles'},
+    {id:'quiz', label:'🧪 QCM (10)'}
+  ];
+  const sc = scores[l.id] || {correct:0,total:0};
+
+  let html = `
+  <div class="lesson-header">
+    <div class="lesson-badge" style="background:${hex2rgba(l.color,.15)}">${l.icon}</div>
+    <div>
+      <div class="lesson-h2">${l.title}</div>
+      <div class="tabs">
+        ${tabs.map(t => `<button class="tab-btn" onclick="setTab('${t.id}')" style="background:${currentTab===t.id?l.color:'#f0f0f0'};color:${currentTab===t.id?'#fff':'#666'}">${t.label}</button>`).join('')}
+      </div>
+    </div>
+  </div>`;
+
+  if (currentTab === 'concepts') {
+    html += `<h3 style="margin:0 0 16px;font-size:13px;color:#888;font-weight:700;text-transform:uppercase;letter-spacing:1px">Concepts Essentiels</h3>`;
+    l.concepts.forEach((c,i) => {
+      html += `<div class="concept-card" style="border-left-color:${l.color}">
+        <div class="concept-num" style="background:${l.color}">${i+1}</div>
+        <p class="concept-text">${c}</p>
+      </div>`;
+    });
+  }
+
+  if (currentTab === 'keypoints') {
+    html += `<h3 style="margin:0 0 16px;font-size:13px;color:#888;font-weight:700;text-transform:uppercase;letter-spacing:1px">Points Cles Enrichis</h3>`;
+    l.keyPoints.forEach(kp => {
+      html += `<div class="kp-card" style="border-color:${hex2rgba(l.color,.25)};box-shadow:0 2px 8px ${hex2rgba(l.color,.1)}">
+        <span style="font-size:18px;flex-shrink:0">⭐</span>
+        <div>
+          <p class="kp-text">${kp.text}</p>
+          <p class="kp-detail">${kp.detail}</p>
+        </div>
+      </div>`;
+    });
+  }
+
+  if (currentTab === 'quiz') {
+    const scoreHtml = sc.total > 0
+      ? `<div class="score-badge" style="background:${sc.correct===sc.total?'#e8f5e9':'#fff3e0'};color:${sc.correct===sc.total?'#2e7d32':'#e65100'}">Score : ${sc.correct}/${sc.total}</div>`
+      : '';
+    html += `<div class="quiz-header">
+      <h3 style="font-size:13px;color:#888;font-weight:700;text-transform:uppercase;letter-spacing:1px">10 Questions avec Justifications</h3>
+      ${scoreHtml}
+    </div>`;
+
+    l.quiz.forEach((q, qi) => {
+      const key = `${l.id}-${qi}`;
+      const selected = quizAnswers[key];
+      const submitted = quizSubmitted[key];
+
+      html += `<div class="q-card">
+        <p class="q-text"><span class="q-num" style="color:${l.color}">Q${qi+1}.</span>${q.q}</p>
+        <div class="options">`;
+
+      q.opts.forEach((opt, oi) => {
+        let cls = 'option';
+        let extraStyle = '';
+        if (submitted) {
+          cls += ' locked';
+          if (oi === q.a) cls += ' correct';
+          else if (oi === selected && oi !== q.a) cls += ' wrong';
+        } else if (selected === oi) {
+          extraStyle = `style="background:${hex2rgba(l.color,.12)};border-color:${l.color};color:${l.color}"`;
+        }
+        const icon = submitted ? (oi === q.a ? '<span class="opt-icon">✅</span>' : (oi === selected && oi !== q.a ? '<span class="opt-icon">❌</span>' : '')) : '';
+        html += `<button class="${cls}" ${extraStyle} onclick="selectAnswer(${l.id},${qi},${oi})">
+          <span class="opt-letter">${String.fromCharCode(65+oi)}.</span>${opt}${icon}
+        </button>`;
+      });
+
+      html += `</div>`;
+
+      if (!submitted && selected !== undefined) {
+        html += `<button class="validate-btn" style="background:${l.color}" onclick="validateAnswer(${l.id},${qi},${q.a})">Valider</button>`;
+      }
+      if (submitted) {
+        const ok = selected === q.a;
+        html += `<div class="feedback" style="color:${ok?'#2e7d32':'#c62828'}">${ok ? '✅ Bonne reponse !' : `❌ La bonne reponse etait : ${q.opts[q.a]}`}</div>`;
+        html += `<div class="justification" style="background:${ok?'#f1f8e9':'#fff8e1'};border-left-color:${ok?'#4caf50':'#ff9800'}">
+          <strong>💡 Justification</strong>
+          ${q.justification}
+        </div>`;
+      }
+
+      html += `</div>`;
+    });
+  }
+
+  el.innerHTML = html;
+}
+
+function renderBonus() {
+  const el = document.getElementById('bonus');
+  let html = '';
+
+  if (currentBonusPage === 'db') {
+    html = renderBonusDB();
+  } else if (currentBonusPage === 'serverless') {
+    html = renderBonusServerless();
+  } else if (currentBonusPage === 'lb') {
+    html = renderBonusLB();
+  } else if (currentBonusPage === 'ha') {
+    html = renderBonusHA();
+  } else if (currentBonusPage === 'migration') {
+    html = renderBonusMigration();
+  }
+
+  el.innerHTML = html;
+}
+
+function renderBonusDB() {
+  let html = `
+    <div class="bonus-title">🗂️ Tableau Comparatif des Bases de Donnees AWS</div>
+    <p class="bonus-subtitle">Bases de donnees relationnelles vs non-relationnelles - Guide de choix pour l'examen AWS</p>
+
+    <h3 style="margin:20px 0 12px;font-size:14px;font-weight:800;color:var(--navy)">Bases de Donnees Relationnelles (SQL)</h3>
+    <div style="overflow-x:auto;margin-bottom:24px"><table class="db-table">
+      <thead><tr><th>Service</th><th>Type</th><th>Moteur</th><th>Cas d'usage</th><th>Scaling</th><th>Dispo.</th><th>Latence</th><th>Stockage</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Amazon RDS</strong><br/><span class="tag tag-rel">SQL</span></td><td>Relationnel</td><td style="font-size:11.5px">MySQL, PostgreSQL, MariaDB, Oracle, SQL Server</td><td style="font-size:11.5px">Apps web, ERP, CRM, e-commerce</td><td style="font-size:11.5px">Vertical + 5 Read Replicas</td><td style="font-size:11.5px">Multi-AZ (failover ~60s)</td><td style="font-size:11.5px">Millisecondes</td><td style="font-size:11.5px">64 To</td></tr>
+        <tr><td><strong>Amazon Aurora</strong><br/><span class="tag tag-rel">SQL</span></td><td>Relationnel Cloud-Native</td><td style="font-size:11.5px">MySQL, PostgreSQL (compatible)</td><td style="font-size:11.5px">Apps critiques, SaaS, fintech</td><td style="font-size:11.5px">Vertical + 15 Replicas + Serverless</td><td style="font-size:11.5px">6 copies/3 AZ, failover <30s</td><td style="font-size:11.5px">ms (3-5x RDS)</td><td style="font-size:11.5px">128 To</td></tr>
+        <tr><td><strong>Amazon Redshift</strong><br/><span class="tag tag-rel">SQL</span> <span class="tag tag-dw">DW</span></td><td>Data Warehouse (OLAP)</td><td style="font-size:11.5px">PostgreSQL modifie, columnaire</td><td style="font-size:11.5px">BI, reporting, analyses massives</td><td style="font-size:11.5px">Horizontal + Serverless + Spectrum</td><td style="font-size:11.5px">Multi-AZ, snapshots S3</td><td style="font-size:11.5px">Secondes</td><td style="font-size:11.5px">Petaoctets</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 style="margin:20px 0 12px;font-size:14px;font-weight:800;color:var(--navy)">Bases de Donnees Non-Relationnelles (NoSQL)</h3>
+    <div style="overflow-x:auto;margin-bottom:24px"><table class="db-table">
+      <thead><tr><th>Service</th><th>Type</th><th>Moteur</th><th>Cas d'usage</th><th>Scaling</th><th>Dispo.</th><th>Latence</th><th>Stockage</th></tr></thead>
+      <tbody>
+        <tr><td><strong>DynamoDB</strong><br/><span class="tag tag-nosql">NoSQL</span></td><td>Cle-Valeur / Document</td><td style="font-size:11.5px">Proprietaire (serverless)</td><td style="font-size:11.5px">Gaming, IoT, mobile, session</td><td style="font-size:11.5px">Horizontal illimite, auto</td><td style="font-size:11.5px">Multi-AZ, Global Tables</td><td style="font-size:11.5px"><10ms (DAX: µs)</td><td style="font-size:11.5px">Illimite</td></tr>
+        <tr><td><strong>ElastiCache</strong><br/><span class="tag tag-nosql">NoSQL</span> <span class="tag tag-cache">Cache</span></td><td>Cache In-Memory</td><td style="font-size:11.5px">Redis, Memcached</td><td style="font-size:11.5px">Cache session, leaderboards</td><td style="font-size:11.5px">Sharding + replicas</td><td style="font-size:11.5px">Multi-AZ + failover</td><td style="font-size:11.5px">Microsecondes</td><td style="font-size:11.5px">~Go (RAM)</td></tr>
+        <tr><td><strong>DocumentDB</strong><br/><span class="tag tag-nosql">NoSQL</span></td><td>Document (JSON)</td><td style="font-size:11.5px">Compatible MongoDB</td><td style="font-size:11.5px">CMS, catalogues, profils</td><td style="font-size:11.5px">15 replicas lecture</td><td style="font-size:11.5px">6 copies/3 AZ</td><td style="font-size:11.5px">Millisecondes</td><td style="font-size:11.5px">128 To</td></tr>
+        <tr><td><strong>Neptune</strong><br/><span class="tag tag-nosql">NoSQL</span></td><td>Graphe</td><td style="font-size:11.5px">Gremlin + SPARQL</td><td style="font-size:11.5px">Reseaux sociaux, fraude</td><td style="font-size:11.5px">15 Read Replicas</td><td style="font-size:11.5px">6 copies/3 AZ</td><td style="font-size:11.5px">Millisecondes</td><td style="font-size:11.5px">128 To</td></tr>
+        <tr><td><strong>Keyspaces</strong><br/><span class="tag tag-nosql">NoSQL</span></td><td>Colonnes larges</td><td style="font-size:11.5px">Compatible Cassandra</td><td style="font-size:11.5px">IoT, time-series</td><td style="font-size:11.5px">Serverless, illimite</td><td style="font-size:11.5px">Multi-AZ, 3 copies</td><td style="font-size:11.5px"><10ms</td><td style="font-size:11.5px">Illimite</td></tr>
+        <tr><td><strong>MemoryDB</strong><br/><span class="tag tag-nosql">NoSQL</span> <span class="tag tag-cache">Cache</span></td><td>Durable In-Memory</td><td style="font-size:11.5px">Compatible Redis</td><td style="font-size:11.5px">Microservices, sessions durables</td><td style="font-size:11.5px">Sharding horizontal</td><td style="font-size:11.5px">Multi-AZ, durable</td><td style="font-size:11.5px">µs (lecture)</td><td style="font-size:11.5px">~Go</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 style="margin:28px 0 14px;font-size:16px;font-weight:800;color:var(--navy)">🧭 Guide de Decision Rapide</h3>
+    <div style="display:grid;gap:10px">
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:#f8faff;border-radius:10px;border:1px solid #e8ecf4"><span style="font-size:20px">📈</span><div style="flex:1"><div style="font-size:13px;color:#444">Donnees structurees avec JOINs complexes ?</div><div style="font-size:13px;font-weight:700;color:#0073BB;margin-top:2px">→ RDS ou Aurora</div></div></div>
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:#f8faff;border-radius:10px;border:1px solid #e8ecf4"><span style="font-size:20px">⚡</span><div style="flex:1"><div style="font-size:13px;color:#444">Performances 3-5x sans changer le code ?</div><div style="font-size:13px;font-weight:700;color:#0073BB;margin-top:2px">→ Aurora</div></div></div>
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:#f8faff;border-radius:10px;border:1px solid #e8ecf4"><span style="font-size:20px">📊</span><div style="flex:1"><div style="font-size:13px;color:#444">Analyses sur des teraoctets+ ?</div><div style="font-size:13px;font-weight:700;color:#0073BB;margin-top:2px">→ Redshift</div></div></div>
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:#f8faff;border-radius:10px;border:1px solid #e8ecf4"><span style="font-size:20px">🚀</span><div style="flex:1"><div style="font-size:13px;color:#444">Latence <10ms, scaling infini, schema flexible ?</div><div style="font-size:13px;font-weight:700;color:#0073BB;margin-top:2px">→ DynamoDB</div></div></div>
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:#f8faff;border-radius:10px;border:1px solid #e8ecf4"><span style="font-size:20px">💨</span><div style="flex:1"><div style="font-size:13px;color:#444">Cache ultra-rapide (microsecondes) ?</div><div style="font-size:13px;font-weight:700;color:#0073BB;margin-top:2px">→ ElastiCache (Redis/Memcached)</div></div></div>
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:#f8faff;border-radius:10px;border:1px solid #e8ecf4"><span style="font-size:20px">📄</span><div style="flex:1"><div style="font-size:13px;color:#444">Documents JSON avec API MongoDB ?</div><div style="font-size:13px;font-weight:700;color:#0073BB;margin-top:2px">→ DocumentDB</div></div></div>
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:#f8faff;border-radius:10px;border:1px solid #e8ecf4"><span style="font-size:20px">🕸️</span><div style="flex:1"><div style="font-size:13px;color:#444">Relations graphe (amis d'amis, fraude) ?</div><div style="font-size:13px;font-weight:700;color:#0073BB;margin-top:2px">→ Neptune</div></div></div>
+    </div>
+
+    <h3 style="margin:28px 0 14px;font-size:16px;font-weight:800;color:var(--navy)">🔑 SQL vs NoSQL</h3>
+    <div style="overflow-x:auto"><table class="db-table">
+      <thead><tr><th>Critere</th><th>Relationnel (SQL)</th><th>Non-Relationnel (NoSQL)</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Schema</strong></td><td>Fixe, rigide</td><td>Flexible ou sans schema</td></tr>
+        <tr><td><strong>Scaling</strong></td><td>Principalement vertical</td><td>Horizontal natif</td></tr>
+        <tr><td><strong>Relations</strong></td><td>JOINs complexes</td><td>Denormalisation</td></tr>
+        <tr><td><strong>Coherence</strong></td><td>ACID strict</td><td>Eventual consistency</td></tr>
+        <tr><td><strong>Langage</strong></td><td>SQL standardise</td><td>API specifiques</td></tr>
+        <tr><td><strong>Performance</strong></td><td>JOINs et transactions</td><td>Lectures/ecritures massives</td></tr>
+        <tr><td><strong>Exemples AWS</strong></td><td>RDS, Aurora, Redshift</td><td>DynamoDB, ElastiCache, Neptune</td></tr>
+      </tbody>
+    </table></div>
+
+    <div style="margin-top:24px;padding:16px 20px;background:linear-gradient(135deg,#fff3e0,#fff8e1);border-radius:12px;border:1px solid #ffe0b2">
+      <p style="font-size:13px;font-weight:700;color:#e65100;margin-bottom:8px">💡 Conseil examen :</p>
+      <p style="font-size:12.5px;line-height:1.7;color:#444">
+        <strong>Regle d'or :</strong> Identifiez le TYPE de workload, puis le service SPECIFIQUE.<br/>
+        <strong>Pieges :</strong> Aurora (OLTP) ≠ Redshift (OLAP). DynamoDB = acces par cle, pas JOINs. ElastiCache = volatile, MemoryDB = durable.
+      </p>
+    </div>
+  `;
+  return html;
+}
+
+function renderBonusServerless() {
+  return `
+    <div class="bonus-title">⚡ Architectures Serverless AWS</div>
+    <p class="bonus-subtitle">Comprendre les patterns serverless, les services impliques et quand les utiliser</p>
+
+    <h3 style="margin:20px 0 12px;font-size:14px;font-weight:800;color:var(--navy)">Comparatif des Services de Compute</h3>
+    <div style="overflow-x:auto;margin-bottom:24px"><table class="db-table">
+      <thead><tr><th>Service</th><th>Type</th><th>Gestion Serveur</th><th>Scaling</th><th>Duree Max</th><th>Pricing</th><th>Cas d'usage</th></tr></thead>
+      <tbody>
+        <tr><td><strong>EC2</strong></td><td>IaaS - VM</td><td>Vous gerez tout (OS, patches, config)</td><td>Manuel ou Auto Scaling</td><td>Illimite</td><td>Par heure/seconde</td><td>Apps monolithiques, personnalisation totale</td></tr>
+        <tr><td><strong>ECS/EKS</strong></td><td>Conteneurs</td><td>Vous gerez le cluster (ou Fargate)</td><td>Auto via service</td><td>Illimite</td><td>Par instance ou Fargate vCPU/mem</td><td>Microservices, apps containerisees</td></tr>
+        <tr><td><strong>Fargate</strong></td><td>Conteneurs Serverless</td><td>AWS gere l'infra</td><td>Automatique</td><td>Illimite</td><td>Par vCPU + memoire utilisee</td><td>Conteneurs sans gerer de serveurs</td></tr>
+        <tr><td><strong>Lambda</strong></td><td>FaaS (Function)</td><td>Zero gestion</td><td>Instantane (1000 concurrents)</td><td>15 minutes</td><td>Par requete + duree (ms)</td><td>Evenements, API, ETL leger, webhooks</td></tr>
+        <tr><td><strong>App Runner</strong></td><td>PaaS Web</td><td>Zero gestion</td><td>Automatique</td><td>Illimite</td><td>Par vCPU + memoire active</td><td>Apps web/API simples depuis code ou image</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 style="margin:20px 0 12px;font-size:14px;font-weight:800;color:var(--navy)">🏗️ Patterns d'Architecture Serverless</h3>
+    <div style="display:grid;gap:16px;margin-bottom:24px">
+      <div style="padding:18px;background:#f8faff;border-radius:12px;border:1px solid #e0e8f5">
+        <div style="font-size:14px;font-weight:700;color:var(--navy);margin-bottom:8px">Pattern 1 : API REST Serverless</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:12px;background:#1a1a2e;color:#8fa3c0;padding:14px;border-radius:8px;line-height:1.8">
+          Client → <span style="color:#FF9900">API Gateway</span> → <span style="color:#FF6B35">Lambda</span> → <span style="color:#0073BB">DynamoDB</span><br/>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↘ <span style="color:#1A9C3E">S3</span> (fichiers)<br/>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↘ <span style="color:#8C4FFF">SES</span> (emails)
+        </div>
+        <p style="font-size:12px;color:var(--muted);margin-top:8px">Zero infrastructure. Scaling automatique. Cout proportionnel a l'usage.</p>
+      </div>
+
+      <div style="padding:18px;background:#f8faff;border-radius:12px;border:1px solid #e0e8f5">
+        <div style="font-size:14px;font-weight:700;color:var(--navy);margin-bottom:8px">Pattern 2 : Traitement Asynchrone (Event-Driven)</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:12px;background:#1a1a2e;color:#8fa3c0;padding:14px;border-radius:8px;line-height:1.8">
+          Upload S3 → <span style="color:#FF6B35">Lambda</span> (resize) → <span style="color:#1A9C3E">S3</span> (thumbnails)<br/>
+          DynamoDB Stream → <span style="color:#FF6B35">Lambda</span> → <span style="color:#E91E8C">SNS</span> (notification)<br/>
+          SQS Queue → <span style="color:#FF6B35">Lambda</span> → <span style="color:#DC143C">Redshift</span> (analytics)
+        </div>
+        <p style="font-size:12px;color:var(--muted);margin-top:8px">Decouplage complet. Chaque composant scale independamment. Resilient aux pannes.</p>
+      </div>
+
+      <div style="padding:18px;background:#f8faff;border-radius:12px;border:1px solid #e0e8f5">
+        <div style="font-size:14px;font-weight:700;color:var(--navy);margin-bottom:8px">Pattern 3 : Workflow Orchestre (Step Functions)</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:12px;background:#1a1a2e;color:#8fa3c0;padding:14px;border-radius:8px;line-height:1.8">
+          Commande → <span style="color:#E91E8C">Step Functions</span><br/>
+          &nbsp;&nbsp;├─ Valider paiement (<span style="color:#FF6B35">Lambda</span>)<br/>
+          &nbsp;&nbsp;├─ Reserver stock (<span style="color:#0073BB">DynamoDB</span>)<br/>
+          &nbsp;&nbsp;├─ Envoyer confirmation (<span style="color:#8C4FFF">SES</span>)<br/>
+          &nbsp;&nbsp;└─ Planifier livraison (<span style="color:#FF9900">EventBridge</span>)
+        </div>
+        <p style="font-size:12px;color:var(--muted);margin-top:8px">Processus metier complexes. Retry/Catch integres. Visualisation en temps reel.</p>
+      </div>
+
+      <div style="padding:18px;background:#f8faff;border-radius:12px;border:1px solid #e0e8f5">
+        <div style="font-size:14px;font-weight:700;color:var(--navy);margin-bottom:8px">Pattern 4 : Site Web Statique + API</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:12px;background:#1a1a2e;color:#8fa3c0;padding:14px;border-radius:8px;line-height:1.8">
+          Navigateur → <span style="color:#1A9C3E">CloudFront</span> → <span style="color:#1A9C3E">S3</span> (HTML/JS/CSS)<br/>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↘ <span style="color:#FF9900">API Gateway</span> → <span style="color:#FF6B35">Lambda</span> → <span style="color:#6A0DAD">Aurora Serverless</span>
+        </div>
+        <p style="font-size:12px;color:var(--muted);margin-top:8px">Frontend statique CDN + Backend API serverless. Cout quasi-nul au repos. Scaling illimite en pic.</p>
+      </div>
+    </div>
+
+    <h3 style="margin:20px 0 12px;font-size:14px;font-weight:800;color:var(--navy)">📊 Quand utiliser Serverless vs Conteneurs vs EC2 ?</h3>
+    <div style="overflow-x:auto"><table class="db-table">
+      <thead><tr><th>Critere</th><th>Lambda (Serverless)</th><th>Fargate (Conteneurs)</th><th>EC2 (Serveurs)</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Duree de la tache</strong></td><td>< 15 min</td><td>Illimitee</td><td>Illimitee</td></tr>
+        <tr><td><strong>Trafic</strong></td><td>Sporadique, evenementiel</td><td>Constant ou variable</td><td>Constant, previsible</td></tr>
+        <tr><td><strong>Cold start</strong></td><td>Oui (100ms-10s)</td><td>Leger (quelques secondes)</td><td>Non (toujours allume)</td></tr>
+        <tr><td><strong>Controle OS</strong></td><td>Aucun</td><td>Image Docker</td><td>Total (SSH, packages)</td></tr>
+        <tr><td><strong>Cout au repos</strong></td><td>$0 (zero trafic = zero cout)</td><td>$0 si scale-to-zero</td><td>Paie meme inactif</td></tr>
+        <tr><td><strong>Scaling</strong></td><td>Instantane (ms)</td><td>Rapide (secondes)</td><td>Minutes (instances)</td></tr>
+        <tr><td><strong>Complexite ops</strong></td><td>Minimale</td><td>Moderee</td><td>Elevee</td></tr>
+      </tbody>
+    </table></div>
+
+    <div style="margin-top:24px;padding:16px 20px;background:linear-gradient(135deg,#fff3e0,#fff8e1);border-radius:12px;border:1px solid #ffe0b2">
+      <p style="font-size:13px;font-weight:700;color:#e65100;margin-bottom:8px">💡 Conseil examen - Serverless :</p>
+      <p style="font-size:12.5px;line-height:1.7;color:#444">
+        <strong>Mot-cle "serverless" dans la question ?</strong> → Lambda + API Gateway + DynamoDB (ou Aurora Serverless).<br/>
+        <strong>Mot-cle "decouple" ou "asynchrone" ?</strong> → SQS + Lambda ou SNS + Lambda.<br/>
+        <strong>Mot-cle "orchestration" ou "workflow" ?</strong> → Step Functions.<br/>
+        <strong>"Minimize operational overhead" ?</strong> → Serverless systematiquement.
+      </p>
+    </div>
+  `;
+}
+
+function renderBonusLB() {
+  return `
+    <div class="bonus-title">⚖️ Comparatif des Load Balancers AWS</div>
+    <p class="bonus-subtitle">ALB vs NLB vs GWLB vs CLB - Choisir le bon load balancer pour chaque scenario</p>
+
+    <h3 style="margin:20px 0 12px;font-size:14px;font-weight:800;color:var(--navy)">Tableau Comparatif Detaille</h3>
+    <div style="overflow-x:auto;margin-bottom:24px"><table class="db-table">
+      <thead><tr><th>Caracteristique</th><th>ALB (Application)</th><th>NLB (Network)</th><th>GWLB (Gateway)</th><th>CLB (Classic)</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Couche OSI</strong></td><td>Couche 7 (HTTP/HTTPS)</td><td>Couche 4 (TCP/UDP/TLS)</td><td>Couche 3/4 (IP)</td><td>Couche 4 + 7 (legacy)</td></tr>
+        <tr><td><strong>Protocoles</strong></td><td>HTTP, HTTPS, gRPC, WebSocket</td><td>TCP, UDP, TLS</td><td>IP (GENEVE encapsulation)</td><td>HTTP, HTTPS, TCP, SSL</td></tr>
+        <tr><td><strong>Performances</strong></td><td>Bonnes (dizaines de milliers req/s)</td><td>Extremes (millions req/s, <1ms latence)</td><td>Bonnes</td><td>Basiques</td></tr>
+        <tr><td><strong>IP statique</strong></td><td>Non (DNS uniquement)</td><td>Oui (1 IP elastique/AZ)</td><td>Non</td><td>Non</td></tr>
+        <tr><td><strong>Routage avance</strong></td><td>Path, host, headers, query string, methode</td><td>Port uniquement</td><td>Non (transparant)</td><td>Non</td></tr>
+        <tr><td><strong>SSL Termination</strong></td><td>Oui</td><td>Oui (TLS) ou pass-through</td><td>Non</td><td>Oui</td></tr>
+        <tr><td><strong>Sticky Sessions</strong></td><td>Oui (cookie)</td><td>Oui (source IP)</td><td>Non</td><td>Oui</td></tr>
+        <tr><td><strong>Cibles</strong></td><td>EC2, IP, Lambda, ALB</td><td>EC2, IP, ALB</td><td>EC2, IP (appliances)</td><td>EC2 uniquement</td></tr>
+        <tr><td><strong>Preserve IP source</strong></td><td>Non (X-Forwarded-For header)</td><td>Oui (nativement)</td><td>Oui</td><td>Non</td></tr>
+        <tr><td><strong>WAF compatible</strong></td><td>Oui</td><td>Non</td><td>Non</td><td>Non</td></tr>
+        <tr><td><strong>Cas d'usage</strong></td><td>Apps web, microservices, API REST</td><td>Gaming, IoT, VoIP, trading</td><td>Firewalls, IDS/IPS tiers</td><td>Legacy (a migrer)</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 style="margin:20px 0 12px;font-size:14px;font-weight:800;color:var(--navy)">🧭 Arbre de Decision</h3>
+    <div style="display:grid;gap:10px;margin-bottom:24px">
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:#e3f2fd;border-radius:10px;border:1px solid #bbdefb"><span style="font-size:20px">🌐</span><div><div style="font-size:13px;font-weight:600">Besoin de routage HTTP avance (path, host, headers) ?</div><div style="font-size:13px;font-weight:700;color:#1565c0;margin-top:2px">→ ALB</div></div></div>
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:#e8f5e9;border-radius:10px;border:1px solid #c8e6c9"><span style="font-size:20px">🚀</span><div><div style="font-size:13px;font-weight:600">Performances extremes, latence minimale, IP statique ?</div><div style="font-size:13px;font-weight:700;color:#2e7d32;margin-top:2px">→ NLB</div></div></div>
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:#fff3e0;border-radius:10px;border:1px solid #ffe0b2"><span style="font-size:20px">🛡️</span><div><div style="font-size:13px;font-weight:600">Appliances de securite tierces (firewall, IDS) ?</div><div style="font-size:13px;font-weight:700;color:#e65100;margin-top:2px">→ GWLB</div></div></div>
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:#fce4ec;border-radius:10px;border:1px solid #f8bbd0"><span style="font-size:20px">⚠️</span><div><div style="font-size:13px;font-weight:600">Application existante sur Classic LB ?</div><div style="font-size:13px;font-weight:700;color:#c62828;margin-top:2px">→ Migrer vers ALB ou NLB (CLB est deprecie)</div></div></div>
+    </div>
+
+    <h3 style="margin:20px 0 12px;font-size:14px;font-weight:800;color:var(--navy)">🔗 Combinaisons Courantes</h3>
+    <div style="overflow-x:auto"><table class="db-table">
+      <thead><tr><th>Architecture</th><th>Load Balancer</th><th>Pourquoi</th></tr></thead>
+      <tbody>
+        <tr><td>Application web multi-services</td><td>ALB</td><td>Routage /api → backend, /app → frontend, /ws → WebSocket</td></tr>
+        <tr><td>API Gateway + microservices</td><td>ALB</td><td>Path-based routing vers differents target groups</td></tr>
+        <tr><td>Serveur de jeux (UDP)</td><td>NLB</td><td>Ultra-faible latence, UDP, millions de connexions</td></tr>
+        <tr><td>Service financier (FIX protocol)</td><td>NLB</td><td>TCP pur, IP statique pour whitelisting, latence critique</td></tr>
+        <tr><td>Inspection de trafic (compliance)</td><td>GWLB + ALB</td><td>GWLB inspecte, ALB route. Transparent pour l'application.</td></tr>
+        <tr><td>NLB devant ALB</td><td>NLB → ALB</td><td>Combine IP statique (NLB) + routage avance (ALB)</td></tr>
+      </tbody>
+    </table></div>
+
+    <div style="margin-top:24px;padding:16px 20px;background:linear-gradient(135deg,#e3f2fd,#e8eaf6);border-radius:12px;border:1px solid #bbdefb">
+      <p style="font-size:13px;font-weight:700;color:#1565c0;margin-bottom:8px">💡 Conseil examen - Load Balancers :</p>
+      <p style="font-size:12.5px;line-height:1.7;color:#444">
+        <strong>"HTTP/HTTPS", "path-based", "host-based", "microservices web" ?</strong> → ALB.<br/>
+        <strong>"Ultra-low latency", "millions of requests", "static IP", "TCP/UDP" ?</strong> → NLB.<br/>
+        <strong>"Third-party security appliance", "inline inspection" ?</strong> → GWLB.<br/>
+        <strong>"WAF" dans la question ?</strong> → Seul l'ALB est compatible WAF nativement.
+      </p>
+    </div>
+  `;
+}
+
+function renderBonusHA() {
+  return `
+    <div class="bonus-title">🛡️ Patterns de Haute Disponibilite AWS</div>
+    <p class="bonus-subtitle">Strategies et architectures pour assurer la resilience, le failover et le disaster recovery</p>
+
+    <h3 style="margin:20px 0 12px;font-size:14px;font-weight:800;color:var(--navy)">Niveaux de Resilience</h3>
+    <div style="overflow-x:auto;margin-bottom:24px"><table class="db-table">
+      <thead><tr><th>Niveau</th><th>Strategie</th><th>RTO</th><th>RPO</th><th>Cout</th><th>Exemple</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Single AZ</strong></td><td>Pas de redundance</td><td>Heures</td><td>Minutes-Heures</td><td>$ (minimal)</td><td>Dev/test environments</td></tr>
+        <tr><td><strong>Multi-AZ</strong></td><td>Replique dans 2-3 AZ</td><td>Secondes-Minutes</td><td>0 (synchrone)</td><td>$$ (x2)</td><td>RDS Multi-AZ, ELB + ASG multi-AZ</td></tr>
+        <tr><td><strong>Multi-Region Active/Passive</strong></td><td>Region standby prete</td><td>Minutes</td><td>Secondes</td><td>$$$ (x2-3)</td><td>Aurora Global DB + Route 53 Failover</td></tr>
+        <tr><td><strong>Multi-Region Active/Active</strong></td><td>Trafic reparti entre regions</td><td>~0 (transparent)</td><td>0 (synchrone)</td><td>$$$$ (x3+)</td><td>DynamoDB Global Tables + CloudFront</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 style="margin:20px 0 12px;font-size:14px;font-weight:800;color:var(--navy)">🏗️ Architectures de Reference</h3>
+    <div style="display:grid;gap:16px;margin-bottom:24px">
+      <div style="padding:18px;background:#f8faff;border-radius:12px;border:1px solid #e0e8f5">
+        <div style="font-size:14px;font-weight:700;color:var(--navy);margin-bottom:8px">Architecture Multi-AZ Standard (99.99%)</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:12px;background:#1a1a2e;color:#8fa3c0;padding:14px;border-radius:8px;line-height:1.8">
+          <span style="color:#8C4FFF">Route 53</span> (DNS) → <span style="color:#FF9900">ALB</span> (multi-AZ)<br/>
+          &nbsp;&nbsp;├─ AZ-a: <span style="color:#FF6B35">EC2</span> (ASG) + <span style="color:#6A0DAD">RDS Primary</span><br/>
+          &nbsp;&nbsp;├─ AZ-b: <span style="color:#FF6B35">EC2</span> (ASG) + <span style="color:#6A0DAD">RDS Standby</span><br/>
+          &nbsp;&nbsp;└─ AZ-c: <span style="color:#FF6B35">EC2</span> (ASG) + <span style="color:#6A0DAD">RDS Read Replica</span>
+        </div>
+        <p style="font-size:12px;color:var(--muted);margin-top:8px">Failover automatique RDS <60s. ASG remplace les instances. ELB reroute le trafic. Aucune intervention manuelle.</p>
+      </div>
+
+      <div style="padding:18px;background:#f8faff;border-radius:12px;border:1px solid #e0e8f5">
+        <div style="font-size:14px;font-weight:700;color:var(--navy);margin-bottom:8px">Architecture Multi-Region DR (99.999%)</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:12px;background:#1a1a2e;color:#8fa3c0;padding:14px;border-radius:8px;line-height:1.8">
+          <span style="color:#8C4FFF">Route 53</span> (Failover Routing)<br/>
+          &nbsp;&nbsp;├─ Region Primaire: <span style="color:#1A9C3E">CloudFront</span> → <span style="color:#FF9900">ALB</span> → <span style="color:#FF6B35">ECS</span> → <span style="color:#6A0DAD">Aurora Primary</span><br/>
+          &nbsp;&nbsp;└─ Region Secondaire: <span style="color:#1A9C3E">CloudFront</span> → <span style="color:#FF9900">ALB</span> → <span style="color:#FF6B35">ECS</span> → <span style="color:#6A0DAD">Aurora Global Replica</span><br/>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(promotion < 1 min si la primaire tombe)
+        </div>
+        <p style="font-size:12px;color:var(--muted);margin-top:8px">Route 53 health checks detectent la panne. Failover DNS vers la region secondaire. Aurora Global DB promu en primaire.</p>
+      </div>
+    </div>
+
+    <h3 style="margin:20px 0 12px;font-size:14px;font-weight:800;color:var(--navy)">📊 Strategies de Disaster Recovery (DR)</h3>
+    <div style="overflow-x:auto;margin-bottom:24px"><table class="db-table">
+      <thead><tr><th>Strategie</th><th>Description</th><th>RTO</th><th>RPO</th><th>Cout</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Backup & Restore</strong></td><td>Sauvegardes S3, restauration manuelle en cas de sinistre</td><td>Heures</td><td>Heures</td><td>$ (tres faible)</td></tr>
+        <tr><td><strong>Pilot Light</strong></td><td>Core minimal actif (BDD repliquee), compute eteint</td><td>10-30 min</td><td>Secondes</td><td>$$ (BDD seule)</td></tr>
+        <tr><td><strong>Warm Standby</strong></td><td>Version reduite mais fonctionnelle dans la region DR</td><td>Minutes</td><td>Secondes</td><td>$$$ (infra reduite)</td></tr>
+        <tr><td><strong>Multi-Site Active/Active</strong></td><td>Trafic reparti, toutes les regions actives</td><td>~0 (temps reel)</td><td>~0</td><td>$$$$ (double infra)</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 style="margin:20px 0 12px;font-size:14px;font-weight:800;color:var(--navy)">🔑 Services Cles pour la HA</h3>
+    <div style="overflow-x:auto"><table class="db-table">
+      <thead><tr><th>Service</th><th>Role dans la HA</th><th>Mecanisme</th></tr></thead>
+      <tbody>
+        <tr><td><strong>ELB</strong></td><td>Distribution de charge multi-AZ</td><td>Health checks + rerouting automatique</td></tr>
+        <tr><td><strong>Auto Scaling</strong></td><td>Self-healing + elasticite</td><td>Remplacement auto des instances defaillantes</td></tr>
+        <tr><td><strong>Route 53</strong></td><td>Failover DNS multi-region</td><td>Health checks + failover routing</td></tr>
+        <tr><td><strong>RDS Multi-AZ</strong></td><td>BDD hautement disponible</td><td>Replication synchrone + failover auto</td></tr>
+        <tr><td><strong>Aurora</strong></td><td>BDD ultra-resiliente</td><td>6 copies/3 AZ + failover <30s + Global DB</td></tr>
+        <tr><td><strong>S3</strong></td><td>Stockage durable</td><td>11 neufs de durabilite, replication cross-region</td></tr>
+        <tr><td><strong>CloudFront</strong></td><td>Performance + resilience edge</td><td>450+ PoPs, Origin failover groups</td></tr>
+        <tr><td><strong>DynamoDB Global Tables</strong></td><td>BDD active/active multi-region</td><td>Replication multi-region <1s</td></tr>
+      </tbody>
+    </table></div>
+
+    <div style="margin-top:24px;padding:16px 20px;background:linear-gradient(135deg,#e8f5e9,#f1f8e9);border-radius:12px;border:1px solid #c8e6c9">
+      <p style="font-size:13px;font-weight:700;color:#2e7d32;margin-bottom:8px">💡 Conseil examen - Haute Disponibilite :</p>
+      <p style="font-size:12.5px;line-height:1.7;color:#444">
+        <strong>"Survive AZ failure" ?</strong> → Multi-AZ (ELB + ASG + RDS Multi-AZ).<br/>
+        <strong>"Survive region failure" ?</strong> → Multi-Region (Route 53 Failover + Aurora Global DB).<br/>
+        <strong>"Minimize RTO" ?</strong> → Active/Active > Warm Standby > Pilot Light > Backup & Restore.<br/>
+        <strong>"Cost-effective DR" ?</strong> → Pilot Light (BDD repliquee, compute lance a la demande).
+      </p>
+    </div>
+  `;
+}
+
+function renderBonusMigration() {
+  return `
+    <div class="bonus-title">🔀 Strategies de Migration AWS</div>
+    <p class="bonus-subtitle">Les 7R de migration, outils AWS, et parcours de migration vers le cloud</p>
+
+    <h3 style="margin:20px 0 12px;font-size:14px;font-weight:800;color:var(--navy)">Les 7 Strategies de Migration (7R)</h3>
+    <div style="overflow-x:auto;margin-bottom:24px"><table class="db-table">
+      <thead><tr><th>Strategie</th><th>Description</th><th>Effort</th><th>Benefice Cloud</th><th>Exemple</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Rehost</strong><br/>(Lift & Shift)</td><td>Deplacer tel quel vers le cloud</td><td>Faible</td><td>Faible (memes limites)</td><td>VM on-premises → EC2</td></tr>
+        <tr><td><strong>Replatform</strong><br/>(Lift & Optimize)</td><td>Quelques optimisations cloud</td><td>Moyen</td><td>Moyen</td><td>MySQL on-prem → RDS MySQL</td></tr>
+        <tr><td><strong>Repurchase</strong><br/>(Drop & Shop)</td><td>Remplacer par un SaaS</td><td>Moyen</td><td>Eleve (zero gestion)</td><td>Exchange → Microsoft 365</td></tr>
+        <tr><td><strong>Refactor</strong><br/>(Re-architect)</td><td>Re-ecrire en cloud-native</td><td>Eleve</td><td>Maximal</td><td>Monolithe → Microservices/Lambda</td></tr>
+        <tr><td><strong>Retire</strong></td><td>Decommissionner (plus necessaire)</td><td>Faible</td><td>Economie directe</td><td>Apps obsoletes ou dupliquees</td></tr>
+        <tr><td><strong>Retain</strong></td><td>Garder on-premises (pas pret)</td><td>Aucun</td><td>Aucun pour l'instant</td><td>Mainframe critique trop risque a migrer</td></tr>
+        <tr><td><strong>Relocate</strong></td><td>Deplacer l'infra VMware vers AWS</td><td>Faible</td><td>Moyen</td><td>VMware on-prem → VMware Cloud on AWS</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 style="margin:20px 0 12px;font-size:14px;font-weight:800;color:var(--navy)">🛠️ Outils de Migration AWS</h3>
+    <div style="overflow-x:auto;margin-bottom:24px"><table class="db-table">
+      <thead><tr><th>Outil</th><th>Role</th><th>Quand l'utiliser</th></tr></thead>
+      <tbody>
+        <tr><td><strong>AWS Migration Hub</strong></td><td>Console centrale de suivi des migrations</td><td>Toujours - vue d'ensemble de la progression</td></tr>
+        <tr><td><strong>AWS Application Discovery</strong></td><td>Decouvrir l'inventaire on-premises</td><td>Phase de planification (mapping des dependances)</td></tr>
+        <tr><td><strong>AWS DMS</strong></td><td>Migrer les bases de donnees</td><td>Migration de BDD avec quasi-zero downtime</td></tr>
+        <tr><td><strong>AWS SCT</strong></td><td>Convertir les schemas de BDD</td><td>Migrations heterogenes (Oracle → PostgreSQL)</td></tr>
+        <tr><td><strong>AWS MGN (Application Migration)</strong></td><td>Lift & shift automatise de serveurs</td><td>Rehost de VMs vers EC2 (remplace SMS)</td></tr>
+        <tr><td><strong>AWS DataSync</strong></td><td>Transfert de donnees rapide</td><td>Migration de fichiers/NFS vers S3/EFS</td></tr>
+        <tr><td><strong>AWS Snow Family</strong></td><td>Migration physique de donnees massives</td><td>Teraoctets/Petaoctets, pas assez de bande passante</td></tr>
+        <tr><td><strong>AWS Transfer Family</strong></td><td>SFTP/FTPS/FTP vers S3</td><td>Workflows existants utilisant FTP</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 style="margin:20px 0 12px;font-size:14px;font-weight:800;color:var(--navy)">📦 Snow Family - Migration Physique</h3>
+    <div style="overflow-x:auto;margin-bottom:24px"><table class="db-table">
+      <thead><tr><th>Appareil</th><th>Capacite</th><th>Cas d'usage</th><th>Compute integre</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Snowcone</strong></td><td>8 To HDD / 14 To SSD</td><td>Environnements austeres, edge computing leger</td><td>Oui (2 vCPU, 4 Go RAM)</td></tr>
+        <tr><td><strong>Snowball Edge Storage</strong></td><td>80 To</td><td>Migrations de donnees, stockage edge temporaire</td><td>Oui (40 vCPU)</td></tr>
+        <tr><td><strong>Snowball Edge Compute</strong></td><td>42 To + GPU</td><td>ML en edge, traitement video, compute intensif</td><td>Oui (52 vCPU + GPU optionnel)</td></tr>
+        <tr><td><strong>Snowmobile</strong></td><td>100 Po (camion)</td><td>Migrations massives de datacenters entiers</td><td>Non</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 style="margin:20px 0 12px;font-size:14px;font-weight:800;color:var(--navy)">🗺️ Parcours de Migration Type</h3>
+    <div style="padding:18px;background:#f8faff;border-radius:12px;border:1px solid #e0e8f5;margin-bottom:20px">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:12px;background:#1a1a2e;color:#8fa3c0;padding:14px;border-radius:8px;line-height:2.2">
+        <span style="color:#FF9900">1. ASSESS</span> (Evaluer)<br/>
+        &nbsp;&nbsp;Discovery Service → inventaire + dependances<br/>
+        &nbsp;&nbsp;Migration Hub → planification<br/><br/>
+        <span style="color:#0073BB">2. MOBILIZE</span> (Preparer)<br/>
+        &nbsp;&nbsp;Landing Zone (Control Tower) → compte multi-comptes<br/>
+        &nbsp;&nbsp;Reseau (VPN/Direct Connect) → connectivite hybride<br/><br/>
+        <span style="color:#1A9C3E">3. MIGRATE</span> (Executer)<br/>
+        &nbsp;&nbsp;Serveurs: MGN (lift & shift) ou refactor<br/>
+        &nbsp;&nbsp;Bases de donnees: DMS + SCT<br/>
+        &nbsp;&nbsp;Fichiers: DataSync ou Snow Family<br/><br/>
+        <span style="color:#E91E8C">4. MODERNIZE</span> (Optimiser)<br/>
+        &nbsp;&nbsp;Conteneurs (ECS/EKS) → microservices<br/>
+        &nbsp;&nbsp;Serverless (Lambda) → event-driven<br/>
+        &nbsp;&nbsp;Managed services (Aurora, DynamoDB) → moins d'ops
+      </div>
+    </div>
+
+    <h3 style="margin:20px 0 12px;font-size:14px;font-weight:800;color:var(--navy)">🔌 Connectivite Hybride</h3>
+    <div style="overflow-x:auto"><table class="db-table">
+      <thead><tr><th>Service</th><th>Bande passante</th><th>Latence</th><th>Chiffrement</th><th>Delai mise en place</th><th>Cout</th></tr></thead>
+      <tbody>
+        <tr><td><strong>VPN Site-to-Site</strong></td><td>~1.25 Gbps max</td><td>Variable (Internet)</td><td>IPsec natif</td><td>Minutes-Heures</td><td>$ (faible)</td></tr>
+        <tr><td><strong>AWS Direct Connect</strong></td><td>1/10/100 Gbps</td><td>Faible et constante</td><td>Non natif (+ VPN si besoin)</td><td>Semaines-Mois</td><td>$$$ (port + transit)</td></tr>
+        <tr><td><strong>Direct Connect + VPN</strong></td><td>Jusqu'a 10 Gbps</td><td>Faible</td><td>IPsec sur lien dedie</td><td>Semaines-Mois</td><td>$$$</td></tr>
+      </tbody>
+    </table></div>
+
+    <div style="margin-top:24px;padding:16px 20px;background:linear-gradient(135deg,#e0f2f1,#e8f5e9);border-radius:12px;border:1px solid #b2dfdb">
+      <p style="font-size:13px;font-weight:700;color:#00695c;margin-bottom:8px">💡 Conseil examen - Migration :</p>
+      <p style="font-size:12.5px;line-height:1.7;color:#444">
+        <strong>"Minimum effort/time" ?</strong> → Rehost (Lift & Shift) avec MGN.<br/>
+        <strong>"Maximize cloud benefits" ?</strong> → Refactor (re-architecture en microservices/serverless).<br/>
+        <strong>"Database migration with minimal downtime" ?</strong> → DMS + CDC.<br/>
+        <strong>"Petabytes of data, limited bandwidth" ?</strong> → Snow Family (Snowball/Snowmobile).<br/>
+        <strong>"Consistent low latency to AWS" ?</strong> → Direct Connect (pas VPN).
+      </p>
+    </div>
+  `;
+}
+
+function selectAnswer(lid, qi, oi) {
+  const key = `${lid}-${qi}`;
+  if (quizSubmitted[key]) return;
+  quizAnswers[key] = oi;
+  renderContent();
+}
+
+function validateAnswer(lid, qi, correct) {
+  const key = `${lid}-${qi}`;
+  quizSubmitted[key] = true;
+  if (!scores[lid]) scores[lid] = {correct:0, total:0};
+  scores[lid].total++;
+  if (quizAnswers[key] === correct) scores[lid].correct++;
+  renderContent();
+  renderSidebar(document.getElementById('search').value);
+}
+
+function filterLessons(val) {
+  renderSidebar(val);
+}
+
+renderSidebar();
+renderChips();
+</script>
+</body>
+</html>

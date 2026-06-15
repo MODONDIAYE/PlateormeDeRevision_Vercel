@@ -66,8 +66,10 @@
         .tech-card.prometheus::before { background: linear-gradient(90deg, #e6522c, #ff6b35); }
         .tech-card.trivy::before { background: linear-gradient(90deg, #1904da, #3d5afe); }
         .tech-card.ia::before { background: linear-gradient(90deg, #00c853, #64dd17); }
+        .tech-card.aws::before { background: linear-gradient(90deg, #ff9900, #ffcc66); }
 
         .tech-card .tech-icon { font-size: 2.5em; margin-bottom: 12px; }
+
         .tech-card h3 { font-size: 1.15em; margin-bottom: 6px; }
         .tech-card .tech-desc { font-size: 0.82em; color: rgba(255,255,255,0.6); margin-bottom: 15px; line-height: 1.5; }
         .tech-card .tech-meta { display: flex; justify-content: space-between; align-items: center; }
@@ -221,7 +223,20 @@
                 <span class="tech-score" id="score-ia">0%</span>
             </div>
         </a>
+
+        <a class="tech-card aws" href="AWS_Revision_Partie3.html">
+            <span class="status-badge ready">Pret</span>
+            <div class="tech-icon">☁️</div>
+            <h3>AWS - Partie 3</h3>
+            <div class="tech-desc">Amazon VPC, EBS, S3, CloudWatch, CloudTrail, Athena, Bonus &amp; QCM</div>
+            <div class="tech-meta">
+                <span class="tech-pages">11+ lecons</span>
+                <div class="tech-progress-bar"><div class="tech-progress-fill" id="prog-aws" style="width:0%"></div></div>
+                <span class="tech-score" id="score-aws">0%</span>
+            </div>
+        </a>
     </div>
+
 
     <div id="missingFiles" style="display:none; margin: 0 auto 25px; max-width:700px; padding:15px 20px; background:rgba(255,82,82,0.15); border:1px solid rgba(255,82,82,0.4); border-radius:12px; text-align:center;">
         <p style="color:#ff8a80; font-weight:600; margin-bottom:5px;">⚠ Fichiers manquants detectes</p>
@@ -230,9 +245,8 @@
 
     <div class="footer">
         <p>Plateforme de Revision DevOps — Modou NDIAYE — 2026</p>
-        <p style="margin-top:5px">Toutes les plateformes fonctionnent hors-ligne (fichiers HTML autonomes)</p>
-        <p style="margin-top:5px; font-size:0.75em; color:rgba(255,255,255,0.3);">Important : les 8 fichiers HTML doivent etre dans le MEME dossier pour fonctionner.</p>
     </div>
+
 
     <script>
     function checkMissingFiles() {
@@ -265,15 +279,18 @@
     if (window.location.protocol !== 'file:') { checkMissingFiles(); }
 
     function loadAllProgress() {
-        const techs = [
+            const techs = [
             { key: 'jenkins_progress', id: 'jenkins', totals: {p1:6,p2:6,p3:6,p4:5,p5:5,p6:6,p7:5,p8:5,p9:5,p10:5,p11:5,p12:5,p13:5,p14:5,p15:5,p16:5,p17:5} },
             { key: 'sonarqube_progress', id: 'sonarqube', totals: {p1:6,p2:6,p3:6,p4:6,p5:6,p6:6,p7:5} },
+
             { key: 'kubernetes_progress', id: 'kubernetes', totals: {p1:5,p2:5,p3:6,p4:5,p5:5,p6:5,p7:5,p8:5,p9:5} },
             { key: 'terraform_progress', id: 'terraform', totals: {p1:5,p2:5,p3:6,p4:5,p5:5,p6:5,p7:5,p8:5,p9:5} },
             { key: 'prometheus_progress', id: 'prometheus', totals: {p1:5,p2:5,p3:6,p4:5,p5:5,p6:5,p7:5} },
             { key: 'trivy_progress', id: 'trivy', totals: {p1:5,p2:5,p3:5,p4:5,p5:5,p6:5} },
-            { key: 'ia_progress', id: 'ia', totals: {p1:5,p2:5,p3:5,p4:5,p5:5,p6:5,p7:5,p8:5,p9:5} }
+            { key: 'ia_progress', id: 'ia', totals: {p1:5,p2:5,p3:5,p4:5,p5:5,p6:5,p7:5,p8:5,p9:5} },
+            { key: 'aws_progress', id: 'aws', totals: {p1:5,p2:5,p3:5,p4:5,p5:5,p6:5,p7:5,p8:5,p9:5,p10:5,p11:5} }
         ];
+
 
         let globalCorrect = 0, globalTotal = 0;
 
