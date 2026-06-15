@@ -224,6 +224,18 @@
             </div>
         </a>
 
+        <a class="tech-card aws" href="aws-revision_Partie2_ModouNDIAYE.html">
+            <span class="status-badge ready">Pret</span>
+            <div class="tech-icon">☁️</div>
+            <h3>AWS - Partie 2</h3>
+            <div class="tech-desc">AWS (Partie 2)</div>
+            <div class="tech-meta">
+                <span class="tech-pages">Partie 2</span>
+                <div class="tech-progress-bar"><div class="tech-progress-fill" id="prog-aws2" style="width:0%"></div></div>
+                <span class="tech-score" id="score-aws2">0%</span>
+            </div>
+        </a>
+
         <a class="tech-card aws" href="AWS_Revision_Partie3.html">
             <span class="status-badge ready">Pret</span>
             <div class="tech-icon">☁️</div>
@@ -235,6 +247,7 @@
                 <span class="tech-score" id="score-aws">0%</span>
             </div>
         </a>
+
     </div>
 
 
@@ -288,11 +301,12 @@
             { key: 'prometheus_progress', id: 'prometheus', totals: {p1:5,p2:5,p3:6,p4:5,p5:5,p6:5,p7:5} },
             { key: 'trivy_progress', id: 'trivy', totals: {p1:5,p2:5,p3:5,p4:5,p5:5,p6:5} },
             { key: 'ia_progress', id: 'ia', totals: {p1:5,p2:5,p3:5,p4:5,p5:5,p6:5,p7:5,p8:5,p9:5} },
-            { key: 'aws_progress', id: 'aws', totals: {p1:5,p2:5,p3:5,p4:5,p5:5,p6:5,p7:5,p8:5,p9:5,p10:5,p11:5} }
+            { key: 'aws_progress', id: 'aws', totals: {p1:5,p2:5,p3:5,p4:5,p5:5,p6:5,p7:5,p8:5,p9:5,p10:5,p11:5} },
+            { key: 'aws2_progress', id: 'aws2', totals: {p1:5,p2:5,p3:5,p4:5,p5:5} }
         ];
 
-
         let globalCorrect = 0, globalTotal = 0;
+
 
         techs.forEach(tech => {
             const total = Object.values(tech.totals).reduce((a,b) => a+b, 0);
