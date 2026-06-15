@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IA pour DevOps - Plateforme de Revision Complete</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0fff4;
+            color: #1a1a1a;
+            line-height: 1.7;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            position: fixed; top: 0; left: 0;
+            width: 270px; height: 100vh;
+            background: linear-gradient(180deg, #1b5e20 0%, #2e7d32 40%, #388e3c 100%);
+            overflow-y: auto; padding: 20px 0; z-index: 100;
+            box-shadow: 4px 0 20px rgba(27,94,32,0.3);
+        }
+        .sidebar-header { padding: 12px 18px 15px; border-bottom: 2px solid rgba(255,255,255,0.15); margin-bottom: 8px; }
+        .sidebar-header h1 { font-size: 1.05em; color: #fff; margin-bottom: 2px; }
+        .sidebar-header p { font-size: 0.72em; color: rgba(255,255,255,0.7); }
+
+        .search-box { padding: 8px 14px; margin-bottom: 8px; }
+        .search-box input {
+            width: 100%; padding: 8px 12px; border-radius: 20px; border: none;
+            background: rgba(255,255,255,0.15); color: #fff; font-size: 0.82em;
+            outline: none; transition: background 0.3s;
+        }
+        .search-box input::placeholder { color: rgba(255,255,255,0.5); }
+        .search-box input:focus { background: rgba(255,255,255,0.25); }
+
+        .sidebar ul { list-style: none; padding: 0; }
+        .sidebar ul li a {
+            display: block; color: rgba(255,255,255,0.85); text-decoration: none;
+            font-size: 0.82em; padding: 9px 18px; border-left: 3px solid transparent;
+            transition: all 0.25s ease;
+        }
+        .sidebar ul li a:hover { background: rgba(255,255,255,0.1); color: #fff; border-left-color: #b9f6ca; }
+        .sidebar ul li a.active { background: linear-gradient(90deg, rgba(185,246,202,0.2), rgba(185,246,202,0.05)); color: #b9f6ca; border-left-color: #b9f6ca; font-weight: 600; }
+        .sidebar ul li a .score-badge {
+            float: right; background: rgba(255,255,255,0.2); color: #b9f6ca;
+            font-size: 0.75em; padding: 1px 7px; border-radius: 10px;
+        }
+        .sidebar ul li.hidden { display: none; }
+        .sidebar::-webkit-scrollbar { width: 6px; }
+        .sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
+
+        .global-progress { padding: 10px 18px; margin-bottom: 5px; }
+        .progress-bar-bg { background: rgba(255,255,255,0.15); border-radius: 10px; height: 8px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #b9f6ca, #00c853); border-radius: 10px; transition: width 0.5s ease; width: 0%; }
+        .progress-text { color: rgba(255,255,255,0.8); font-size: 0.7em; margin-top: 4px; text-align: center; }
+
+        .main-content { margin-left: 270px; flex: 1; padding: 25px 35px; max-width: 1100px; }
+        .page { display: none; }
+        .page.active { display: block; }
+
+        .lesson-header {
+            background: linear-gradient(135deg, #00c853 0%, #1b5e20 100%);
+            padding: 18px 24px; margin-bottom: 18px; border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,200,83,0.3);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .lesson-header h2 { color: #fff; font-size: 1.3em; }
+        .lesson-score { color: #fff; font-size: 0.9em; background: rgba(255,255,255,0.2); padding: 5px 14px; border-radius: 20px; }
+
+        .tabs-container { display: flex; gap: 0; border-bottom: 3px solid #c8e6c9; }
+        .tab-btn {
+            padding: 11px 24px; border: none; background: #f5f5f5; color: #666;
+            font-size: 0.92em; font-weight: 600; cursor: pointer;
+            border-radius: 10px 10px 0 0; transition: all 0.3s;
+            border: 1px solid #e0e0e0; border-bottom: none; margin-right: 4px;
+        }
+        .tab-btn:hover { background: #e8f5e9; color: #2e7d32; }
+        .tab-btn.active { background: #fff; color: #2e7d32; border-color: #a5d6a7; position: relative; }
+        .tab-btn.active::after { content: ''; position: absolute; bottom: -3px; left: 0; right: 0; height: 3px; background: #fff; }
+
+        .tab-content {
+            display: none; background: #fff; border: 1px solid #e0e0e0; border-top: none;
+            border-radius: 0 0 12px 12px; padding: 22px; min-height: 350px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+        }
+        .tab-content.active { display: block; }
+
+        .concepts p { margin-bottom: 12px; padding: 11px 15px; border-left: 3px solid #00c853; background: #fafafa; border-radius: 0 8px 8px 0; font-size: 0.93em; }
+        .key-points ul { list-style: none; padding: 0; }
+        .key-points ul li {
+            padding: 11px 15px; margin-bottom: 8px; background: linear-gradient(135deg, #e8f5e9, #f1f8e9);
+            border-radius: 8px; border-left: 4px solid #00c853; font-size: 0.93em;
+            transition: transform 0.2s;
+        }
+        .key-points ul li:hover { transform: translateX(4px); }
+        .key-points ul li strong { color: #1b5e20; }
+
+        .qcm-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .qcm-score-display { font-size: 0.9em; color: #2e7d32; font-weight: 600; }
+        .btn-reset {
+            background: #ff5252; color: white; border: none; padding: 7px 16px;
+            border-radius: 18px; cursor: pointer; font-size: 0.82em; transition: all 0.2s;
+        }
+        .btn-reset:hover { background: #d32f2f; transform: scale(1.05); }
+
+        .qcm-question { margin-bottom: 18px; padding: 16px; background: #fafafa; border-radius: 10px; border: 1px solid #e8e8e8; }
+        .qcm-question.answered-correct { border-color: #66bb6a; background: #f1f8f1; }
+        .qcm-question.answered-wrong { border-color: #ef5350; background: #fff5f5; }
+        .qcm-question p.q-text { font-weight: 600; margin-bottom: 12px; color: #1b5e20; font-size: 0.92em; }
+        .qcm-options { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; }
+        .qcm-option { display: flex; align-items: center; padding: 7px 10px; border-radius: 6px; cursor: pointer; transition: background 0.2s; font-size: 0.88em; }
+        .qcm-option:hover { background: #e8f5e9; }
+        .qcm-option input[type="radio"] { margin-right: 8px; accent-color: #00c853; width: 15px; height: 15px; }
+        .qcm-option label { cursor: pointer; flex: 1; }
+
+        .btn-validate {
+            background: linear-gradient(135deg, #00c853, #1b5e20); color: white; border: none;
+            padding: 8px 20px; border-radius: 18px; cursor: pointer; font-size: 0.85em;
+            margin-top: 8px; transition: transform 0.2s; box-shadow: 0 3px 10px rgba(0,200,83,0.3);
+        }
+        .btn-validate:hover { transform: translateY(-2px); }
+        .feedback { display: none; margin-top: 8px; padding: 10px; border-radius: 8px; font-size: 0.85em; line-height: 1.5; }
+        .feedback.correct { background: linear-gradient(135deg, #e8f5e9, #c8e6c9); border: 1px solid #66bb6a; color: #1B5E20; }
+        .feedback.incorrect { background: linear-gradient(135deg, #fce4ec, #ffcdd2); border: 1px solid #ef5350; color: #b71c1c; }
+
+        /* Exam Mode */
+        .exam-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); z-index: 500; justify-content: center; align-items: center;
+        }
+        .exam-overlay.active { display: flex; }
+        .exam-container {
+            background: #fff; width: 90%; max-width: 800px; max-height: 90vh;
+            border-radius: 16px; padding: 30px; overflow-y: auto; position: relative;
+        }
+        .exam-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #c8e6c9; }
+        .exam-header h2 { color: #1b5e20; font-size: 1.3em; }
+        .exam-timer { font-size: 1.3em; font-weight: 700; color: #d32f2f; background: #fce4ec; padding: 8px 18px; border-radius: 25px; }
+        .exam-timer.warning { animation: pulse 1s infinite; }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .exam-question { margin-bottom: 20px; padding: 15px; background: #fafafa; border-radius: 10px; border: 1px solid #e0e0e0; }
+        .exam-question p { font-weight: 600; margin-bottom: 10px; color: #1a1a1a; font-size: 0.92em; }
+        .exam-options { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; }
+        .exam-option { display: flex; align-items: center; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 0.88em; }
+        .exam-option:hover { background: #e8f5e9; }
+        .exam-option input { margin-right: 8px; accent-color: #00c853; }
+        .btn-submit-exam {
+            display: block; margin: 20px auto 0; background: linear-gradient(135deg, #00c853, #1b5e20);
+            color: #fff; border: none; padding: 12px 40px; border-radius: 25px;
+            font-size: 1em; font-weight: 600; cursor: pointer; transition: transform 0.2s;
+        }
+        .btn-submit-exam:hover { transform: scale(1.05); }
+        .exam-result { text-align: center; padding: 30px; }
+        .exam-result .score-big { font-size: 3em; font-weight: 700; color: #1b5e20; }
+        .exam-result .score-text { font-size: 1.1em; color: #666; margin-top: 10px; }
+        .btn-close-exam { position: absolute; top: 15px; right: 20px; background: none; border: none; font-size: 1.5em; cursor: pointer; color: #999; }
+        .btn-start-exam {
+            display: block; margin: 15px auto; background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: #fff; border: none; padding: 12px 30px; border-radius: 25px;
+            font-size: 0.95em; font-weight: 600; cursor: pointer; transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(238,90,36,0.3);
+        }
+        .btn-start-exam:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(238,90,36,0.4); }
+
+        /* Cheat Sheet */
+        .cheat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .cheat-card { background: #fff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 15px; }
+        .cheat-card h4 { color: #2e7d32; margin-bottom: 8px; font-size: 0.95em; border-bottom: 2px solid #c8e6c9; padding-bottom: 5px; }
+        .cheat-card code { display: block; background: #1a1a2e; color: #a5d6a7; padding: 8px 12px; border-radius: 6px; font-size: 0.8em; margin: 4px 0; white-space: pre-wrap; }
+        .cheat-card ul { padding-left: 16px; font-size: 0.85em; }
+        .cheat-card li { margin-bottom: 3px; }
+
+        /* Pipeline Diagram */
+        .pipeline-diagram { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 0; padding: 20px 10px; margin: 15px 0; }
+        .pipeline-stage {
+            background: linear-gradient(135deg, #00c853, #1b5e20); color: #fff;
+            padding: 12px 18px; border-radius: 8px; font-size: 0.82em; font-weight: 600;
+            text-align: center; min-width: 90px; position: relative;
+            box-shadow: 0 3px 10px rgba(0,200,83,0.3); transition: transform 0.2s;
+        }
+        .pipeline-stage:hover { transform: scale(1.08); }
+        .pipeline-stage small { display: block; font-weight: 400; opacity: 0.8; font-size: 0.85em; }
+        .pipeline-arrow { color: #2e7d32; font-size: 1.4em; margin: 0 6px; }
+
+        /* Bonus */
+        .bonus-section h2 { color:#fff; font-size:1.3em; background:linear-gradient(135deg,#00c853,#1b5e20); padding:16px 22px; border-radius:12px; margin-bottom:18px; }
+        .bonus-section h3 { color:#1b5e20; margin:20px 0 8px; padding-left:10px; border-left:3px solid #00c853; }
+        .bonus-section ul { padding-left:18px; margin-bottom:12px; }
+        .bonus-section li { margin-bottom:6px; font-size:0.92em; }
+        .code-block { background:linear-gradient(135deg,#1a1a2e,#16213e); color:#a5d6a7; padding:14px 18px; border-radius:8px; font-family:Consolas,monospace; font-size:0.82em; overflow-x:auto; margin:8px 0 15px; white-space:pre-wrap; border:1px solid #0f3460; }
+
+        /* Next Lesson Button */
+        .next-lesson-container { text-align: center; margin-top: 25px; padding-top: 20px; border-top: 2px dashed #e0e0e0; }
+        .btn-next-lesson {
+            background: linear-gradient(135deg, #00c853, #1b5e20); color: #fff; border: none;
+            padding: 14px 32px; border-radius: 30px; font-size: 0.95em; font-weight: 600;
+            cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(0,200,83,0.3);
+            display: inline-flex; align-items: center; gap: 8px;
+        }
+        .btn-next-lesson:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,200,83,0.4); }
+
+        /* Mobile */
+        .burger-btn { display:none; position:fixed; top:12px; left:12px; z-index:200; background:linear-gradient(135deg,#00c853,#1b5e20); border:none; border-radius:10px; padding:10px 12px; cursor:pointer; flex-direction:column; gap:5px; }
+        .burger-btn span { display:block; width:22px; height:3px; background:white; border-radius:2px; transition:transform 0.3s,opacity 0.3s; }
+        .burger-btn.active span:nth-child(1) { transform:rotate(45deg) translate(5px,6px); }
+        .burger-btn.active span:nth-child(2) { opacity:0; }
+        .burger-btn.active span:nth-child(3) { transform:rotate(-45deg) translate(5px,-6px); }
+        .overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.3); z-index:90; }
+        @media (max-width:900px) {
+            .burger-btn { display:flex; }
+            .sidebar { left:-280px; transition:left 0.3s; z-index:150; }
+            .sidebar.open { left:0; }
+            .overlay.visible { display:block; }
+            .main-content { margin-left:0; padding:18px 12px; padding-top:55px; }
+            .qcm-options,.exam-options { grid-template-columns:1fr; }
+            .cheat-grid { grid-template-columns:1fr; }
+            .pipeline-diagram { flex-direction:column; }
+            .pipeline-arrow { transform:rotate(90deg); }
+        }
+    </style>
+</head>
+<body>
+    <button class="burger-btn" id="burgerBtn" onclick="toggleMobile()"><span></span><span></span><span></span></button>
+    <div class="overlay" id="overlay" onclick="closeMobile()"></div>
+
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h1>IA pour DevOps - Revision</h1>
+            <p>Formation Intelligence Artificielle</p>
+        </div>
+        <div class="global-progress">
+            <div class="progress-bar-bg"><div class="progress-bar-fill" id="globalProgressBar"></div></div>
+            <div class="progress-text" id="globalProgressText">0% complete</div>
+        </div>
+        <div class="search-box"><input type="text" id="searchInput" placeholder="Rechercher..." oninput="filterNav()"></div>
+        <ul id="navList">
+            <li><a href="#" class="nav-link active" onclick="showPage('p1',this)">1. Problematique <span class="score-badge" id="badge-p1">-</span></a></li>
+            <li><a href="#" class="nav-link" onclick="showPage('p2',this)">2. Qu'est-ce qu'un LLM <span class="score-badge" id="badge-p2">-</span></a></li>
+            <li><a href="#" class="nav-link" onclick="showPage('p3',this)">3. IA gen. vs Agent vs Agentique <span class="score-badge" id="badge-p3">-</span></a></li>
+            <li><a href="#" class="nav-link" onclick="showPage('p4',this)">4. Prompt Engineering <span class="score-badge" id="badge-p4">-</span></a></li>
+            <li><a href="#" class="nav-link" onclick="showPage('p5',this)">5. Invoquer un LLM via script <span class="score-badge" id="badge-p5">-</span></a></li>
+            <li><a href="#" class="nav-link" onclick="showPage('p6',this)">6. RAG <span class="score-badge" id="badge-p6">-</span></a></li>
+            <li><a href="#" class="nav-link" onclick="showPage('p7',this)">7. AI Pair Programming <span class="score-badge" id="badge-p7">-</span></a></li>
+            <li><a href="#" class="nav-link" onclick="showPage('p8',this)">8. Agents IA pour DevOps <span class="score-badge" id="badge-p8">-</span></a></li>
+            <li><a href="#" class="nav-link" onclick="showPage('p9',this)">9. AIOps <span class="score-badge" id="badge-p9">-</span></a></li>
+            <li><a href="#" class="nav-link" onclick="showPage('cheatsheet',this)">Cheat Sheet</a></li>
+            <li><a href="#" class="nav-link" onclick="showPage('bonus',this)">Bonus</a></li>
+        </ul>
+        <button class="btn-start-exam" onclick="startExam()">Mode Examen (10 min)</button>
+    </nav>
+
+    <div class="main-content">
+
+<!-- PAGE 1 -->
+<div class="page active" id="p1">
+    <div class="lesson-header"><h2>1 - Problematique : pourquoi l'IA dans le DevOps</h2><span class="lesson-score" id="score-p1">0/5</span></div>
+    <div class="tabs-container">
+        <button class="tab-btn active" onclick="switchTab(this,'p1-concepts')">Concepts</button>
+        <button class="tab-btn" onclick="switchTab(this,'p1-keys')">Points Cles</button>
+        <button class="tab-btn" onclick="switchTab(this,'p1-qcm')">QCM</button>
+    </div>
+    <div class="tab-content active" id="p1-concepts">
+        <div class="concepts">
+            <p><strong>La complexite croissante des systemes :</strong> Les infrastructures modernes comptent des centaines de microservices, des milliers de conteneurs et des millions de lignes de logs par jour. Un humain ne peut plus tout surveiller manuellement. L'IA devient indispensable pour gerer cette complexite a grande echelle.</p>
+            <p><strong>L'automatisation intelligente :</strong> Le DevOps classique automatise des taches repetitives via des scripts et des pipelines CI/CD. L'IA va plus loin : elle permet une automatisation INTELLIGENTE qui s'adapte au contexte, apprend des erreurs passees et prend des decisions autonomes (ex: auto-scaling predictif, detection d'anomalies).</p>
+            <p><strong>Le volume de donnees et de logs :</strong> Une application cloud genere des teraoctets de logs, metriques et traces. L'IA peut analyser ces donnees en temps reel pour detecter des patterns invisibles a l'oeil humain : correlations entre metriques, predictions de pannes, identification de causes racines (root cause analysis).</p>
+            <p><strong>Les cas d'usage principaux :</strong> 1) Generation de code/config (Dockerfile, Terraform, pipelines). 2) Analyse intelligente des logs et incidents. 3) Optimisation des performances et des couts cloud. 4) Securite proactive (detection de vulnerabilites). 5) Documentation automatique. 6) Chatbots ops pour le support L1/L2.</p>
+            <p><strong>Le paradigme shift :</strong> On passe du "Infrastructure as Code" (IaC) au "Infrastructure as Intent" : au lieu d'ecrire comment deployer, on decrit CE QU'ON VEUT et l'IA genere le code necessaire. L'ingenieur DevOps devient un "orchestrateur d'IA" qui valide et supervise les decisions automatiques.</p>
+        </div>
+    </div>
+    <div class="tab-content" id="p1-keys">
+        <div class="key-points"><ul>
+            <li><strong>Complexite croissante = besoin d'IA.</strong> Microservices, conteneurs, millions de logs/jour.</li>
+            <li><strong>Automatisation intelligente vs scripte.</strong> L'IA s'adapte, apprend, decide.</li>
+            <li><strong>Volume de donnees intraitable humainement.</strong> Teraoctets de metriques/logs/traces.</li>
+            <li><strong>6 cas d'usage IA dans DevOps.</strong> Code gen, logs, perf, secu, docs, chatbots.</li>
+            <li><strong>IaC vers Infrastructure as Intent.</strong> Decrire l'intention, l'IA genere le code.</li>
+        </ul></div>
+    </div>
+    <div class="tab-content" id="p1-qcm">
+        <div class="qcm-header"><span class="qcm-score-display" id="qcm-score-p1">Score: 0/5</span><button class="btn-reset" onclick="resetQcm('p1')">Recommencer</button></div>
+        <div class="qcm-grid" id="qcm-p1">
+            <div class="qcm-question" data-page="p1"><p class="q-text">1) Pourquoi l'intelligence artificielle devient-elle indispensable dans le DevOps moderne ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q1-1" value="a" id="q1-1a"><label for="q1-1a">Pour remplacer tous les ingenieurs</label></div><div class="qcm-option"><input type="radio" name="q1-1" value="b" id="q1-1b"><label for="q1-1b">A cause de la complexite croissante et du volume de donnees</label></div><div class="qcm-option"><input type="radio" name="q1-1" value="c" id="q1-1c"><label for="q1-1c">Pour reduire le nombre de serveurs</label></div><div class="qcm-option"><input type="radio" name="q1-1" value="d" id="q1-1d"><label for="q1-1d">Uniquement pour la mode technologique</label></div></div><button class="btn-validate" onclick="checkAnswer('q1-1','b',this,'p1')">Valider</button><div class="feedback"></div></div>
+            <div class="qcm-question" data-page="p1"><p class="q-text">2) Quelle est la difference principale entre l'automatisation classique et l'automatisation intelligente par IA ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q1-2" value="a" id="q1-2a"><label for="q1-2a">L'IA est plus lente mais plus sure</label></div><div class="qcm-option"><input type="radio" name="q1-2" value="b" id="q1-2b"><label for="q1-2b">L'IA s'adapte au contexte et apprend des erreurs passees</label></div><div class="qcm-option"><input type="radio" name="q1-2" value="c" id="q1-2c"><label for="q1-2c">L'IA ne necessite aucune supervision</label></div><div class="qcm-option"><input type="radio" name="q1-2" value="d" id="q1-2d"><label for="q1-2d">Il n'y a aucune difference</label></div></div><button class="btn-validate" onclick="checkAnswer('q1-2','b',this,'p1')">Valider</button><div class="feedback"></div></div>
+            <div class="qcm-question" data-page="p1"><p class="q-text">3) Que signifie le concept d'Infrastructure as Intent dans le contexte de l'IA pour DevOps ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q1-3" value="a" id="q1-3a"><label for="q1-3a">Ecrire du code Terraform manuellement</label></div><div class="qcm-option"><input type="radio" name="q1-3" value="b" id="q1-3b"><label for="q1-3b">Decrire ce qu'on veut et l'IA genere le code necessaire</label></div><div class="qcm-option"><input type="radio" name="q1-3" value="c" id="q1-3c"><label for="q1-3c">Supprimer toute infrastructure</label></div><div class="qcm-option"><input type="radio" name="q1-3" value="d" id="q1-3d"><label for="q1-3d">Utiliser uniquement du serverless</label></div></div><button class="btn-validate" onclick="checkAnswer('q1-3','b',this,'p1')">Valider</button><div class="feedback"></div></div>
+            <div class="qcm-question" data-page="p1"><p class="q-text">4) Quel type d'analyse l'IA peut-elle effectuer sur les logs que l'humain ne peut pas faire manuellement ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q1-4" value="a" id="q1-4a"><label for="q1-4a">Lire les logs un par un</label></div><div class="qcm-option"><input type="radio" name="q1-4" value="b" id="q1-4b"><label for="q1-4b">Supprimer les logs anciens</label></div><div class="qcm-option"><input type="radio" name="q1-4" value="c" id="q1-4c"><label for="q1-4c">Detecter des correlations et predire des pannes en temps reel</label></div><div class="qcm-option"><input type="radio" name="q1-4" value="d" id="q1-4d"><label for="q1-4d">Compresser les fichiers de logs</label></div></div><button class="btn-validate" onclick="checkAnswer('q1-4','c',this,'p1')">Valider</button><div class="feedback"></div></div>
+            <div class="qcm-question" data-page="p1"><p class="q-text">5) Comment evolue le role de l'ingenieur DevOps avec l'introduction de l'IA ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q1-5" value="a" id="q1-5a"><label for="q1-5a">Il disparait completement</label></div><div class="qcm-option"><input type="radio" name="q1-5" value="b" id="q1-5b"><label for="q1-5b">Il devient un orchestrateur d'IA qui valide et supervise</label></div><div class="qcm-option"><input type="radio" name="q1-5" value="c" id="q1-5c"><label for="q1-5c">Il ne code plus jamais</label></div><div class="qcm-option"><input type="radio" name="q1-5" value="d" id="q1-5d"><label for="q1-5d">Il ne fait que du monitoring</label></div></div><button class="btn-validate" onclick="checkAnswer('q1-5','b',this,'p1')">Valider</button><div class="feedback"></div></div>
+        </div>
+        <div class="next-lesson-container"><button class="btn-next-lesson" onclick="goToNextPage('p2')">Lecon suivante &#10132; 2. Qu'est-ce qu'un LLM</button></div>
+    </div>
+</div>
+
+<!-- PAGE 2 -->
+<div class="page" id="p2">
+    <div class="lesson-header"><h2>2 - Qu'est-ce qu'un LLM (Large Language Model)</h2><span class="lesson-score" id="score-p2">0/5</span></div>
+    <div class="tabs-container"><button class="tab-btn active" onclick="switchTab(this,'p2-concepts')">Concepts</button><button class="tab-btn" onclick="switchTab(this,'p2-keys')">Points Cles</button><button class="tab-btn" onclick="switchTab(this,'p2-qcm')">QCM</button></div>
+    <div class="tab-content active" id="p2-concepts"><div class="concepts">
+        <p><strong>Definition d'un LLM :</strong> Un Large Language Model est un reseau de neurones massif (des milliards de parametres) entraine sur d'enormes corpus de texte. Il apprend les patterns statistiques du langage pour generer du texte coherent, repondre a des questions, ecrire du code, etc. Exemples : GPT-4 (OpenAI), Claude (Anthropic), Llama (Meta), Mistral (Mistral AI).</p>
+        <p><strong>Architecture Transformer :</strong> Tous les LLMs modernes sont bases sur l'architecture Transformer (2017, Google "Attention is All You Need"). Le mecanisme d'attention permet au modele de comprendre les relations entre TOUS les mots d'une phrase simultanement, contrairement aux anciens modeles sequentiels (RNN/LSTM).</p>
+        <p><strong>Tokens :</strong> Un LLM ne traite pas des mots mais des tokens (sous-unites de mots). "Deploiement" = ["Deploy", "ement"]. Un token represente environ 4 caracteres en anglais, 3 en francais. La "context window" (fenetre de contexte) est le nombre maximum de tokens que le modele peut traiter en une fois (ex: GPT-4 = 128K tokens, Claude = 200K tokens).</p>
+        <p><strong>Phases d'entrainement :</strong> 1) Pre-training : le modele apprend le langage sur des milliards de pages web (cout: millions de dollars, des mois de calcul). 2) Fine-tuning : on specialise le modele sur un domaine precis (ex: code, medecine). 3) RLHF (Reinforcement Learning from Human Feedback) : des humains evaluent les reponses pour ameliorer la qualite et la securite.</p>
+        <p><strong>Parametres cles :</strong> Temperature (0-2) : controle la creativite. 0 = deterministe/factuel, 1 = creatif, 2 = imprevisible. Top-p (nucleus sampling) : limite le vocabulaire considere. Max tokens : nombre maximum de tokens en sortie. Pour le DevOps, on utilise generalement temperature=0 ou 0.1 pour des reponses precises et reproductibles.</p>
+    </div></div>
+    <div class="tab-content" id="p2-keys"><div class="key-points"><ul>
+        <li><strong>LLM = reseau de neurones massif</strong> entraine sur des milliards de textes.</li>
+        <li><strong>Transformer + Attention</strong> = comprendre les relations entre tous les mots.</li>
+        <li><strong>Token = sous-unite de mot</strong> (~4 chars EN, ~3 chars FR).</li>
+        <li><strong>Context window = memoire</strong> (128K-200K tokens pour les meilleurs).</li>
+        <li><strong>Temperature 0 pour DevOps</strong> = reponses precises et reproductibles.</li>
+    </ul></div></div>
+    <div class="tab-content" id="p2-qcm"><div class="qcm-header"><span class="qcm-score-display" id="qcm-score-p2">Score: 0/5</span><button class="btn-reset" onclick="resetQcm('p2')">Recommencer</button></div><div class="qcm-grid" id="qcm-p2">
+        <div class="qcm-question" data-page="p2"><p class="q-text">1) Quelle architecture est a la base de tous les LLMs modernes comme GPT-4 et Claude ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q2-1" value="a" id="q2-1a"><label for="q2-1a">RNN (Recurrent Neural Network)</label></div><div class="qcm-option"><input type="radio" name="q2-1" value="b" id="q2-1b"><label for="q2-1b">Transformer avec mecanisme d'attention</label></div><div class="qcm-option"><input type="radio" name="q2-1" value="c" id="q2-1c"><label for="q2-1c">CNN (Convolutional Neural Network)</label></div><div class="qcm-option"><input type="radio" name="q2-1" value="d" id="q2-1d"><label for="q2-1d">LSTM (Long Short-Term Memory)</label></div></div><button class="btn-validate" onclick="checkAnswer('q2-1','b',this,'p2')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p2"><p class="q-text">2) Que represente un token dans le contexte des LLMs ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q2-2" value="a" id="q2-2a"><label for="q2-2a">Un mot complet uniquement</label></div><div class="qcm-option"><input type="radio" name="q2-2" value="b" id="q2-2b"><label for="q2-2b">Une phrase entiere</label></div><div class="qcm-option"><input type="radio" name="q2-2" value="c" id="q2-2c"><label for="q2-2c">Une sous-unite de mot (environ 4 caracteres)</label></div><div class="qcm-option"><input type="radio" name="q2-2" value="d" id="q2-2d"><label for="q2-2d">Un caractere unique</label></div></div><button class="btn-validate" onclick="checkAnswer('q2-2','c',this,'p2')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p2"><p class="q-text">3) Quelle valeur de temperature est recommandee pour des taches DevOps necessitant precision et reproductibilite ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q2-3" value="a" id="q2-3a"><label for="q2-3a">Temperature = 2 (maximum de creativite)</label></div><div class="qcm-option"><input type="radio" name="q2-3" value="b" id="q2-3b"><label for="q2-3b">Temperature = 1 (equilibre)</label></div><div class="qcm-option"><input type="radio" name="q2-3" value="c" id="q2-3c"><label for="q2-3c">Temperature = 0 ou 0.1 (deterministe)</label></div><div class="qcm-option"><input type="radio" name="q2-3" value="d" id="q2-3d"><label for="q2-3d">Temperature = 1.5 (tres creatif)</label></div></div><button class="btn-validate" onclick="checkAnswer('q2-3','c',this,'p2')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p2"><p class="q-text">4) Que designe la context window d'un LLM ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q2-4" value="a" id="q2-4a"><label for="q2-4a">Le nombre maximum de tokens traitables en une seule requete</label></div><div class="qcm-option"><input type="radio" name="q2-4" value="b" id="q2-4b"><label for="q2-4b">La taille de l'ecran de l'interface</label></div><div class="qcm-option"><input type="radio" name="q2-4" value="c" id="q2-4c"><label for="q2-4c">Le temps de reponse maximum</label></div><div class="qcm-option"><input type="radio" name="q2-4" value="d" id="q2-4d"><label for="q2-4d">Le nombre de requetes par minute</label></div></div><button class="btn-validate" onclick="checkAnswer('q2-4','a',this,'p2')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p2"><p class="q-text">5) Quelle etape d'entrainement permet de specialiser un LLM sur un domaine precis comme le code ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q2-5" value="a" id="q2-5a"><label for="q2-5a">Le pre-training sur des pages web</label></div><div class="qcm-option"><input type="radio" name="q2-5" value="b" id="q2-5b"><label for="q2-5b">Le fine-tuning sur des donnees specifiques</label></div><div class="qcm-option"><input type="radio" name="q2-5" value="c" id="q2-5c"><label for="q2-5c">La tokenization</label></div><div class="qcm-option"><input type="radio" name="q2-5" value="d" id="q2-5d"><label for="q2-5d">Le deploiement en production</label></div></div><button class="btn-validate" onclick="checkAnswer('q2-5','b',this,'p2')">Valider</button><div class="feedback"></div></div>
+    </div>
+        <div class="next-lesson-container"><button class="btn-next-lesson" onclick="goToNextPage('p3')">Lecon suivante &#10132; 3. IA generative vs Agent IA</button></div></div>
+</div>
+
+<!-- PAGE 3 -->
+<div class="page" id="p3">
+    <div class="lesson-header"><h2>3 - IA generative vs Agent IA vs IA agentique</h2><span class="lesson-score" id="score-p3">0/5</span></div>
+    <div class="tabs-container"><button class="tab-btn active" onclick="switchTab(this,'p3-concepts')">Concepts</button><button class="tab-btn" onclick="switchTab(this,'p3-keys')">Points Cles</button><button class="tab-btn" onclick="switchTab(this,'p3-qcm')">QCM</button></div>
+    <div class="tab-content active" id="p3-concepts"><div class="concepts">
+        <p><strong>IA generative :</strong> C'est une IA qui genere du contenu nouveau (texte, code, images) a partir d'un prompt. Elle est REACTIVE : on pose une question, elle repond. Pas de memoire entre les echanges (sauf si on gere le contexte). Exemples : ChatGPT pour generer un Dockerfile, DALL-E pour des diagrammes, Copilot pour du code.</p>
+        <p><strong>Agent IA :</strong> Un agent IA est un systeme qui peut percevoir son environnement, prendre des decisions et agir de maniere autonome. Il a un objectif (goal) et utilise des outils (tools) pour l'atteindre. La boucle fondamentale : Perception (observer) -> Reflexion (raisonner) -> Action (executer). Il peut appeler des API, lire des fichiers, executer des commandes.</p>
+        <p><strong>IA agentique :</strong> L'IA agentique pousse l'autonomie plus loin. Caracteristiques : 1) Boucle iterative : l'agent planifie, execute, observe le resultat, ajuste. 2) Multi-etapes : il decompose un probleme complexe en sous-taches. 3) Utilisation d'outils : il choisit et combine des outils. 4) Multi-agents : plusieurs agents collaborent (ex: un planificateur + un executeur + un verificateur).</p>
+        <p><strong>Exemples DevOps concrets :</strong> IA generative = generer un fichier Terraform. Agent IA = un agent qui detecte une alerte, analyse les logs, identifie la cause et propose un fix. IA agentique = un systeme multi-agents ou un agent monitore, un autre diagnostique, un troisieme corrige automatiquement, et un quatrieme valide la correction.</p>
+        <p><strong>Orchestration multi-agents :</strong> Des frameworks comme CrewAI, AutoGen ou LangGraph permettent de creer des equipes d'agents qui collaborent. Chaque agent a un role specifique (Researcher, Coder, Reviewer). Ils communiquent entre eux pour resoudre des problemes complexes de maniere autonome.</p>
+    </div></div>
+    <div class="tab-content" id="p3-keys"><div class="key-points"><ul>
+        <li><strong>IA generative = reactive, genere du contenu sur demande.</strong></li>
+        <li><strong>Agent IA = percoit + decide + agit avec des outils.</strong></li>
+        <li><strong>IA agentique = autonome, iterative, multi-agents.</strong></li>
+        <li><strong>Boucle : Perception -> Reflexion -> Action.</strong></li>
+        <li><strong>Multi-agents = collaboration entre agents specialises.</strong></li>
+    </ul></div></div>
+    <div class="tab-content" id="p3-qcm"><div class="qcm-header"><span class="qcm-score-display" id="qcm-score-p3">Score: 0/5</span><button class="btn-reset" onclick="resetQcm('p3')">Recommencer</button></div><div class="qcm-grid" id="qcm-p3">
+        <div class="qcm-question" data-page="p3"><p class="q-text">1) Quelle est la caracteristique principale qui distingue un Agent IA d'une IA generative simple ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q3-1" value="a" id="q3-1a"><label for="q3-1a">L'agent genere du texte plus long</label></div><div class="qcm-option"><input type="radio" name="q3-1" value="b" id="q3-1b"><label for="q3-1b">L'agent peut percevoir, decider et agir de maniere autonome</label></div><div class="qcm-option"><input type="radio" name="q3-1" value="c" id="q3-1c"><label for="q3-1c">L'agent est plus rapide</label></div><div class="qcm-option"><input type="radio" name="q3-1" value="d" id="q3-1d"><label for="q3-1d">L'agent ne fait pas d'erreurs</label></div></div><button class="btn-validate" onclick="checkAnswer('q3-1','b',this,'p3')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p3"><p class="q-text">2) Quelle est la boucle fondamentale de fonctionnement d'un agent IA ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q3-2" value="a" id="q3-2a"><label for="q3-2a">Input -> Output -> Fin</label></div><div class="qcm-option"><input type="radio" name="q3-2" value="b" id="q3-2b"><label for="q3-2b">Perception -> Reflexion -> Action</label></div><div class="qcm-option"><input type="radio" name="q3-2" value="c" id="q3-2c"><label for="q3-2c">Build -> Test -> Deploy</label></div><div class="qcm-option"><input type="radio" name="q3-2" value="d" id="q3-2d"><label for="q3-2d">Read -> Write -> Delete</label></div></div><button class="btn-validate" onclick="checkAnswer('q3-2','b',this,'p3')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p3"><p class="q-text">3) Que permet l'orchestration multi-agents dans un contexte DevOps ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q3-3" value="a" id="q3-3a"><label for="q3-3a">Avoir plusieurs chatbots identiques</label></div><div class="qcm-option"><input type="radio" name="q3-3" value="b" id="q3-3b"><label for="q3-3b">Des agents specialises qui collaborent pour resoudre des problemes complexes</label></div><div class="qcm-option"><input type="radio" name="q3-3" value="c" id="q3-3c"><label for="q3-3c">Reduire le cout des API</label></div><div class="qcm-option"><input type="radio" name="q3-3" value="d" id="q3-3d"><label for="q3-3d">Eviter d'utiliser des outils</label></div></div><button class="btn-validate" onclick="checkAnswer('q3-3','b',this,'p3')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p3"><p class="q-text">4) Quel framework permet de creer des equipes d'agents IA collaboratifs ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q3-4" value="a" id="q3-4a"><label for="q3-4a">Docker Compose</label></div><div class="qcm-option"><input type="radio" name="q3-4" value="b" id="q3-4b"><label for="q3-4b">Kubernetes</label></div><div class="qcm-option"><input type="radio" name="q3-4" value="c" id="q3-4c"><label for="q3-4c">CrewAI / AutoGen / LangGraph</label></div><div class="qcm-option"><input type="radio" name="q3-4" value="d" id="q3-4d"><label for="q3-4d">Jenkins Pipeline</label></div></div><button class="btn-validate" onclick="checkAnswer('q3-4','c',this,'p3')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p3"><p class="q-text">5) Comment une IA agentique gere-t-elle un probleme complexe en DevOps ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q3-5" value="a" id="q3-5a"><label for="q3-5a">Elle genere une seule reponse et s'arrete</label></div><div class="qcm-option"><input type="radio" name="q3-5" value="b" id="q3-5b"><label for="q3-5b">Elle decompose en sous-taches, execute, observe et ajuste iterativement</label></div><div class="qcm-option"><input type="radio" name="q3-5" value="c" id="q3-5c"><label for="q3-5c">Elle attend qu'un humain fasse chaque etape</label></div><div class="qcm-option"><input type="radio" name="q3-5" value="d" id="q3-5d"><label for="q3-5d">Elle copie les solutions de StackOverflow</label></div></div><button class="btn-validate" onclick="checkAnswer('q3-5','b',this,'p3')">Valider</button><div class="feedback"></div></div>
+    </div>
+        <div class="next-lesson-container"><button class="btn-next-lesson" onclick="goToNextPage('p4')">Lecon suivante &#10132; 4. Prompt Engineering</button></div></div>
+</div>
+
+<!-- PAGE 4 -->
+<div class="page" id="p4">
+    <div class="lesson-header"><h2>4 - Prompt Engineering</h2><span class="lesson-score" id="score-p4">0/5</span></div>
+    <div class="tabs-container"><button class="tab-btn active" onclick="switchTab(this,'p4-concepts')">Concepts</button><button class="tab-btn" onclick="switchTab(this,'p4-keys')">Points Cles</button><button class="tab-btn" onclick="switchTab(this,'p4-qcm')">QCM</button></div>
+    <div class="tab-content active" id="p4-concepts"><div class="concepts">
+        <p><strong>Qu'est-ce que le Prompt Engineering :</strong> C'est l'art de formuler des instructions (prompts) pour obtenir les meilleurs resultats d'un LLM. Un bon prompt est precis, contextualise et structure. En DevOps, un prompt bien ecrit peut generer un Dockerfile optimise, un pipeline CI/CD complet ou une analyse de logs pertinente.</p>
+        <p><strong>Techniques fondamentales :</strong> 1) Zero-shot : on demande directement sans exemple ("Genere un Dockerfile pour Python 3.11"). 2) Few-shot : on donne des exemples avant la question ("Voici 2 Dockerfiles bien ecrits, genere le mien"). 3) Chain-of-thought : on demande au modele de raisonner etape par etape ("Explique ton raisonnement avant de generer la config").</p>
+        <p><strong>Roles system/user/assistant :</strong> Dans les API de LLMs, on definit 3 roles : System (instructions de comportement, ex: "Tu es un expert DevOps senior"), User (la question de l'utilisateur), Assistant (la reponse du modele). Le message system cadre le comportement global et persiste tout au long de la conversation.</p>
+        <p><strong>Templates DevOps :</strong> Exemples de prompts efficaces : "En tant qu'expert Docker, genere un Dockerfile multi-stage pour une application Python Flask avec: base slim, user non-root, healthcheck, et .dockerignore". Ou encore : "Analyse ce log d'erreur Kubernetes et propose 3 solutions classees par probabilite".</p>
+        <p><strong>Limites et hallucinations :</strong> Les LLMs peuvent generer des informations fausses mais convaincantes (hallucinations). En DevOps, cela peut signifier : des commandes inexistantes, des options invalides, des configurations dangereuses. TOUJOURS valider le code genere (review, tests, sandbox) avant la mise en production.</p>
+    </div></div>
+    <div class="tab-content" id="p4-keys"><div class="key-points"><ul>
+        <li><strong>Zero-shot = pas d'exemple, Few-shot = avec exemples.</strong></li>
+        <li><strong>Chain-of-thought = raisonnement etape par etape.</strong></li>
+        <li><strong>System role = cadrer le comportement du modele.</strong></li>
+        <li><strong>Templates DevOps = prompts pre-structures efficaces.</strong></li>
+        <li><strong>Hallucinations = TOUJOURS valider avant prod.</strong></li>
+    </ul></div></div>
+    <div class="tab-content" id="p4-qcm"><div class="qcm-header"><span class="qcm-score-display" id="qcm-score-p4">Score: 0/5</span><button class="btn-reset" onclick="resetQcm('p4')">Recommencer</button></div><div class="qcm-grid" id="qcm-p4">
+        <div class="qcm-question" data-page="p4"><p class="q-text">1) Quelle technique de prompting consiste a fournir des exemples avant de poser sa question ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q4-1" value="a" id="q4-1a"><label for="q4-1a">Zero-shot prompting</label></div><div class="qcm-option"><input type="radio" name="q4-1" value="b" id="q4-1b"><label for="q4-1b">Few-shot prompting</label></div><div class="qcm-option"><input type="radio" name="q4-1" value="c" id="q4-1c"><label for="q4-1c">Chain-of-thought</label></div><div class="qcm-option"><input type="radio" name="q4-1" value="d" id="q4-1d"><label for="q4-1d">Role prompting</label></div></div><button class="btn-validate" onclick="checkAnswer('q4-1','b',this,'p4')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p4"><p class="q-text">2) A quoi sert le message system dans une API de LLM ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q4-2" value="a" id="q4-2a"><label for="q4-2a">A poser la question de l'utilisateur</label></div><div class="qcm-option"><input type="radio" name="q4-2" value="b" id="q4-2b"><label for="q4-2b">A definir le comportement et le role du modele</label></div><div class="qcm-option"><input type="radio" name="q4-2" value="c" id="q4-2c"><label for="q4-2c">A stocker les reponses precedentes</label></div><div class="qcm-option"><input type="radio" name="q4-2" value="d" id="q4-2d"><label for="q4-2d">A configurer la temperature</label></div></div><button class="btn-validate" onclick="checkAnswer('q4-2','b',this,'p4')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p4"><p class="q-text">3) Que sont les hallucinations dans le contexte des LLMs et pourquoi sont-elles dangereuses en DevOps ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q4-3" value="a" id="q4-3a"><label for="q4-3a">Des erreurs de syntaxe dans le code</label></div><div class="qcm-option"><input type="radio" name="q4-3" value="b" id="q4-3b"><label for="q4-3b">Des informations fausses mais convaincantes pouvant mener a des configs dangereuses</label></div><div class="qcm-option"><input type="radio" name="q4-3" value="c" id="q4-3c"><label for="q4-3c">Des problemes de reseau</label></div><div class="qcm-option"><input type="radio" name="q4-3" value="d" id="q4-3d"><label for="q4-3d">Des temps de reponse trop longs</label></div></div><button class="btn-validate" onclick="checkAnswer('q4-3','b',this,'p4')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p4"><p class="q-text">4) Quelle technique de prompting demande au modele de raisonner etape par etape avant de repondre ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q4-4" value="a" id="q4-4a"><label for="q4-4a">Few-shot</label></div><div class="qcm-option"><input type="radio" name="q4-4" value="b" id="q4-4b"><label for="q4-4b">Zero-shot</label></div><div class="qcm-option"><input type="radio" name="q4-4" value="c" id="q4-4c"><label for="q4-4c">Chain-of-thought (CoT)</label></div><div class="qcm-option"><input type="radio" name="q4-4" value="d" id="q4-4d"><label for="q4-4d">Temperature tuning</label></div></div><button class="btn-validate" onclick="checkAnswer('q4-4','c',this,'p4')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p4"><p class="q-text">5) Quelle bonne pratique faut-il appliquer avant de deployer du code genere par un LLM en production ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q4-5" value="a" id="q4-5a"><label for="q4-5a">Le deployer directement car le LLM ne se trompe jamais</label></div><div class="qcm-option"><input type="radio" name="q4-5" value="b" id="q4-5b"><label for="q4-5b">Toujours valider par review, tests et sandbox</label></div><div class="qcm-option"><input type="radio" name="q4-5" value="c" id="q4-5c"><label for="q4-5c">Augmenter la temperature pour plus de fiabilite</label></div><div class="qcm-option"><input type="radio" name="q4-5" value="d" id="q4-5d"><label for="q4-5d">Redemander au modele si sa reponse est correcte</label></div></div><button class="btn-validate" onclick="checkAnswer('q4-5','b',this,'p4')">Valider</button><div class="feedback"></div></div>
+    </div>
+        <div class="next-lesson-container"><button class="btn-next-lesson" onclick="goToNextPage('p5')">Lecon suivante &#10132; 5. Invoquer un LLM via script</button></div></div>
+</div>
+
+<!-- PAGE 5 -->
+<div class="page" id="p5">
+    <div class="lesson-header"><h2>5 - Invoquer un LLM via script</h2><span class="lesson-score" id="score-p5">0/5</span></div>
+    <div class="tabs-container"><button class="tab-btn active" onclick="switchTab(this,'p5-concepts')">Concepts</button><button class="tab-btn" onclick="switchTab(this,'p5-keys')">Points Cles</button><button class="tab-btn" onclick="switchTab(this,'p5-qcm')">QCM</button></div>
+    <div class="tab-content active" id="p5-concepts"><div class="concepts">
+        <p><strong>API OpenAI / Anthropic :</strong> Les LLMs s'utilisent via des API REST. OpenAI (GPT-4) et Anthropic (Claude) exposent des endpoints HTTP. On envoie un JSON avec les messages et parametres, on recoit la reponse. Authentification par API key (jamais en clair dans le code, toujours en variable d'environnement ou secret manager).</p>
+        <p><strong>Python SDK :</strong> Les SDKs officiels simplifient l'appel. Pour OpenAI : from openai import OpenAI; client = OpenAI(); response = client.chat.completions.create(model="gpt-4", messages=[...]). Pour Anthropic : from anthropic import Anthropic; client = Anthropic(); message = client.messages.create(model="claude-3-opus", messages=[...]).</p>
+        <p><strong>Appels curl (bash) :</strong> On peut aussi invoquer directement en bash avec curl : curl -X POST https://api.openai.com/v1/chat/completions -H "Authorization: Bearer $OPENAI_API_KEY" -d '{"model":"gpt-4","messages":[...]}'. Utile pour les scripts shell et les pipelines CI/CD qui n'ont pas Python.</p>
+        <p><strong>Streaming et tokens/couts :</strong> Le streaming (stream=True) affiche la reponse token par token au lieu d'attendre la reponse complete. Les couts sont factures par token (ex: GPT-4 = ~$30/million tokens input, ~$60/million output). Pour optimiser : prompts concis, caching des reponses, modeles moins chers pour les taches simples.</p>
+        <p><strong>Modeles locaux (Ollama, LM Studio) :</strong> Alternative aux API cloud : executer un LLM sur sa propre machine. Ollama permet de telecharger et lancer des modeles open source (Llama, Mistral, CodeLlama) localement. Avantages : gratuit, pas de donnees envoyees a l'exterieur, pas de latence reseau. Inconvenients : necessite un GPU puissant, modeles moins performants que GPT-4/Claude.</p>
+    </div></div>
+    <div class="tab-content" id="p5-keys"><div class="key-points"><ul>
+        <li><strong>API REST avec authentification par API key.</strong> Jamais en clair dans le code.</li>
+        <li><strong>Python SDK = methode recommandee.</strong> OpenAI et Anthropic ont des SDKs officiels.</li>
+        <li><strong>curl = pour scripts shell et CI/CD.</strong></li>
+        <li><strong>Streaming = reponse progressive token par token.</strong></li>
+        <li><strong>Ollama/LM Studio = modeles locaux, gratuit, prive.</strong></li>
+    </ul></div></div>
+    <div class="tab-content" id="p5-qcm"><div class="qcm-header"><span class="qcm-score-display" id="qcm-score-p5">Score: 0/5</span><button class="btn-reset" onclick="resetQcm('p5')">Recommencer</button></div><div class="qcm-grid" id="qcm-p5">
+        <div class="qcm-question" data-page="p5"><p class="q-text">1) Comment doit-on stocker une cle API pour un LLM dans un projet DevOps ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q5-1" value="a" id="q5-1a"><label for="q5-1a">En dur dans le code source</label></div><div class="qcm-option"><input type="radio" name="q5-1" value="b" id="q5-1b"><label for="q5-1b">Dans un commentaire du fichier</label></div><div class="qcm-option"><input type="radio" name="q5-1" value="c" id="q5-1c"><label for="q5-1c">En variable d'environnement ou secret manager</label></div><div class="qcm-option"><input type="radio" name="q5-1" value="d" id="q5-1d"><label for="q5-1d">Dans le README du projet</label></div></div><button class="btn-validate" onclick="checkAnswer('q5-1','c',this,'p5')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p5"><p class="q-text">2) Quel outil permet d'executer des LLMs open source localement sur sa propre machine ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q5-2" value="a" id="q5-2a"><label for="q5-2a">Docker Hub</label></div><div class="qcm-option"><input type="radio" name="q5-2" value="b" id="q5-2b"><label for="q5-2b">Ollama / LM Studio</label></div><div class="qcm-option"><input type="radio" name="q5-2" value="c" id="q5-2c"><label for="q5-2c">GitHub Actions</label></div><div class="qcm-option"><input type="radio" name="q5-2" value="d" id="q5-2d"><label for="q5-2d">Kubernetes</label></div></div><button class="btn-validate" onclick="checkAnswer('q5-2','b',this,'p5')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p5"><p class="q-text">3) Que permet le mode streaming lors de l'appel a une API de LLM ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q5-3" value="a" id="q5-3a"><label for="q5-3a">Envoyer plusieurs requetes en parallele</label></div><div class="qcm-option"><input type="radio" name="q5-3" value="b" id="q5-3b"><label for="q5-3b">Recevoir la reponse token par token au fur et a mesure</label></div><div class="qcm-option"><input type="radio" name="q5-3" value="c" id="q5-3c"><label for="q5-3c">Reduire le cout de l'appel</label></div><div class="qcm-option"><input type="radio" name="q5-3" value="d" id="q5-3d"><label for="q5-3d">Augmenter la qualite de la reponse</label></div></div><button class="btn-validate" onclick="checkAnswer('q5-3','b',this,'p5')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p5"><p class="q-text">4) Quel est le principal avantage d'utiliser un modele local plutot qu'une API cloud ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q5-4" value="a" id="q5-4a"><label for="q5-4a">Le modele local est toujours plus performant</label></div><div class="qcm-option"><input type="radio" name="q5-4" value="b" id="q5-4b"><label for="q5-4b">Gratuit et donnees privees (pas envoyees a l'exterieur)</label></div><div class="qcm-option"><input type="radio" name="q5-4" value="c" id="q5-4c"><label for="q5-4c">Pas besoin de GPU</label></div><div class="qcm-option"><input type="radio" name="q5-4" value="d" id="q5-4d"><label for="q5-4d">Il n'y a aucun avantage</label></div></div><button class="btn-validate" onclick="checkAnswer('q5-4','b',this,'p5')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p5"><p class="q-text">5) Comment les API de LLMs comme OpenAI facturent-elles l'utilisation ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q5-5" value="a" id="q5-5a"><label for="q5-5a">Par nombre de requetes uniquement</label></div><div class="qcm-option"><input type="radio" name="q5-5" value="b" id="q5-5b"><label for="q5-5b">Par nombre de tokens consommes (input + output)</label></div><div class="qcm-option"><input type="radio" name="q5-5" value="c" id="q5-5c"><label for="q5-5c">Forfait mensuel fixe</label></div><div class="qcm-option"><input type="radio" name="q5-5" value="d" id="q5-5d"><label for="q5-5d">Par temps de calcul en secondes</label></div></div><button class="btn-validate" onclick="checkAnswer('q5-5','b',this,'p5')">Valider</button><div class="feedback"></div></div>
+    </div>
+        <div class="next-lesson-container"><button class="btn-next-lesson" onclick="goToNextPage('p6')">Lecon suivante &#10132; 6. RAG</button></div></div>
+</div>
+
+<!-- PAGE 6 -->
+<div class="page" id="p6">
+    <div class="lesson-header"><h2>6 - RAG (Retrieval Augmented Generation)</h2><span class="lesson-score" id="score-p6">0/5</span></div>
+    <div class="tabs-container"><button class="tab-btn active" onclick="switchTab(this,'p6-concepts')">Concepts</button><button class="tab-btn" onclick="switchTab(this,'p6-keys')">Points Cles</button><button class="tab-btn" onclick="switchTab(this,'p6-qcm')">QCM</button></div>
+    <div class="tab-content active" id="p6-concepts"><div class="concepts">
+        <p><strong>Principe du RAG :</strong> RAG combine un systeme de recherche (Retriever) avec un LLM (Generator). Au lieu de se fier uniquement a la memoire du modele, on cherche d'abord les informations pertinentes dans une base de connaissances, puis on les donne au LLM comme contexte pour generer une reponse precise et a jour.</p>
+        <p><strong>Embeddings (vecteurs) :</strong> Pour rechercher des documents pertinents, on transforme le texte en vecteurs numeriques (embeddings) qui capturent le SENS semantique. Des textes similaires auront des vecteurs proches. Modeles d'embedding : text-embedding-3-small (OpenAI), voyage-3 (Voyage AI), all-MiniLM (open source).</p>
+        <p><strong>Vector Databases :</strong> Les embeddings sont stockes dans des bases de donnees vectorielles optimisees pour la recherche par similarite. Principales solutions : Pinecone (cloud, managed), ChromaDB (open source, leger), Weaviate (open source, features avancees), Qdrant (performant, Rust), pgvector (extension PostgreSQL).</p>
+        <p><strong>Chunking (decoupage) :</strong> Les documents longs doivent etre decoupes en morceaux (chunks) avant d'etre indexes. Strategies : par paragraphe, par nombre de tokens (500-1000), avec overlap (chevauchement) pour ne pas couper les idees. Le choix de la taille de chunk impacte directement la qualite des resultats.</p>
+        <p><strong>Use cases DevOps :</strong> 1) Documentation intelligente : interroger la doc technique avec des questions en langage naturel. 2) Analyse de logs : indexer les logs/erreurs pour trouver des solutions similaires passees. 3) Runbooks dynamiques : retrouver la procedure adaptee a un incident. 4) Onboarding : un chatbot qui repond aux questions sur l'infrastructure interne.</p>
+    </div></div>
+    <div class="tab-content" id="p6-keys"><div class="key-points"><ul>
+        <li><strong>RAG = Retriever + Generator.</strong> Chercher avant de generer.</li>
+        <li><strong>Embeddings = vecteurs semantiques.</strong> Capturer le SENS du texte.</li>
+        <li><strong>Vector DB : Pinecone, Chroma, Weaviate, Qdrant.</strong></li>
+        <li><strong>Chunking = decoupage en morceaux avec overlap.</strong></li>
+        <li><strong>DevOps : doc intelligente, analyse de logs, runbooks.</strong></li>
+    </ul></div></div>
+    <div class="tab-content" id="p6-qcm"><div class="qcm-header"><span class="qcm-score-display" id="qcm-score-p6">Score: 0/5</span><button class="btn-reset" onclick="resetQcm('p6')">Recommencer</button></div><div class="qcm-grid" id="qcm-p6">
+        <div class="qcm-question" data-page="p6"><p class="q-text">1) Quel est le principe fondamental du RAG (Retrieval Augmented Generation) ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q6-1" value="a" id="q6-1a"><label for="q6-1a">Entrainer un nouveau modele pour chaque question</label></div><div class="qcm-option"><input type="radio" name="q6-1" value="b" id="q6-1b"><label for="q6-1b">Chercher des informations pertinentes puis les donner au LLM comme contexte</label></div><div class="qcm-option"><input type="radio" name="q6-1" value="c" id="q6-1c"><label for="q6-1c">Augmenter la taille du modele</label></div><div class="qcm-option"><input type="radio" name="q6-1" value="d" id="q6-1d"><label for="q6-1d">Utiliser plusieurs LLMs en parallele</label></div></div><button class="btn-validate" onclick="checkAnswer('q6-1','b',this,'p6')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p6"><p class="q-text">2) Que sont les embeddings dans le contexte du RAG ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q6-2" value="a" id="q6-2a"><label for="q6-2a">Des fichiers compresses</label></div><div class="qcm-option"><input type="radio" name="q6-2" value="b" id="q6-2b"><label for="q6-2b">Des vecteurs numeriques capturant le sens semantique du texte</label></div><div class="qcm-option"><input type="radio" name="q6-2" value="c" id="q6-2c"><label for="q6-2c">Des images generees par IA</label></div><div class="qcm-option"><input type="radio" name="q6-2" value="d" id="q6-2d"><label for="q6-2d">Des liens hypertextes entre documents</label></div></div><button class="btn-validate" onclick="checkAnswer('q6-2','b',this,'p6')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p6"><p class="q-text">3) Quelle base de donnees est specialisee dans le stockage et la recherche de vecteurs ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q6-3" value="a" id="q6-3a"><label for="q6-3a">MySQL</label></div><div class="qcm-option"><input type="radio" name="q6-3" value="b" id="q6-3b"><label for="q6-3b">MongoDB</label></div><div class="qcm-option"><input type="radio" name="q6-3" value="c" id="q6-3c"><label for="q6-3c">Pinecone / ChromaDB / Weaviate</label></div><div class="qcm-option"><input type="radio" name="q6-3" value="d" id="q6-3d"><label for="q6-3d">Redis</label></div></div><button class="btn-validate" onclick="checkAnswer('q6-3','c',this,'p6')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p6"><p class="q-text">4) Pourquoi faut-il decouper les documents en chunks avant de les indexer ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q6-4" value="a" id="q6-4a"><label for="q6-4a">Pour economiser de l'espace disque</label></div><div class="qcm-option"><input type="radio" name="q6-4" value="b" id="q6-4b"><label for="q6-4b">Pour permettre une recherche precise et respecter les limites de contexte</label></div><div class="qcm-option"><input type="radio" name="q6-4" value="c" id="q6-4c"><label for="q6-4c">Pour accelerer le telechargement</label></div><div class="qcm-option"><input type="radio" name="q6-4" value="d" id="q6-4d"><label for="q6-4d">Pour chiffrer les donnees</label></div></div><button class="btn-validate" onclick="checkAnswer('q6-4','b',this,'p6')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p6"><p class="q-text">5) Quel est un cas d'usage concret du RAG pour les equipes DevOps ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q6-5" value="a" id="q6-5a"><label for="q6-5a">Remplacer les bases de donnees relationnelles</label></div><div class="qcm-option"><input type="radio" name="q6-5" value="b" id="q6-5b"><label for="q6-5b">Un chatbot qui repond aux questions sur la documentation interne et les runbooks</label></div><div class="qcm-option"><input type="radio" name="q6-5" value="c" id="q6-5c"><label for="q6-5c">Generer des images de monitoring</label></div><div class="qcm-option"><input type="radio" name="q6-5" value="d" id="q6-5d"><label for="q6-5d">Compresser les logs</label></div></div><button class="btn-validate" onclick="checkAnswer('q6-5','b',this,'p6')">Valider</button><div class="feedback"></div></div>
+    </div>
+        <div class="next-lesson-container"><button class="btn-next-lesson" onclick="goToNextPage('p7')">Lecon suivante &#10132; 7. AI Pair Programming</button></div></div>
+</div>
+
+<!-- PAGE 7 -->
+<div class="page" id="p7">
+    <div class="lesson-header"><h2>7 - AI Pair Programming</h2><span class="lesson-score" id="score-p7">0/5</span></div>
+    <div class="tabs-container"><button class="tab-btn active" onclick="switchTab(this,'p7-concepts')">Concepts</button><button class="tab-btn" onclick="switchTab(this,'p7-keys')">Points Cles</button><button class="tab-btn" onclick="switchTab(this,'p7-qcm')">QCM</button></div>
+    <div class="tab-content active" id="p7-concepts"><div class="concepts">
+        <p><strong>GitHub Copilot :</strong> Assistant IA integre dans l'IDE (VS Code, JetBrains) qui genere du code en temps reel. Il propose des completions de code, des fonctions entieres, des tests unitaires. Base sur le modele Codex d'OpenAI, entraine sur des milliards de lignes de code public. Copilot Chat permet de poser des questions en langage naturel directement dans l'IDE.</p>
+        <p><strong>Copilot CLI et extensions :</strong> Copilot CLI genere des commandes shell a partir de descriptions en langage naturel (ex: "liste les pods en erreur dans le namespace prod" -> kubectl get pods -n prod --field-selector status.phase=Failed). Copilot for PR genere automatiquement les descriptions de Pull Requests et suggere des reviewers.</p>
+        <p><strong>Claude Code :</strong> Agent IA d'Anthropic qui fonctionne dans le terminal. Il peut lire/ecrire des fichiers, executer des commandes, naviguer dans un codebase, creer des commits. Contrairement a Copilot (completion), Claude Code est agentique : il planifie, execute et itere de maniere autonome sur des taches complexes.</p>
+        <p><strong>Cursor IDE :</strong> IDE fork de VS Code avec IA integree en profondeur. Features : Cmd+K pour editer du code avec des instructions, Chat contextuel (connait tout votre projet), Composer pour des changements multi-fichiers. Le mode Agent peut modifier plusieurs fichiers et executer des commandes pour accomplir une tache.</p>
+        <p><strong>Bonnes pratiques et limites :</strong> 1) Toujours relire/comprendre le code genere. 2) Ne pas copier aveuglément — comprendre la logique. 3) Tester systematiquement. 4) Attention aux licences (code entraine sur du code public). 5) Ne jamais envoyer de secrets/credentials dans les prompts. 6) L'IA accelere mais ne remplace pas la comprehension.</p>
+    </div></div>
+    <div class="tab-content" id="p7-keys"><div class="key-points"><ul>
+        <li><strong>Copilot = completion temps reel dans l'IDE.</strong></li>
+        <li><strong>Copilot CLI = commandes shell depuis langage naturel.</strong></li>
+        <li><strong>Claude Code = agent terminal autonome.</strong></li>
+        <li><strong>Cursor = IDE IA-native, multi-fichiers.</strong></li>
+        <li><strong>Toujours relire, comprendre et tester le code genere.</strong></li>
+    </ul></div></div>
+    <div class="tab-content" id="p7-qcm"><div class="qcm-header"><span class="qcm-score-display" id="qcm-score-p7">Score: 0/5</span><button class="btn-reset" onclick="resetQcm('p7')">Recommencer</button></div><div class="qcm-grid" id="qcm-p7">
+        <div class="qcm-question" data-page="p7"><p class="q-text">1) Quelle est la difference principale entre GitHub Copilot et Claude Code ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q7-1" value="a" id="q7-1a"><label for="q7-1a">Copilot est gratuit, Claude Code est payant</label></div><div class="qcm-option"><input type="radio" name="q7-1" value="b" id="q7-1b"><label for="q7-1b">Copilot fait de la completion, Claude Code est un agent autonome</label></div><div class="qcm-option"><input type="radio" name="q7-1" value="c" id="q7-1c"><label for="q7-1c">Claude Code ne genere pas de code</label></div><div class="qcm-option"><input type="radio" name="q7-1" value="d" id="q7-1d"><label for="q7-1d">Il n'y a aucune difference</label></div></div><button class="btn-validate" onclick="checkAnswer('q7-1','b',this,'p7')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p7"><p class="q-text">2) Que permet de faire Copilot CLI pour un ingenieur DevOps ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q7-2" value="a" id="q7-2a"><label for="q7-2a">Generer des commandes shell a partir de descriptions en langage naturel</label></div><div class="qcm-option"><input type="radio" name="q7-2" value="b" id="q7-2b"><label for="q7-2b">Deployer automatiquement en production</label></div><div class="qcm-option"><input type="radio" name="q7-2" value="c" id="q7-2c"><label for="q7-2c">Remplacer kubectl</label></div><div class="qcm-option"><input type="radio" name="q7-2" value="d" id="q7-2d"><label for="q7-2d">Creer des clusters Kubernetes</label></div></div><button class="btn-validate" onclick="checkAnswer('q7-2','a',this,'p7')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p7"><p class="q-text">3) Quelle bonne pratique est essentielle lorsqu'on utilise du code genere par une IA ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q7-3" value="a" id="q7-3a"><label for="q7-3a">Le copier sans le lire car l'IA est fiable</label></div><div class="qcm-option"><input type="radio" name="q7-3" value="b" id="q7-3b"><label for="q7-3b">Toujours relire, comprendre la logique et tester</label></div><div class="qcm-option"><input type="radio" name="q7-3" value="c" id="q7-3c"><label for="q7-3c">Ne jamais modifier le code genere</label></div><div class="qcm-option"><input type="radio" name="q7-3" value="d" id="q7-3d"><label for="q7-3d">L'utiliser uniquement en production</label></div></div><button class="btn-validate" onclick="checkAnswer('q7-3','b',this,'p7')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p7"><p class="q-text">4) Quelle fonctionnalite distingue Cursor IDE des autres editeurs de code ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q7-4" value="a" id="q7-4a"><label for="q7-4a">Il est uniquement en ligne de commande</label></div><div class="qcm-option"><input type="radio" name="q7-4" value="b" id="q7-4b"><label for="q7-4b">Le mode Composer pour des changements multi-fichiers avec IA</label></div><div class="qcm-option"><input type="radio" name="q7-4" value="c" id="q7-4c"><label for="q7-4c">Il ne supporte que Python</label></div><div class="qcm-option"><input type="radio" name="q7-4" value="d" id="q7-4d"><label for="q7-4d">Il remplace Git</label></div></div><button class="btn-validate" onclick="checkAnswer('q7-4','b',this,'p7')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p7"><p class="q-text">5) Pourquoi ne faut-il jamais envoyer de secrets dans les prompts d'un outil d'IA ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q7-5" value="a" id="q7-5a"><label for="q7-5a">Cela ralentit la reponse</label></div><div class="qcm-option"><input type="radio" name="q7-5" value="b" id="q7-5b"><label for="q7-5b">Les donnees peuvent etre stockees/loggees par le fournisseur du service</label></div><div class="qcm-option"><input type="radio" name="q7-5" value="c" id="q7-5c"><label for="q7-5c">L'IA ne comprend pas les mots de passe</label></div><div class="qcm-option"><input type="radio" name="q7-5" value="d" id="q7-5d"><label for="q7-5d">Cela augmente le cout</label></div></div><button class="btn-validate" onclick="checkAnswer('q7-5','b',this,'p7')">Valider</button><div class="feedback"></div></div>
+    </div>
+        <div class="next-lesson-container"><button class="btn-next-lesson" onclick="goToNextPage('p8')">Lecon suivante &#10132; 8. Agents IA pour DevOps</button></div></div>
+</div>
+
+<!-- PAGE 8 -->
+<div class="page" id="p8">
+    <div class="lesson-header"><h2>8 - Agents IA pour DevOps</h2><span class="lesson-score" id="score-p8">0/5</span></div>
+    <div class="tabs-container"><button class="tab-btn active" onclick="switchTab(this,'p8-concepts')">Concepts</button><button class="tab-btn" onclick="switchTab(this,'p8-keys')">Points Cles</button><button class="tab-btn" onclick="switchTab(this,'p8-qcm')">QCM</button></div>
+    <div class="tab-content active" id="p8-concepts"><div class="concepts">
+        <p><strong>Agents autonomes DevOps :</strong> Un agent DevOps combine un LLM (le cerveau) avec des outils (tools) pour agir sur l'infrastructure. Il peut : lire des metriques Prometheus, executer des commandes kubectl, modifier des fichiers Terraform, creer des tickets Jira. La cle : il PLANIFIE avant d'agir et VERIFIE apres avoir agi.</p>
+        <p><strong>Function Calling (Tool Use) :</strong> Les LLMs modernes supportent le "function calling" : on definit des fonctions disponibles (avec schema JSON), le modele decide QUAND et AVEC QUELS ARGUMENTS les appeler. Exemple : l'agent detecte "pod CrashLoopBackOff", decide d'appeler get_pod_logs(pod_name, namespace), analyse le resultat, puis appelle restart_pod() si necessaire.</p>
+        <p><strong>LangChain et frameworks :</strong> LangChain est le framework Python le plus populaire pour construire des agents IA. Il fournit : des abstractions pour les LLMs, des outils pre-faits (recherche web, execution code, acces fichiers), des chaines (chains) pour des workflows sequentiels, et des agents qui decident dynamiquement les actions a prendre.</p>
+        <p><strong>CrewAI :</strong> Framework pour creer des equipes d'agents collaboratifs. On definit des Agents (role, objectif, outils) et des Tasks (tache, agent assigne). Un Crew orchestre l'execution. Exemple DevOps : Agent "SRE" monitore, Agent "Developer" corrige le code, Agent "Reviewer" valide les changements.</p>
+        <p><strong>Use cases avances :</strong> 1) Incident Response automatique : detecter, diagnostiquer, remedier. 2) Infrastructure provisioning : decrire en langage naturel, l'agent genere et applique le Terraform. 3) Code review automatique : analyse de securite, performance, bonnes pratiques. 4) Capacity planning : predire les besoins et scaler proactivement.</p>
+    </div></div>
+    <div class="tab-content" id="p8-keys"><div class="key-points"><ul>
+        <li><strong>Agent = LLM + outils (tools) + planification.</strong></li>
+        <li><strong>Function Calling = le LLM decide quand appeler quelle fonction.</strong></li>
+        <li><strong>LangChain = framework Python pour agents IA.</strong></li>
+        <li><strong>CrewAI = equipes d'agents collaboratifs.</strong></li>
+        <li><strong>Use cases : incident response, IaC, code review, scaling.</strong></li>
+    </ul></div></div>
+    <div class="tab-content" id="p8-qcm"><div class="qcm-header"><span class="qcm-score-display" id="qcm-score-p8">Score: 0/5</span><button class="btn-reset" onclick="resetQcm('p8')">Recommencer</button></div><div class="qcm-grid" id="qcm-p8">
+        <div class="qcm-question" data-page="p8"><p class="q-text">1) Que permet le mecanisme de Function Calling dans les LLMs modernes ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q8-1" value="a" id="q8-1a"><label for="q8-1a">Appeler d'autres LLMs</label></div><div class="qcm-option"><input type="radio" name="q8-1" value="b" id="q8-1b"><label for="q8-1b">Le modele decide quand et avec quels arguments appeler des fonctions definies</label></div><div class="qcm-option"><input type="radio" name="q8-1" value="c" id="q8-1c"><label for="q8-1c">Executer du code Python dans le modele</label></div><div class="qcm-option"><input type="radio" name="q8-1" value="d" id="q8-1d"><label for="q8-1d">Telecharger des fichiers</label></div></div><button class="btn-validate" onclick="checkAnswer('q8-1','b',this,'p8')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p8"><p class="q-text">2) Quel framework Python est le plus populaire pour construire des agents IA ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q8-2" value="a" id="q8-2a"><label for="q8-2a">Django</label></div><div class="qcm-option"><input type="radio" name="q8-2" value="b" id="q8-2b"><label for="q8-2b">Flask</label></div><div class="qcm-option"><input type="radio" name="q8-2" value="c" id="q8-2c"><label for="q8-2c">LangChain</label></div><div class="qcm-option"><input type="radio" name="q8-2" value="d" id="q8-2d"><label for="q8-2d">FastAPI</label></div></div><button class="btn-validate" onclick="checkAnswer('q8-2','c',this,'p8')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p8"><p class="q-text">3) Comment fonctionne CrewAI pour des taches DevOps complexes ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q8-3" value="a" id="q8-3a"><label for="q8-3a">Un seul agent fait tout</label></div><div class="qcm-option"><input type="radio" name="q8-3" value="b" id="q8-3b"><label for="q8-3b">Des agents specialises collaborent avec roles et taches assignees</label></div><div class="qcm-option"><input type="radio" name="q8-3" value="c" id="q8-3c"><label for="q8-3c">Il remplace Kubernetes</label></div><div class="qcm-option"><input type="radio" name="q8-3" value="d" id="q8-3d"><label for="q8-3d">Il execute uniquement des scripts bash</label></div></div><button class="btn-validate" onclick="checkAnswer('q8-3','b',this,'p8')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p8"><p class="q-text">4) Quelle est la premiere action d'un agent IA bien concu avant d'intervenir sur l'infrastructure ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q8-4" value="a" id="q8-4a"><label for="q8-4a">Executer immediatement la correction</label></div><div class="qcm-option"><input type="radio" name="q8-4" value="b" id="q8-4b"><label for="q8-4b">Planifier ses actions et verifier le contexte</label></div><div class="qcm-option"><input type="radio" name="q8-4" value="c" id="q8-4c"><label for="q8-4c">Redemarrer tous les services</label></div><div class="qcm-option"><input type="radio" name="q8-4" value="d" id="q8-4d"><label for="q8-4d">Envoyer un email</label></div></div><button class="btn-validate" onclick="checkAnswer('q8-4','b',this,'p8')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p8"><p class="q-text">5) Quel use case illustre un agent IA DevOps gerant un incident de bout en bout ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q8-5" value="a" id="q8-5a"><label for="q8-5a">Generer un README</label></div><div class="qcm-option"><input type="radio" name="q8-5" value="b" id="q8-5b"><label for="q8-5b">Detecter l'alerte, analyser les logs, identifier la cause et remedier automatiquement</label></div><div class="qcm-option"><input type="radio" name="q8-5" value="c" id="q8-5c"><label for="q8-5c">Creer un repository Git</label></div><div class="qcm-option"><input type="radio" name="q8-5" value="d" id="q8-5d"><label for="q8-5d">Installer des packages npm</label></div></div><button class="btn-validate" onclick="checkAnswer('q8-5','b',this,'p8')">Valider</button><div class="feedback"></div></div>
+    </div>
+        <div class="next-lesson-container"><button class="btn-next-lesson" onclick="goToNextPage('p9')">Lecon suivante &#10132; 9. AIOps</button></div></div>
+</div>
+
+<!-- PAGE 9 -->
+<div class="page" id="p9">
+    <div class="lesson-header"><h2>9 - AIOps (IA pour l'exploitation)</h2><span class="lesson-score" id="score-p9">0/5</span></div>
+    <div class="tabs-container"><button class="tab-btn active" onclick="switchTab(this,'p9-concepts')">Concepts</button><button class="tab-btn" onclick="switchTab(this,'p9-keys')">Points Cles</button><button class="tab-btn" onclick="switchTab(this,'p9-qcm')">QCM</button></div>
+    <div class="tab-content active" id="p9-concepts"><div class="concepts">
+        <p><strong>Definition d'AIOps :</strong> AIOps (Artificial Intelligence for IT Operations) combine le big data et le machine learning pour automatiser et ameliorer les operations IT. Gartner a invente le terme en 2017. L'objectif : passer d'une approche reactive (on repare quand ca casse) a une approche proactive (on predit et previent les pannes).</p>
+        <p><strong>Detection d'anomalies :</strong> L'IA apprend le comportement "normal" de vos systemes (CPU, memoire, latence, taux d'erreur) et alerte quand un comportement anormal est detecte. Contrairement aux seuils statiques (alerte si CPU > 80%), l'IA detecte des patterns subtils : "le CPU est a 60% mais c'est anormal pour un dimanche a 3h du matin".</p>
+        <p><strong>Analyse predictive et correlation :</strong> 1) Prediction : prevoir une panne 30 minutes avant qu'elle ne se produise en detectant des signaux faibles. 2) Correlation d'evenements : regrouper automatiquement 500 alertes liees au meme incident racine ("alert storm") pour identifier la cause unique. Reduction de 90% du bruit d'alertes.</p>
+        <p><strong>Auto-remediation :</strong> Le systeme detecte un probleme ET le corrige automatiquement. Exemple : detection d'un memory leak -> restart du pod concerne -> notification de l'equipe. Niveaux d'autonomie : 1) Suggestion (propose une action), 2) Semi-auto (execute apres validation humaine), 3) Full-auto (execute et notifie apres).</p>
+        <p><strong>Outils AIOps du marche :</strong> Datadog AI (analyse predictive, anomaly detection), Dynatrace Davis (IA causale, root cause auto), PagerDuty AI (correlation d'incidents, routing intelligent), Moogsoft (noise reduction), New Relic AI. Metriques cles : MTTD (Mean Time to Detect), MTTR (Mean Time to Resolve), reduction du bruit d'alertes.</p>
+    </div></div>
+    <div class="tab-content" id="p9-keys"><div class="key-points"><ul>
+        <li><strong>AIOps = IA + Big Data pour operations IT.</strong> Reactif vers proactif.</li>
+        <li><strong>Anomaly detection = apprendre le normal, alerter sur l'anormal.</strong></li>
+        <li><strong>Correlation = regrouper alertes, trouver la cause racine.</strong></li>
+        <li><strong>Auto-remediation = detecter + corriger automatiquement.</strong></li>
+        <li><strong>KPIs : MTTD, MTTR, reduction du bruit d'alertes.</strong></li>
+    </ul></div></div>
+    <div class="tab-content" id="p9-qcm"><div class="qcm-header"><span class="qcm-score-display" id="qcm-score-p9">Score: 0/5</span><button class="btn-reset" onclick="resetQcm('p9')">Recommencer</button></div><div class="qcm-grid" id="qcm-p9">
+        <div class="qcm-question" data-page="p9"><p class="q-text">1) Quel est l'objectif principal de l'AIOps par rapport aux operations IT traditionnelles ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q9-1" value="a" id="q9-1a"><label for="q9-1a">Supprimer toutes les alertes</label></div><div class="qcm-option"><input type="radio" name="q9-1" value="b" id="q9-1b"><label for="q9-1b">Passer d'une approche reactive a une approche proactive et predictive</label></div><div class="qcm-option"><input type="radio" name="q9-1" value="c" id="q9-1c"><label for="q9-1c">Remplacer tous les outils de monitoring</label></div><div class="qcm-option"><input type="radio" name="q9-1" value="d" id="q9-1d"><label for="q9-1d">Reduire le nombre de serveurs</label></div></div><button class="btn-validate" onclick="checkAnswer('q9-1','b',this,'p9')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p9"><p class="q-text">2) Comment la detection d'anomalies par IA se distingue-t-elle des seuils d'alertes statiques ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q9-2" value="a" id="q9-2a"><label for="q9-2a">Elle utilise des seuils plus eleves</label></div><div class="qcm-option"><input type="radio" name="q9-2" value="b" id="q9-2b"><label for="q9-2b">Elle apprend le comportement normal et detecte les ecarts contextuels</label></div><div class="qcm-option"><input type="radio" name="q9-2" value="c" id="q9-2c"><label for="q9-2c">Elle desactive les alertes la nuit</label></div><div class="qcm-option"><input type="radio" name="q9-2" value="d" id="q9-2d"><label for="q9-2d">Elle n'envoie jamais d'alertes</label></div></div><button class="btn-validate" onclick="checkAnswer('q9-2','b',this,'p9')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p9"><p class="q-text">3) Que permet la correlation d'evenements dans un contexte d'alert storm ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q9-3" value="a" id="q9-3a"><label for="q9-3a">Supprimer toutes les alertes</label></div><div class="qcm-option"><input type="radio" name="q9-3" value="b" id="q9-3b"><label for="q9-3b">Regrouper des centaines d'alertes liees pour identifier la cause racine unique</label></div><div class="qcm-option"><input type="radio" name="q9-3" value="c" id="q9-3c"><label for="q9-3c">Envoyer plus d'emails de notification</label></div><div class="qcm-option"><input type="radio" name="q9-3" value="d" id="q9-3d"><label for="q9-3d">Dupliquer les alertes pour chaque equipe</label></div></div><button class="btn-validate" onclick="checkAnswer('q9-3','b',this,'p9')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p9"><p class="q-text">4) Quel outil AIOps est connu pour son moteur d'IA causale appele Davis ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q9-4" value="a" id="q9-4a"><label for="q9-4a">Datadog</label></div><div class="qcm-option"><input type="radio" name="q9-4" value="b" id="q9-4b"><label for="q9-4b">PagerDuty</label></div><div class="qcm-option"><input type="radio" name="q9-4" value="c" id="q9-4c"><label for="q9-4c">Dynatrace</label></div><div class="qcm-option"><input type="radio" name="q9-4" value="d" id="q9-4d"><label for="q9-4d">Grafana</label></div></div><button class="btn-validate" onclick="checkAnswer('q9-4','c',this,'p9')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p9"><p class="q-text">5) Que mesure la metrique MTTR dans le cadre de l'AIOps ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q9-5" value="a" id="q9-5a"><label for="q9-5a">Le temps moyen entre deux deploiements</label></div><div class="qcm-option"><input type="radio" name="q9-5" value="b" id="q9-5b"><label for="q9-5b">Le temps moyen de resolution d'un incident (Mean Time to Resolve)</label></div><div class="qcm-option"><input type="radio" name="q9-5" value="c" id="q9-5c"><label for="q9-5c">Le nombre total de tickets</label></div><div class="qcm-option"><input type="radio" name="q9-5" value="d" id="q9-5d"><label for="q9-5d">Le cout mensuel du cloud</label></div></div><button class="btn-validate" onclick="checkAnswer('q9-5','b',this,'p9')">Valider</button><div class="feedback"></div></div>
+    </div>
+        <div class="next-lesson-container"><button class="btn-next-lesson" onclick="goToNextPage('cheatsheet')">Lecon suivante &#10132; Cheat Sheet</button></div></div>
+</div>
+
+<!-- CHEAT SHEET -->
+<div class="page" id="cheatsheet">
+    <div class="lesson-header"><h2>Cheat Sheet - IA pour DevOps</h2></div>
+    <h3 style="color:#2e7d32;margin:15px 0">Pipeline IA DevOps - Flux visuel</h3>
+    <div class="pipeline-diagram">
+        <div class="pipeline-stage">Prompt<small>Instruction</small></div><span class="pipeline-arrow">&#10132;</span>
+        <div class="pipeline-stage">LLM<small>GPT-4/Claude</small></div><span class="pipeline-arrow">&#10132;</span>
+        <div class="pipeline-stage">RAG<small>Contexte</small></div><span class="pipeline-arrow">&#10132;</span>
+        <div class="pipeline-stage">Agent<small>Tools</small></div><span class="pipeline-arrow">&#10132;</span>
+        <div class="pipeline-stage">Action<small>kubectl/terraform</small></div><span class="pipeline-arrow">&#10132;</span>
+        <div class="pipeline-stage" style="background:linear-gradient(135deg,#ff6b6b,#ee5a24)">Verification<small>Human-in-loop</small></div>
+    </div>
+    <div class="cheat-grid">
+        <div class="cheat-card"><h4>Appel API OpenAI (Python)</h4><code>from openai import OpenAI
+client = OpenAI()
+response = client.chat.completions.create(
+    model="gpt-4",
+    temperature=0,
+    messages=[
+        {"role": "system", "content": "Expert DevOps"},
+        {"role": "user", "content": "..."}
+    ]
+)</code></div>
+        <div class="cheat-card"><h4>Appel API Anthropic (Python)</h4><code>from anthropic import Anthropic
+client = Anthropic()
+message = client.messages.create(
+    model="claude-sonnet-4-20250514",
+    max_tokens=1024,
+    system="Expert DevOps senior",
+    messages=[
+        {"role": "user", "content": "..."}
+    ]
+)</code></div>
+        <div class="cheat-card"><h4>RAG avec ChromaDB</h4><code>import chromadb
+client = chromadb.Client()
+collection = client.create_collection("docs")
+collection.add(documents=[...], ids=[...])
+results = collection.query(
+    query_texts=["mon erreur K8s"],
+    n_results=3
+)</code></div>
+        <div class="cheat-card"><h4>LangChain Agent</h4><code>from langchain.agents import initialize_agent
+from langchain.tools import Tool
+
+tools = [Tool(name="kubectl", func=run_kubectl)]
+agent = initialize_agent(
+    tools, llm, agent="zero-shot-react"
+)
+agent.run("Liste les pods en erreur")</code></div>
+        <div class="cheat-card"><h4>Ollama (local)</h4><code># Installer un modele
+ollama pull llama3
+ollama pull codellama
+
+# Utiliser via API
+curl http://localhost:11434/api/generate \
+  -d '{"model":"llama3","prompt":"..."}'
+
+# Ou en Python
+import ollama
+ollama.chat(model='llama3', messages=[...])</code></div>
+        <div class="cheat-card"><h4>Techniques de Prompting</h4><ul><li><strong>Zero-shot</strong> : question directe</li><li><strong>Few-shot</strong> : avec exemples</li><li><strong>CoT</strong> : "raisonne etape par etape"</li><li><strong>System role</strong> : cadrer le comportement</li><li><strong>Temperature 0</strong> : DevOps (precision)</li></ul></div>
+        <div class="cheat-card"><h4>Modeles principaux</h4><ul><li><strong>GPT-4</strong> - OpenAI (cloud, payant)</li><li><strong>Claude</strong> - Anthropic (cloud, payant)</li><li><strong>Llama 3</strong> - Meta (open source)</li><li><strong>Mistral</strong> - Mistral AI (open source)</li><li><strong>CodeLlama</strong> - Meta (code specialise)</li></ul></div>
+        <div class="cheat-card"><h4>Outils AIOps</h4><ul><li><strong>Datadog AI</strong> - Anomaly detection</li><li><strong>Dynatrace Davis</strong> - Root cause auto</li><li><strong>PagerDuty AI</strong> - Correlation incidents</li><li><strong>Moogsoft</strong> - Noise reduction</li><li><strong>MTTD/MTTR</strong> - KPIs a suivre</li></ul></div>
+    </div>
+    <div class="next-lesson-container"><button class="btn-next-lesson" onclick="goToNextPage('bonus')">Lecon suivante &#10132; Bonus</button></div>
+</div>
+
+<!-- BONUS -->
+<div class="page" id="bonus">
+    <div class="bonus-section">
+        <h2>Bonus - Approfondissement IA pour DevOps</h2>
+        <h3>1. CrewAI - Equipe d'agents DevOps</h3>
+        <div class="code-block">from crewai import Agent, Task, Crew
+
+sre_agent = Agent(
+    role="SRE Engineer",
+    goal="Monitorer et diagnostiquer les incidents",
+    tools=[prometheus_tool, kubectl_tool]
+)
+
+dev_agent = Agent(
+    role="Developer",
+    goal="Corriger les bugs identifies",
+    tools=[git_tool, code_editor_tool]
+)
+
+task = Task(description="Resoudre l'alerte CPU > 95% sur prod")
+crew = Crew(agents=[sre_agent, dev_agent], tasks=[task])
+crew.kickoff()</div>
+        <h3>2. Function Calling - Schema d'outil</h3>
+        <div class="code-block">tools = [{
+    "type": "function",
+    "function": {
+        "name": "get_pod_status",
+        "description": "Recupere le statut d'un pod Kubernetes",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "pod_name": {"type": "string"},
+                "namespace": {"type": "string", "default": "default"}
+            },
+            "required": ["pod_name"]
+        }
+    }
+}]
+
+response = client.chat.completions.create(
+    model="gpt-4", messages=messages, tools=tools
+)</div>
+        <h3>3. RAG Pipeline complet</h3>
+        <div class="code-block"># 1. Charger les documents
+from langchain.document_loaders import DirectoryLoader
+docs = DirectoryLoader("./runbooks/").load()
+
+# 2. Decouper en chunks
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+splitter = RecursiveCharacterTextSplitter(chunk_size=500, overlap=50)
+chunks = splitter.split_documents(docs)
+
+# 3. Creer les embeddings et indexer
+from langchain.vectorstores import Chroma
+vectorstore = Chroma.from_documents(chunks, embedding_model)
+
+# 4. Interroger
+retriever = vectorstore.as_retriever(k=3)
+relevant_docs = retriever.get_relevant_documents("comment redemarrer le service auth?")</div>
+        <h3>4. Bonnes pratiques securite IA</h3>
+        <ul>
+            <li><strong>Jamais de secrets dans les prompts</strong> — utiliser des variables d'environnement.</li>
+            <li><strong>Valider TOUT code genere</strong> — review, tests, sandbox avant prod.</li>
+            <li><strong>Human-in-the-loop</strong> — approbation humaine pour actions critiques.</li>
+            <li><strong>Audit trail</strong> — logger toutes les actions de l'agent IA.</li>
+            <li><strong>Principle of least privilege</strong> — limiter les permissions de l'agent.</li>
+        </ul>
+        <h3>5. Metriques de performance IA</h3>
+        <ul>
+            <li><strong>Latence</strong> : temps de reponse du LLM (objectif < 3s).</li>
+            <li><strong>Cout/requete</strong> : optimiser tokens input/output.</li>
+            <li><strong>Taux de succes</strong> : % d'actions de l'agent qui resolvent le probleme.</li>
+            <li><strong>MTTR reduction</strong> : amelioration du temps de resolution avec IA.</li>
+            <li><strong>False positive rate</strong> : alertes IA incorrectes a minimiser.</li>
+        </ul>
+    </div>
+</div>
+</div>
+
+    <!-- EXAM OVERLAY -->
+    <div class="exam-overlay" id="examOverlay">
+        <div class="exam-container" id="examContainer">
+            <button class="btn-close-exam" onclick="closeExam()">&times;</button>
+            <div id="examContent"></div>
+        </div>
+    </div>
+
+    <script>
+    // Auto-prefix A. B. C. D. on all QCM options
+    document.querySelectorAll('.qcm-question').forEach(q => {
+        q.querySelectorAll('.qcm-option').forEach((opt, i) => {
+            const lbl = opt.querySelector('label');
+            if (lbl && !lbl.textContent.match(/^[A-D]\.\s/)) {
+                lbl.textContent = String.fromCharCode(65 + i) + '. ' + lbl.textContent;
+            }
+        });
+    });
+
+    // Justifications pour chaque question
+    const justifications = {
+        'q1-1': "La complexite croissante des systemes (microservices, conteneurs) et le volume massif de donnees/logs rendent l'IA indispensable pour gerer ce que l'humain ne peut plus surveiller seul.",
+        'q1-2': "L'automatisation classique execute des scripts fixes. L'IA s'adapte au contexte, apprend des erreurs passees et prend des decisions intelligentes en fonction de la situation.",
+        'q1-3': "Infrastructure as Intent signifie qu'on decrit CE QU'ON VEUT (l'intention) et l'IA genere automatiquement le code (Terraform, Dockerfile, etc.) necessaire pour y arriver.",
+        'q1-4': "L'IA peut analyser des teraoctets de logs en temps reel, detecter des correlations invisibles et predire des pannes avant qu'elles ne se produisent.",
+        'q1-5': "L'ingenieur DevOps evolue vers un role d'orchestrateur d'IA : il supervise, valide les decisions automatiques et intervient quand necessaire.",
+        'q2-1': "L'architecture Transformer (2017, Google) avec son mecanisme d'attention est la base de tous les LLMs modernes (GPT, Claude, Llama, Mistral).",
+        'q2-2': "Un token est une sous-unite de mot (environ 4 caracteres en anglais, 3 en francais). Le mot 'deploiement' peut etre decoupe en plusieurs tokens.",
+        'q2-3': "Pour le DevOps, temperature 0 ou 0.1 est recommandee car on veut des reponses precises, factuelles et reproductibles (pas de creativite aleatoire).",
+        'q2-4': "La context window est le nombre maximum de tokens que le modele peut traiter en une seule requete (input + output). Ex: GPT-4 = 128K, Claude = 200K.",
+        'q2-5': "Le fine-tuning prend un modele pre-entraine et le specialise sur un domaine specifique avec des donnees ciblees (code, medecine, etc.).",
+        'q3-1': "L'IA generative est reactive (question/reponse). L'Agent IA est autonome : il percoit son environnement, decide et agit avec des outils.",
+        'q3-2': "La boucle fondamentale d'un agent est : Perception (observer l'environnement) -> Reflexion (raisonner, planifier) -> Action (executer via des outils).",
+        'q3-3': "L'orchestration multi-agents permet a des agents specialises (SRE, Dev, Reviewer) de collaborer pour resoudre des problemes trop complexes pour un seul agent.",
+        'q3-4': "CrewAI, AutoGen et LangGraph sont des frameworks dedies a la creation d'equipes d'agents collaboratifs avec roles et taches assignes.",
+        'q3-5': "L'IA agentique decompose un probleme complexe en sous-taches, execute chacune, observe le resultat et ajuste iterativement jusqu'a resolution.",
+        'q4-1': "Le few-shot prompting consiste a fournir 2-3 exemples du format attendu avant de poser sa question, guidant ainsi le modele.",
+        'q4-2': "Le message system definit le comportement global du modele (ex: 'Tu es un expert DevOps senior') et persiste tout au long de la conversation.",
+        'q4-3': "Les hallucinations sont des informations fausses mais formulees de maniere convaincante. En DevOps, cela peut mener a des configs dangereuses ou des commandes inexistantes.",
+        'q4-4': "Chain-of-thought (CoT) demande au modele de raisonner etape par etape avant de donner sa reponse finale, ameliorant la qualite pour les problemes complexes.",
+        'q4-5': "Le code genere par un LLM peut contenir des erreurs ou des hallucinations. Toujours valider par code review, tests automatises et execution en sandbox.",
+        'q5-1': "Les cles API ne doivent JAMAIS etre en clair dans le code source. Utiliser des variables d'environnement ou un secret manager (Vault, AWS Secrets Manager).",
+        'q5-2': "Ollama et LM Studio permettent de telecharger et executer des LLMs open source (Llama, Mistral, CodeLlama) directement sur sa machine locale.",
+        'q5-3': "Le streaming (stream=True) permet de recevoir la reponse token par token au fur et a mesure de la generation, au lieu d'attendre la reponse complete.",
+        'q5-4': "Les modeles locaux sont gratuits, les donnees ne quittent pas la machine (confidentialite), et il n'y a pas de latence reseau. Mais ils necessitent un GPU et sont moins performants.",
+        'q5-5': "Les API de LLMs (OpenAI, Anthropic) facturent par nombre de tokens consommes, separement pour l'input et l'output, avec des tarifs differents selon le modele.",
+        'q6-1': "Le RAG combine recherche (Retriever) et generation (LLM). On cherche d'abord les infos pertinentes dans une base, puis on les donne comme contexte au LLM.",
+        'q6-2': "Les embeddings sont des vecteurs numeriques qui capturent le sens semantique du texte. Des textes similaires ont des vecteurs proches dans l'espace vectoriel.",
+        'q6-3': "Pinecone, ChromaDB et Weaviate sont des bases de donnees vectorielles specialisees dans le stockage et la recherche par similarite semantique.",
+        'q6-4': "Le chunking permet une recherche plus precise (on retrouve le passage exact) et respecte les limites de context window des LLMs.",
+        'q6-5': "Le RAG permet de creer des chatbots qui interrogent la documentation interne, les runbooks et les logs pour repondre aux questions de l'equipe.",
+        'q7-1': "Copilot fait de la completion de code en temps reel dans l'IDE. Claude Code est un agent autonome qui planifie, execute des commandes et itere sur des taches complexes.",
+        'q7-2': "Copilot CLI traduit des descriptions en langage naturel en commandes shell (kubectl, docker, git, etc.), accelerant le travail des DevOps.",
+        'q7-3': "Toujours relire et comprendre le code genere par une IA. Le tester systematiquement avant de l'utiliser. L'IA accelere mais ne remplace pas la comprehension.",
+        'q7-4': "Cursor IDE offre un mode Composer qui permet de decrire des changements a appliquer sur plusieurs fichiers simultanement, avec l'IA qui execute.",
+        'q7-5': "Les donnees envoyees aux API d'IA peuvent etre loggees, stockees ou utilisees pour l'entrainement. Ne jamais y inclure de credentials ou secrets.",
+        'q8-1': "Le function calling permet au LLM de decider dynamiquement quelle fonction appeler et avec quels arguments, en fonction du contexte de la conversation.",
+        'q8-2': "LangChain est le framework Python le plus utilise pour construire des agents IA, avec des abstractions pour LLMs, outils, chaines et agents.",
+        'q8-3': "CrewAI cree des equipes d'agents specialises (chacun avec un role, un objectif et des outils) qui collaborent pour accomplir des taches complexes.",
+        'q8-4': "Un agent bien concu planifie d'abord ses actions, verifie le contexte (etat actuel du systeme) avant d'executer quoi que ce soit sur l'infrastructure.",
+        'q8-5': "L'incident response automatique est le use case phare : l'agent detecte l'alerte, analyse les logs, identifie la cause racine et applique la remediation.",
+        'q9-1': "L'AIOps transforme les operations IT d'une approche reactive (reparer apres la panne) vers une approche proactive (predire et prevenir).",
+        'q9-2': "Contrairement aux seuils statiques (CPU > 80%), l'IA apprend le comportement normal et detecte les anomalies en tenant compte du contexte (heure, jour, charge habituelle).",
+        'q9-3': "La correlation d'evenements regroupe des centaines d'alertes liees au meme incident pour identifier la cause racine unique, reduisant le bruit de 90%.",
+        'q9-4': "Dynatrace Davis est un moteur d'IA causale qui identifie automatiquement la cause racine des problemes dans les environnements cloud complexes.",
+        'q9-5': "MTTR (Mean Time to Resolve) mesure le temps moyen pour resoudre un incident. C'est le KPI principal que l'AIOps cherche a reduire."
+    };
+
+    // Score tracking
+    const pageScores = {};
+    const pageTotals = {p1:5,p2:5,p3:5,p4:5,p5:5,p6:5,p7:5,p8:5,p9:5};
+    const allPages = Object.keys(pageTotals);
+    allPages.forEach(p => pageScores[p] = 0);
+
+    // Load saved progress
+    function loadProgress() {
+        const saved = localStorage.getItem('ia_progress');
+        if (saved) {
+            const data = JSON.parse(saved);
+            Object.assign(pageScores, data.scores || {});
+            updateAllDisplays();
+            if (data.answered) {
+                Object.entries(data.answered).forEach(([name, ans]) => {
+                    const radio = document.querySelector(`input[name="${name}"][value="${ans}"]`);
+                    if (radio) { radio.checked = true; radio.disabled = true; }
+                    const btn = radio?.closest('.qcm-question')?.querySelector('.btn-validate');
+                    if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; }
+                });
+            }
+        }
+    }
+
+    const answeredQuestions = JSON.parse(localStorage.getItem('ia_answered') || '{}');
+
+    function saveProgress() {
+        localStorage.setItem('ia_progress', JSON.stringify({ scores: pageScores, answered: answeredQuestions }));
+    }
+
+    function updateAllDisplays() {
+        let totalCorrect = 0, totalQuestions = 0;
+        allPages.forEach(p => {
+            const s = pageScores[p] || 0;
+            const t = pageTotals[p];
+            totalCorrect += s;
+            totalQuestions += t;
+            const scoreEl = document.getElementById(`score-${p}`);
+            if (scoreEl) scoreEl.textContent = `${s}/${t}`;
+            const qcmScoreEl = document.getElementById(`qcm-score-${p}`);
+            if (qcmScoreEl) qcmScoreEl.textContent = `Score: ${s}/${t}`;
+            const badge = document.getElementById(`badge-${p}`);
+            if (badge) badge.textContent = s > 0 ? `${s}/${t}` : '-';
+        });
+        const pct = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
+        document.getElementById('globalProgressBar').style.width = pct + '%';
+        document.getElementById('globalProgressText').textContent = `${totalCorrect}/${totalQuestions} (${pct}%)`;
+    }
+
+    function checkAnswer(name, correct, btn, page) {
+        const sel = document.querySelector(`input[name="${name}"]:checked`);
+        const fb = btn.nextElementSibling;
+        if (!sel) { fb.style.display='block'; fb.className='feedback incorrect'; fb.innerHTML='<strong>Selectionnez une reponse.</strong>'; return; }
+        const ans = sel.value;
+        const q = btn.closest('.qcm-question');
+        const justif = justifications[name] || '';
+        fb.style.display = 'block';
+        if (ans === correct) {
+            fb.className = 'feedback correct';
+            fb.innerHTML = `<strong>Correct ! (${correct.toUpperCase()})</strong><br><em>${justif}</em>`;
+            q.classList.add('answered-correct');
+            pageScores[page] = (pageScores[page] || 0) + 1;
+        } else {
+            fb.className = 'feedback incorrect';
+            fb.innerHTML = `<strong>Incorrect.</strong> La bonne reponse est <strong>${correct.toUpperCase()}</strong>.<br><em>${justif}</em>`;
+            q.classList.add('answered-wrong');
+        }
+        document.querySelectorAll(`input[name="${name}"]`).forEach(r => r.disabled = true);
+        btn.disabled = true; btn.style.opacity = '0.5';
+        answeredQuestions[name] = ans;
+        updateAllDisplays();
+        saveProgress();
+    }
+
+    function resetQcm(page) {
+        const grid = document.getElementById(`qcm-${page}`);
+        if (!grid) return;
+        grid.querySelectorAll('input[type="radio"]').forEach(r => { r.checked = false; r.disabled = false; });
+        grid.querySelectorAll('.btn-validate').forEach(b => { b.disabled = false; b.style.opacity = '1'; });
+        grid.querySelectorAll('.feedback').forEach(f => { f.style.display = 'none'; });
+        grid.querySelectorAll('.qcm-question').forEach(q => { q.classList.remove('answered-correct','answered-wrong'); });
+        grid.querySelectorAll('input[type="radio"]').forEach(r => { delete answeredQuestions[r.name]; });
+        pageScores[page] = 0;
+        updateAllDisplays();
+        saveProgress();
+    }
+
+    // Exam Mode
+    let examTimer;
+    function startExam() {
+        const allQ = document.querySelectorAll('.qcm-question[data-page]');
+        const arr = Array.from(allQ);
+        const shuffled = arr.sort(() => Math.random() - 0.5).slice(0, 20);
+        let html = '<div class="exam-header"><h2>Examen IA pour DevOps (20 questions)</h2><div class="exam-timer" id="examTimer">10:00</div></div>';
+        shuffled.forEach((q, i) => {
+            const text = q.querySelector('.q-text').textContent;
+            const opts = q.querySelectorAll('.qcm-option');
+            const name = `exam-${i}`;
+            const correct = q.querySelector('.btn-validate').getAttribute('onclick').match(/'([a-d])'/)?.[1] || 'b';
+            html += `<div class="exam-question" data-correct="${correct}"><p>${i+1}) ${text.replace(/^\d+\)\s*/, '')}</p><div class="exam-options">`;
+            opts.forEach(o => {
+                const val = o.querySelector('input').value;
+                const lbl = o.querySelector('label').textContent;
+                html += `<div class="exam-option"><input type="radio" name="${name}" value="${val}"><label>${lbl}</label></div>`;
+            });
+            html += '</div></div>';
+        });
+        html += '<button class="btn-submit-exam" onclick="submitExam()">Soumettre l\'examen</button>';
+        document.getElementById('examContent').innerHTML = html;
+        document.getElementById('examOverlay').classList.add('active');
+        let timeLeft = 600;
+        examTimer = setInterval(() => {
+            timeLeft--;
+            const m = Math.floor(timeLeft / 60);
+            const s = timeLeft % 60;
+            const el = document.getElementById('examTimer');
+            if (el) el.textContent = `${m}:${s.toString().padStart(2,'0')}`;
+            if (timeLeft <= 60 && el) el.classList.add('warning');
+            if (timeLeft <= 0) submitExam();
+        }, 1000);
+    }
+
+    function submitExam() {
+        clearInterval(examTimer);
+        const questions = document.querySelectorAll('#examContent .exam-question');
+        let score = 0;
+        questions.forEach(q => {
+            const correct = q.dataset.correct;
+            const name = q.querySelector('input').name;
+            const sel = document.querySelector(`#examContent input[name="${name}"]:checked`);
+            if (sel && sel.value === correct) score++;
+        });
+        const note = Math.round((score / 20) * 20);
+        let comment = note >= 16 ? 'Excellent !' : note >= 12 ? 'Bien !' : note >= 10 ? 'Passable' : 'A retravailler';
+        document.getElementById('examContent').innerHTML = `<div class="exam-result"><div class="score-big">${note}/20</div><div class="score-text">${score} bonnes reponses sur 20<br>${comment}</div><br><button class="btn-submit-exam" onclick="closeExam()">Fermer</button></div>`;
+    }
+
+    function closeExam() {
+        clearInterval(examTimer);
+        document.getElementById('examOverlay').classList.remove('active');
+    }
+
+    // Navigation
+    function switchTab(btn, tabId) {
+        const parent = btn.closest('.page');
+        parent.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        parent.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(tabId).classList.add('active');
+    }
+
+    function showPage(pageId, link) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+        window.scrollTo(0, 0);
+        closeMobile();
+        return false;
+    }
+
+    function goToNextPage(pageId) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+        document.querySelectorAll('.nav-link').forEach(l => {
+            l.classList.remove('active');
+            if (l.getAttribute('onclick') && l.getAttribute('onclick').includes("'" + pageId + "'")) {
+                l.classList.add('active');
+            }
+        });
+        window.scrollTo(0, 0);
+        closeMobile();
+    }
+
+    function filterNav() {
+        const q = document.getElementById('searchInput').value.toLowerCase();
+        document.querySelectorAll('#navList li').forEach(li => {
+            const text = li.textContent.toLowerCase();
+            li.classList.toggle('hidden', q && !text.includes(q));
+        });
+    }
+
+    function toggleMobile() {
+        document.getElementById('sidebar').classList.toggle('open');
+        document.getElementById('overlay').classList.toggle('visible');
+        document.getElementById('burgerBtn').classList.toggle('active');
+    }
+    function closeMobile() {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('overlay').classList.remove('visible');
+        document.getElementById('burgerBtn').classList.remove('active');
+    }
+
+    // Init
+    loadProgress();
+    updateAllDisplays();
+    </script>
+</body>
+</html>

@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trivy - Plateforme de Revision Complete</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f4ff;
+            color: #1a1a1a;
+            line-height: 1.7;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            position: fixed; top: 0; left: 0;
+            width: 270px; height: 100vh;
+            background: linear-gradient(180deg, #1904da 0%, #2a1fba 40%, #3d5afe 100%);
+            overflow-y: auto; padding: 20px 0; z-index: 100;
+            box-shadow: 4px 0 20px rgba(25,4,218,0.3);
+        }
+        .sidebar-header { padding: 12px 18px 15px; border-bottom: 2px solid rgba(255,255,255,0.15); margin-bottom: 8px; }
+        .sidebar-header h1 { font-size: 1.05em; color: #fff; margin-bottom: 2px; }
+        .sidebar-header p { font-size: 0.72em; color: rgba(255,255,255,0.7); }
+
+        .search-box { padding: 8px 14px; margin-bottom: 8px; }
+        .search-box input {
+            width: 100%; padding: 8px 12px; border-radius: 20px; border: none;
+            background: rgba(255,255,255,0.15); color: #fff; font-size: 0.82em;
+            outline: none; transition: background 0.3s;
+        }
+        .search-box input::placeholder { color: rgba(255,255,255,0.5); }
+        .search-box input:focus { background: rgba(255,255,255,0.25); }
+
+        .sidebar ul { list-style: none; padding: 0; }
+        .sidebar ul li a {
+            display: block; color: rgba(255,255,255,0.85); text-decoration: none;
+            font-size: 0.82em; padding: 9px 18px; border-left: 3px solid transparent;
+            transition: all 0.25s ease;
+        }
+        .sidebar ul li a:hover { background: rgba(255,255,255,0.1); color: #fff; border-left-color: #64ffda; }
+        .sidebar ul li a.active { background: linear-gradient(90deg, rgba(100,255,218,0.2), rgba(100,255,218,0.05)); color: #64ffda; border-left-color: #64ffda; font-weight: 600; }
+        .sidebar ul li a .score-badge {
+            float: right; background: rgba(255,255,255,0.2); color: #64ffda;
+            font-size: 0.75em; padding: 1px 7px; border-radius: 10px;
+        }
+        .sidebar ul li.hidden { display: none; }
+        .sidebar::-webkit-scrollbar { width: 6px; }
+        .sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
+
+        .global-progress { padding: 10px 18px; margin-bottom: 5px; }
+        .progress-bar-bg { background: rgba(255,255,255,0.15); border-radius: 10px; height: 8px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #64ffda, #00e676); border-radius: 10px; transition: width 0.5s ease; width: 0%; }
+        .progress-text { color: rgba(255,255,255,0.8); font-size: 0.7em; margin-top: 4px; text-align: center; }
+
+        .main-content { margin-left: 270px; flex: 1; padding: 25px 35px; max-width: 1100px; }
+        .page { display: none; }
+        .page.active { display: block; }
+
+        .lesson-header {
+            background: linear-gradient(135deg, #1904da 0%, #3d5afe 100%);
+            padding: 18px 24px; margin-bottom: 18px; border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(25,4,218,0.3);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .lesson-header h2 { color: #fff; font-size: 1.3em; }
+        .lesson-score { color: #fff; font-size: 0.9em; background: rgba(255,255,255,0.2); padding: 5px 14px; border-radius: 20px; }
+
+        .tabs-container { display: flex; gap: 0; border-bottom: 3px solid #e8eaf6; }
+        .tab-btn {
+            padding: 11px 24px; border: none; background: #f5f5f5; color: #666;
+            font-size: 0.92em; font-weight: 600; cursor: pointer;
+            border-radius: 10px 10px 0 0; transition: all 0.3s;
+            border: 1px solid #e0e0e0; border-bottom: none; margin-right: 4px;
+        }
+        .tab-btn:hover { background: #e8eaf6; color: #3d5afe; }
+        .tab-btn.active { background: #fff; color: #3d5afe; border-color: #c5cae9; position: relative; }
+        .tab-btn.active::after { content: ''; position: absolute; bottom: -3px; left: 0; right: 0; height: 3px; background: #fff; }
+
+        .tab-content {
+            display: none; background: #fff; border: 1px solid #e0e0e0; border-top: none;
+            border-radius: 0 0 12px 12px; padding: 22px; min-height: 350px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+        }
+        .tab-content.active { display: block; }
+
+        .concepts p { margin-bottom: 12px; padding: 11px 15px; border-left: 3px solid #3d5afe; background: #fafafa; border-radius: 0 8px 8px 0; font-size: 0.93em; }
+        .key-points ul { list-style: none; padding: 0; }
+        .key-points ul li {
+            padding: 11px 15px; margin-bottom: 8px; background: linear-gradient(135deg, #e8f5e9, #f1f8e9);
+            border-radius: 8px; border-left: 4px solid #00c853; font-size: 0.93em;
+            transition: transform 0.2s;
+        }
+        .key-points ul li:hover { transform: translateX(4px); }
+        .key-points ul li strong { color: #00796b; }
+
+        .qcm-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .qcm-score-display { font-size: 0.9em; color: #3d5afe; font-weight: 600; }
+        .btn-reset {
+            background: #ff5252; color: white; border: none; padding: 7px 16px;
+            border-radius: 18px; cursor: pointer; font-size: 0.82em; transition: all 0.2s;
+        }
+        .btn-reset:hover { background: #d32f2f; transform: scale(1.05); }
+
+        .qcm-question { margin-bottom: 18px; padding: 16px; background: #fafafa; border-radius: 10px; border: 1px solid #e8e8e8; }
+        .qcm-question.answered-correct { border-color: #66bb6a; background: #f1f8f1; }
+        .qcm-question.answered-wrong { border-color: #ef5350; background: #fff5f5; }
+        .qcm-question p.q-text { font-weight: 600; margin-bottom: 12px; color: #1904da; font-size: 0.92em; }
+        .qcm-options { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; }
+        .qcm-option { display: flex; align-items: center; padding: 7px 10px; border-radius: 6px; cursor: pointer; transition: background 0.2s; font-size: 0.88em; }
+        .qcm-option:hover { background: #e8eaf6; }
+        .qcm-option input[type="radio"] { margin-right: 8px; accent-color: #3d5afe; width: 15px; height: 15px; }
+        .qcm-option label { cursor: pointer; flex: 1; }
+
+        .btn-validate {
+            background: linear-gradient(135deg, #1904da, #3d5afe); color: white; border: none;
+            padding: 8px 20px; border-radius: 18px; cursor: pointer; font-size: 0.85em;
+            margin-top: 8px; transition: transform 0.2s; box-shadow: 0 3px 10px rgba(25,4,218,0.3);
+        }
+        .btn-validate:hover { transform: translateY(-2px); }
+        .feedback { display: none; margin-top: 8px; padding: 10px; border-radius: 8px; font-size: 0.85em; line-height: 1.5; }
+        .feedback.correct { background: linear-gradient(135deg, #e8f5e9, #c8e6c9); border: 1px solid #66bb6a; color: #1B5E20; }
+        .feedback.incorrect { background: linear-gradient(135deg, #fce4ec, #ffcdd2); border: 1px solid #ef5350; color: #b71c1c; }
+
+        .exam-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); z-index: 500; justify-content: center; align-items: center;
+        }
+        .exam-overlay.active { display: flex; }
+        .exam-container {
+            background: #fff; width: 90%; max-width: 800px; max-height: 90vh;
+            border-radius: 16px; padding: 30px; overflow-y: auto; position: relative;
+        }
+        .exam-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #e8eaf6; }
+        .exam-header h2 { color: #1904da; font-size: 1.3em; }
+        .exam-timer { font-size: 1.3em; font-weight: 700; color: #d32f2f; background: #fce4ec; padding: 8px 18px; border-radius: 25px; }
+        .exam-timer.warning { animation: pulse 1s infinite; }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .exam-question { margin-bottom: 20px; padding: 15px; background: #fafafa; border-radius: 10px; border: 1px solid #e0e0e0; }
+        .exam-question p { font-weight: 600; margin-bottom: 10px; color: #1a1a1a; font-size: 0.92em; }
+        .exam-options { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; }
+        .exam-option { display: flex; align-items: center; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 0.88em; }
+        .exam-option:hover { background: #e8eaf6; }
+        .exam-option input { margin-right: 8px; accent-color: #3d5afe; }
+        .btn-submit-exam {
+            display: block; margin: 20px auto 0; background: linear-gradient(135deg, #1904da, #3d5afe);
+            color: #fff; border: none; padding: 12px 40px; border-radius: 25px;
+            font-size: 1em; font-weight: 600; cursor: pointer; transition: transform 0.2s;
+        }
+        .btn-submit-exam:hover { transform: scale(1.05); }
+        .exam-result { text-align: center; padding: 30px; }
+        .exam-result .score-big { font-size: 3em; font-weight: 700; color: #1904da; }
+        .exam-result .score-text { font-size: 1.1em; color: #666; margin-top: 10px; }
+        .btn-close-exam { position: absolute; top: 15px; right: 20px; background: none; border: none; font-size: 1.5em; cursor: pointer; color: #999; }
+        .btn-start-exam {
+            display: block; margin: 15px auto; background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: #fff; border: none; padding: 12px 30px; border-radius: 25px;
+            font-size: 0.95em; font-weight: 600; cursor: pointer; transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(238,90,36,0.3);
+        }
+        .btn-start-exam:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(238,90,36,0.4); }
+
+        .cheat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .cheat-card { background: #fff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 15px; }
+        .cheat-card h4 { color: #3d5afe; margin-bottom: 8px; font-size: 0.95em; border-bottom: 2px solid #e8eaf6; padding-bottom: 5px; }
+        .cheat-card code { display: block; background: #1a1a2e; color: #a5d6a7; padding: 8px 12px; border-radius: 6px; font-size: 0.8em; margin: 4px 0; white-space: pre-wrap; }
+        .cheat-card ul { padding-left: 16px; font-size: 0.85em; }
+        .cheat-card li { margin-bottom: 3px; }
+
+        .pipeline-diagram { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 0; padding: 20px 10px; margin: 15px 0; }
+        .pipeline-stage {
+            background: linear-gradient(135deg, #1904da, #3d5afe); color: #fff;
+            padding: 12px 18px; border-radius: 8px; font-size: 0.82em; font-weight: 600;
+            text-align: center; min-width: 90px; position: relative;
+            box-shadow: 0 3px 10px rgba(25,4,218,0.3); transition: transform 0.2s;
+        }
+        .pipeline-stage:hover { transform: scale(1.08); }
+        .pipeline-stage small { display: block; font-weight: 400; opacity: 0.8; font-size: 0.85em; }
+        .pipeline-arrow { color: #3d5afe; font-size: 1.4em; margin: 0 6px; }
+
+        .bonus-section h2 { color:#fff; font-size:1.3em; background:linear-gradient(135deg,#1904da,#3d5afe); padding:16px 22px; border-radius:12px; margin-bottom:18px; }
+        .bonus-section h3 { color:#1904da; margin:20px 0 8px; padding-left:10px; border-left:3px solid #3d5afe; }
+        .bonus-section ul { padding-left:18px; margin-bottom:12px; }
+        .bonus-section li { margin-bottom:6px; font-size:0.92em; }
+        .code-block { background:linear-gradient(135deg,#1a1a2e,#16213e); color:#a5d6a7; padding:14px 18px; border-radius:8px; font-family:Consolas,monospace; font-size:0.82em; overflow-x:auto; margin:8px 0 15px; white-space:pre-wrap; border:1px solid #0f3460; }
+
+        .next-lesson-container { text-align: center; margin-top: 25px; padding-top: 20px; border-top: 2px dashed #e0e0e0; }
+        .btn-next-lesson {
+            background: linear-gradient(135deg, #00c853, #00796b); color: #fff; border: none;
+            padding: 14px 32px; border-radius: 30px; font-size: 0.95em; font-weight: 600;
+            cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(0,200,83,0.3);
+            display: inline-flex; align-items: center; gap: 8px;
+        }
+        .btn-next-lesson:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,200,83,0.4); }
+
+        .burger-btn { display:none; position:fixed; top:12px; left:12px; z-index:200; background:linear-gradient(135deg,#1904da,#3d5afe); border:none; border-radius:10px; padding:10px 12px; cursor:pointer; flex-direction:column; gap:5px; }
+        .burger-btn span { display:block; width:22px; height:3px; background:white; border-radius:2px; transition:transform 0.3s,opacity 0.3s; }
+        .burger-btn.active span:nth-child(1) { transform:rotate(45deg) translate(5px,6px); }
+        .burger-btn.active span:nth-child(2) { opacity:0; }
+        .burger-btn.active span:nth-child(3) { transform:rotate(-45deg) translate(5px,-6px); }
+        .overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.3); z-index:90; }
+        @media (max-width:900px) {
+            .burger-btn { display:flex; }
+            .sidebar { left:-280px; transition:left 0.3s; z-index:150; }
+            .sidebar.open { left:0; }
+            .overlay.visible { display:block; }
+            .main-content { margin-left:0; padding:18px 12px; padding-top:55px; }
+            .qcm-options,.exam-options { grid-template-columns:1fr; }
+            .cheat-grid { grid-template-columns:1fr; }
+            .pipeline-diagram { flex-direction:column; }
+            .pipeline-arrow { transform:rotate(90deg); }
+        }
+    </style>
+</head>
+<body>
+    <button class="burger-btn" id="burgerBtn" onclick="toggleMobile()"><span></span><span></span><span></span></button>
+    <div class="overlay" id="overlay" onclick="closeMobile()"></div>
+
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h1>Trivy - Revision</h1>
+            <p>Securite DevOps Complete</p>
+        </div>
+        <div class="global-progress">
+            <div class="progress-bar-bg"><div class="progress-bar-fill" id="globalProgressBar"></div></div>
+            <div class="progress-text" id="globalProgressText">0% complete</div>
+        </div>
+        <div class="search-box"><input type="text" id="searchInput" placeholder="Rechercher..." oninput="filterNav()"></div>
+        <ul id="navList">
+            <li><a href="#" class="nav-link active" onclick="showPage('p1',this)">1. Securite DevOps <span class="score-badge" id="badge-p1">-</span></a></li>
+            <li><a href="#" class="nav-link" onclick="showPage('p2',this)">2. Presentation <span class="score-badge" id="badge-p2">-</span></a></li>
+            <li><a href="#" class="nav-link" onclick="showPage('p3',this)">3. Scan Images Docker <span class="score-badge" id="badge-p3">-</span></a></li>
+            <li><a href="#" class="nav-link" onclick="showPage('p4',this)">4. Vulnerabilites & Secrets <span class="score-badge" id="badge-p4">-</span></a></li>
+            <li><a href="#" class="nav-link" onclick="showPage('p5',this)">5. Scan IaC <span class="score-badge" id="badge-p5">-</span></a></li>
+            <li><a href="#" class="nav-link" onclick="showPage('p6',this)">6. CI/CD & Pratiques <span class="score-badge" id="badge-p6">-</span></a></li>
+            <li><a href="#" class="nav-link" onclick="showPage('cheatsheet',this)">Cheat Sheet</a></li>
+            <li><a href="#" class="nav-link" onclick="showPage('bonus',this)">Bonus</a></li>
+        </ul>
+        <button class="btn-start-exam" onclick="startExam()">Mode Examen (10 min)</button>
+    </nav>
+
+    <div class="main-content">
+
+<!-- PAGE 1 -->
+<div class="page active" id="p1">
+    <div class="lesson-header"><h2>1 - Securite dans le DevOps</h2><span class="lesson-score" id="score-p1">0/5</span></div>
+    <div class="tabs-container">
+        <button class="tab-btn active" onclick="switchTab(this,'p1-concepts')">Concepts</button>
+        <button class="tab-btn" onclick="switchTab(this,'p1-keys')">Points Cles</button>
+        <button class="tab-btn" onclick="switchTab(this,'p1-qcm')">QCM</button>
+    </div>
+    <div class="tab-content active" id="p1-concepts"><div class="concepts">
+        <p><strong>Le defi de la securite en DevOps :</strong> Les pipelines CI/CD deployent du code rapidement — parfois plusieurs fois par jour. Cette vitesse est un avantage pour le business, mais un risque pour la securite. Si une image Docker contient une vulnerabilite connue (CVE), elle peut etre deployee en production en quelques minutes. Sans scan automatise, personne ne le detecte avant qu'un attaquant l'exploite.</p>
+        <p><strong>Shift-Left Security :</strong> Le concept "Shift-Left" consiste a deplacer les controles de securite le plus tot possible dans le cycle de developpement. Au lieu de scanner en production (trop tard), on scanne au moment du build, du commit, voire dans l'IDE du developpeur. Plus une faille est detectee tot, moins elle coute cher a corriger.</p>
+        <p><strong>Attaques de la supply chain :</strong> Les applications modernes dependent de centaines de librairies open source (npm, pip, Maven). Un attaquant peut compromettre une seule dependance et impacter des milliers de projets (exemples : log4shell, event-stream, SolarWinds). Scanner les dependances est devenu critique.</p>
+        <p><strong>CVE et vulnerabilites :</strong> Un CVE (Common Vulnerabilities and Exposures) est un identifiant unique pour une faille de securite connue (ex: CVE-2021-44228 = Log4Shell). Les bases de donnees NVD (National Vulnerability Database) et GHSA (GitHub Security Advisories) repertorient ces failles avec leur severite (CVSS score).</p>
+        <p><strong>Securite des conteneurs :</strong> Les images Docker contiennent un OS de base (Alpine, Debian, Ubuntu) avec ses propres paquets et vulnerabilites. Meme si votre code est parfait, l'image de base peut contenir des dizaines de CVE critiques. Scanner les images avant deploiement est indispensable.</p>
+    </div></div>
+    <div class="tab-content" id="p1-keys"><div class="key-points"><ul>
+        <li><strong>Shift-Left = securite le plus tot possible dans le pipeline.</strong></li>
+        <li><strong>Supply chain = dependances compromises = risque massif.</strong></li>
+        <li><strong>CVE = identifiant unique d'une vulnerabilite connue.</strong></li>
+        <li><strong>NVD + GHSA = bases de donnees de vulnerabilites.</strong></li>
+        <li><strong>Images Docker = OS de base + paquets = surface d'attaque.</strong></li>
+        <li><strong>Sans scan automatise, les failles arrivent en production.</strong></li>
+    </ul></div></div>
+    <div class="tab-content" id="p1-qcm">
+        <div class="qcm-header"><span class="qcm-score-display" id="qcm-score-p1">Score: 0/5</span><button class="btn-reset" onclick="resetQcm('p1')">Recommencer</button></div>
+        <div class="qcm-grid" id="qcm-p1">
+            <div class="qcm-question" data-page="p1"><p class="q-text">1) Que signifie "Shift-Left" en securite ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q1-1" value="a" id="q1-1a"><label for="q1-1a">A. Deployer plus vite en production</label></div><div class="qcm-option"><input type="radio" name="q1-1" value="b" id="q1-1b"><label for="q1-1b">B. Deplacer les controles de securite plus tot dans le cycle</label></div><div class="qcm-option"><input type="radio" name="q1-1" value="c" id="q1-1c"><label for="q1-1c">C. Utiliser un clavier AZERTY</label></div><div class="qcm-option"><input type="radio" name="q1-1" value="d" id="q1-1d"><label for="q1-1d">D. Reduire le nombre de developpeurs</label></div></div><button class="btn-validate" onclick="checkAnswer('q1-1','b',this,'p1')">Valider</button><div class="feedback"></div></div>
+            <div class="qcm-question" data-page="p1"><p class="q-text">2) Qu'est-ce qu'un CVE ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q1-2" value="a" id="q1-2a"><label for="q1-2a">A. Un langage de programmation</label></div><div class="qcm-option"><input type="radio" name="q1-2" value="b" id="q1-2b"><label for="q1-2b">B. Un identifiant unique pour une vulnerabilite connue</label></div><div class="qcm-option"><input type="radio" name="q1-2" value="c" id="q1-2c"><label for="q1-2c">C. Un outil de deploiement</label></div><div class="qcm-option"><input type="radio" name="q1-2" value="d" id="q1-2d"><label for="q1-2d">D. Un type de conteneur</label></div></div><button class="btn-validate" onclick="checkAnswer('q1-2','b',this,'p1')">Valider</button><div class="feedback"></div></div>
+            <div class="qcm-question" data-page="p1"><p class="q-text">3) Quel est le risque principal des attaques supply chain ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q1-3" value="a" id="q1-3a"><label for="q1-3a">A. Serveurs trop lents</label></div><div class="qcm-option"><input type="radio" name="q1-3" value="b" id="q1-3b"><label for="q1-3b">B. Une dependance compromise impacte des milliers de projets</label></div><div class="qcm-option"><input type="radio" name="q1-3" value="c" id="q1-3c"><label for="q1-3c">C. Trop de documentation</label></div><div class="qcm-option"><input type="radio" name="q1-3" value="d" id="q1-3d"><label for="q1-3d">D. Equipe trop grande</label></div></div><button class="btn-validate" onclick="checkAnswer('q1-3','b',this,'p1')">Valider</button><div class="feedback"></div></div>
+            <div class="qcm-question" data-page="p1"><p class="q-text">4) Pourquoi scanner les images Docker est-il important ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q1-4" value="a" id="q1-4a"><label for="q1-4a">A. Pour reduire la taille de l'image</label></div><div class="qcm-option"><input type="radio" name="q1-4" value="b" id="q1-4b"><label for="q1-4b">B. Pour verifier la syntaxe du Dockerfile</label></div><div class="qcm-option"><input type="radio" name="q1-4" value="c" id="q1-4c"><label for="q1-4c">C. L'image de base peut contenir des CVE critiques</label></div><div class="qcm-option"><input type="radio" name="q1-4" value="d" id="q1-4d"><label for="q1-4d">D. Pour accelerer le build</label></div></div><button class="btn-validate" onclick="checkAnswer('q1-4','c',this,'p1')">Valider</button><div class="feedback"></div></div>
+            <div class="qcm-question" data-page="p1"><p class="q-text">5) Quelle base de donnees repertorie les vulnerabilites avec un score CVSS ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q1-5" value="a" id="q1-5a"><label for="q1-5a">A. Docker Hub</label></div><div class="qcm-option"><input type="radio" name="q1-5" value="b" id="q1-5b"><label for="q1-5b">B. NVD (National Vulnerability Database)</label></div><div class="qcm-option"><input type="radio" name="q1-5" value="c" id="q1-5c"><label for="q1-5c">C. npm registry</label></div><div class="qcm-option"><input type="radio" name="q1-5" value="d" id="q1-5d"><label for="q1-5d">D. GitHub Actions</label></div></div><button class="btn-validate" onclick="checkAnswer('q1-5','b',this,'p1')">Valider</button><div class="feedback"></div></div>
+        </div>
+        <div class="next-lesson-container"><button class="btn-next-lesson" onclick="goToNextPage('p2')">Lecon suivante &#10132; 2. Presentation</button></div>
+    </div>
+</div>
+
+<!-- PAGE 2 -->
+<div class="page" id="p2">
+    <div class="lesson-header"><h2>2 - Presentation de Trivy</h2><span class="lesson-score" id="score-p2">0/5</span></div>
+    <div class="tabs-container"><button class="tab-btn active" onclick="switchTab(this,'p2-concepts')">Concepts</button><button class="tab-btn" onclick="switchTab(this,'p2-keys')">Points Cles</button><button class="tab-btn" onclick="switchTab(this,'p2-qcm')">QCM</button></div>
+    <div class="tab-content active" id="p2-concepts"><div class="concepts">
+        <p><strong>Qu'est-ce que Trivy ?</strong> Trivy est un scanner de securite open source "all-in-one" developpe par Aqua Security. Il detecte les vulnerabilites, les misconfigurations, les secrets exposes et les problemes de licences dans les images Docker, les systemes de fichiers, les depots Git et les clusters Kubernetes.</p>
+        <p><strong>Aqua Security :</strong> Aqua Security est l'entreprise israelienne qui developpe Trivy. Fonde en 2015, Aqua est un leader de la securite cloud-native. Trivy a ete open-source des le depart et est devenu le scanner le plus populaire de l'ecosysteme cloud-native (20k+ stars GitHub).</p>
+        <p><strong>Scanner all-in-one :</strong> Contrairement a d'autres outils specialises (Clair pour les images, TFSec pour Terraform), Trivy fait tout : vulnerabilites OS, vulnerabilites applicatives, secrets, IaC misconfigurations, licences. Un seul outil pour tout scanner.</p>
+        <p><strong>Cibles de scan :</strong> Trivy peut scanner : des images conteneurs (Docker, OCI), des systemes de fichiers locaux, des depots Git distants, des clusters Kubernetes, des fichiers IaC (Terraform, CloudFormation, Dockerfile, Kubernetes YAML). C'est l'outil le plus polyvalent.</p>
+        <p><strong>Comparaison avec les alternatives :</strong> Clair (RedHat) = images uniquement, plus complexe a deployer. Snyk = commercial, excellent mais payant. Grype (Anchore) = similaire a Trivy mais moins de fonctionnalites. Trivy se distingue par sa simplicite, sa rapidite et sa couverture complete.</p>
+    </div></div>
+    <div class="tab-content" id="p2-keys"><div class="key-points"><ul>
+        <li><strong>Trivy = scanner all-in-one par Aqua Security (Israel, 2019).</strong></li>
+        <li><strong>Open source, 20k+ stars GitHub, le plus populaire.</strong></li>
+        <li><strong>Cibles : images, filesystem, git repos, K8s, IaC.</strong></li>
+        <li><strong>Detecte : vulnerabilites, secrets, misconfigs, licences.</strong></li>
+        <li><strong>Simple a utiliser : un seul binaire, zero configuration.</strong></li>
+        <li><strong>Alternatives : Clair, Snyk, Grype — Trivy est le plus complet.</strong></li>
+    </ul></div></div>
+    <div class="tab-content" id="p2-qcm"><div class="qcm-header"><span class="qcm-score-display" id="qcm-score-p2">Score: 0/5</span><button class="btn-reset" onclick="resetQcm('p2')">Recommencer</button></div><div class="qcm-grid" id="qcm-p2">
+        <div class="qcm-question" data-page="p2"><p class="q-text">1) Qui developpe Trivy ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q2-1" value="a" id="q2-1a"><label for="q2-1a">A. Google</label></div><div class="qcm-option"><input type="radio" name="q2-1" value="b" id="q2-1b"><label for="q2-1b">B. Aqua Security</label></div><div class="qcm-option"><input type="radio" name="q2-1" value="c" id="q2-1c"><label for="q2-1c">C. HashiCorp</label></div><div class="qcm-option"><input type="radio" name="q2-1" value="d" id="q2-1d"><label for="q2-1d">D. RedHat</label></div></div><button class="btn-validate" onclick="checkAnswer('q2-1','b',this,'p2')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p2"><p class="q-text">2) Que signifie "all-in-one" pour Trivy ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q2-2" value="a" id="q2-2a"><label for="q2-2a">A. Il ne fonctionne que sur un seul OS</label></div><div class="qcm-option"><input type="radio" name="q2-2" value="b" id="q2-2b"><label for="q2-2b">B. Il scanne vulnerabilites, secrets, misconfigs et licences</label></div><div class="qcm-option"><input type="radio" name="q2-2" value="c" id="q2-2c"><label for="q2-2c">C. Il ne supporte qu'un seul langage</label></div><div class="qcm-option"><input type="radio" name="q2-2" value="d" id="q2-2d"><label for="q2-2d">D. Il remplace Docker</label></div></div><button class="btn-validate" onclick="checkAnswer('q2-2','b',this,'p2')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p2"><p class="q-text">3) Quelle est l'alternative commerciale la plus connue a Trivy ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q2-3" value="a" id="q2-3a"><label for="q2-3a">A. Jenkins</label></div><div class="qcm-option"><input type="radio" name="q2-3" value="b" id="q2-3b"><label for="q2-3b">B. Terraform</label></div><div class="qcm-option"><input type="radio" name="q2-3" value="c" id="q2-3c"><label for="q2-3c">C. Snyk</label></div><div class="qcm-option"><input type="radio" name="q2-3" value="d" id="q2-3d"><label for="q2-3d">D. Prometheus</label></div></div><button class="btn-validate" onclick="checkAnswer('q2-3','c',this,'p2')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p2"><p class="q-text">4) Quelles cibles Trivy peut-il scanner ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q2-4" value="a" id="q2-4a"><label for="q2-4a">A. Uniquement des images Docker</label></div><div class="qcm-option"><input type="radio" name="q2-4" value="b" id="q2-4b"><label for="q2-4b">B. Images, filesystem, git repos, K8s, IaC</label></div><div class="qcm-option"><input type="radio" name="q2-4" value="c" id="q2-4c"><label for="q2-4c">C. Seulement les fichiers Python</label></div><div class="qcm-option"><input type="radio" name="q2-4" value="d" id="q2-4d"><label for="q2-4d">D. Uniquement le code source Java</label></div></div><button class="btn-validate" onclick="checkAnswer('q2-4','b',this,'p2')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p2"><p class="q-text">5) Quel est l'avantage principal de Trivy par rapport a Clair ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q2-5" value="a" id="q2-5a"><label for="q2-5a">A. Clair est plus rapide</label></div><div class="qcm-option"><input type="radio" name="q2-5" value="b" id="q2-5b"><label for="q2-5b">B. Trivy est plus simple et couvre plus de cibles</label></div><div class="qcm-option"><input type="radio" name="q2-5" value="c" id="q2-5c"><label for="q2-5c">C. Clair est gratuit, Trivy est payant</label></div><div class="qcm-option"><input type="radio" name="q2-5" value="d" id="q2-5d"><label for="q2-5d">D. Aucune difference</label></div></div><button class="btn-validate" onclick="checkAnswer('q2-5','b',this,'p2')">Valider</button><div class="feedback"></div></div>
+    </div>
+        <div class="next-lesson-container"><button class="btn-next-lesson" onclick="goToNextPage('p3')">Lecon suivante &#10132; 3. Scan Images Docker</button></div></div>
+</div>
+
+<!-- PAGE 3 -->
+<div class="page" id="p3">
+    <div class="lesson-header"><h2>3 - Scan d'Images Docker</h2><span class="lesson-score" id="score-p3">0/5</span></div>
+    <div class="tabs-container"><button class="tab-btn active" onclick="switchTab(this,'p3-concepts')">Concepts</button><button class="tab-btn" onclick="switchTab(this,'p3-keys')">Points Cles</button><button class="tab-btn" onclick="switchTab(this,'p3-qcm')">QCM</button></div>
+    <div class="tab-content active" id="p3-concepts"><div class="concepts">
+        <p><strong>La commande trivy image :</strong> C'est la commande de base pour scanner une image Docker. Syntaxe : <code>trivy image nginx:latest</code>. Trivy telecharge sa base de donnees de vulnerabilites, analyse chaque couche de l'image, et affiche un rapport avec les CVE trouvees, leur severite et les versions corrigees.</p>
+        <p><strong>Niveaux de severite :</strong> Trivy classe les vulnerabilites en 4 niveaux : CRITICAL (score CVSS 9.0-10.0, exploitation facile, impact maximal), HIGH (7.0-8.9), MEDIUM (4.0-6.9), LOW (0.1-3.9). On peut filtrer avec <code>--severity CRITICAL,HIGH</code> pour ne voir que les plus graves.</p>
+        <p><strong>Filtrage et ignore :</strong> Le fichier <code>.trivyignore</code> permet d'ignorer certains CVE (faux positifs, vulnerabilites acceptees). Syntaxe : un CVE par ligne (ex: CVE-2021-44228). On peut aussi filtrer par type avec <code>--vuln-type os,library</code> pour scanner uniquement les paquets OS ou applicatifs.</p>
+        <p><strong>Images de base et strategie :</strong> Les images basees sur Debian/Ubuntu contiennent souvent 100+ vulnerabilites. Strategies de reduction : utiliser Alpine (minimaliste, musl libc), utiliser des images distroless (Google, sans shell ni package manager), ou builder en multi-stage pour minimiser la surface d'attaque.</p>
+        <p><strong>Scan de registres distants :</strong> Trivy peut scanner des images directement depuis un registre sans les pull localement : <code>trivy image --remote registry.example.com/app:v1</code>. Il supporte Docker Hub, ECR, GCR, ACR et tout registre compatible OCI.</p>
+    </div></div>
+    <div class="tab-content" id="p3-keys"><div class="key-points"><ul>
+        <li><strong>trivy image &lt;nom&gt; = commande de base pour scanner.</strong></li>
+        <li><strong>4 niveaux : CRITICAL, HIGH, MEDIUM, LOW.</strong></li>
+        <li><strong>--severity CRITICAL,HIGH = filtrer les plus graves.</strong></li>
+        <li><strong>.trivyignore = fichier pour ignorer des CVE specifiques.</strong></li>
+        <li><strong>Alpine/Distroless = reduire la surface d'attaque.</strong></li>
+        <li><strong>Scan distant possible sans pull local.</strong></li>
+    </ul></div></div>
+    <div class="tab-content" id="p3-qcm"><div class="qcm-header"><span class="qcm-score-display" id="qcm-score-p3">Score: 0/5</span><button class="btn-reset" onclick="resetQcm('p3')">Recommencer</button></div><div class="qcm-grid" id="qcm-p3">
+        <div class="qcm-question" data-page="p3"><p class="q-text">1) Quelle commande scanne une image Docker avec Trivy ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q3-1" value="a" id="q3-1a"><label for="q3-1a">A. trivy scan nginx</label></div><div class="qcm-option"><input type="radio" name="q3-1" value="b" id="q3-1b"><label for="q3-1b">B. trivy image nginx:latest</label></div><div class="qcm-option"><input type="radio" name="q3-1" value="c" id="q3-1c"><label for="q3-1c">C. docker scan nginx</label></div><div class="qcm-option"><input type="radio" name="q3-1" value="d" id="q3-1d"><label for="q3-1d">D. trivy docker nginx</label></div></div><button class="btn-validate" onclick="checkAnswer('q3-1','b',this,'p3')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p3"><p class="q-text">2) Quel score CVSS correspond a une severite CRITICAL ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q3-2" value="a" id="q3-2a"><label for="q3-2a">A. 0.1-3.9</label></div><div class="qcm-option"><input type="radio" name="q3-2" value="b" id="q3-2b"><label for="q3-2b">B. 4.0-6.9</label></div><div class="qcm-option"><input type="radio" name="q3-2" value="c" id="q3-2c"><label for="q3-2c">C. 7.0-8.9</label></div><div class="qcm-option"><input type="radio" name="q3-2" value="d" id="q3-2d"><label for="q3-2d">D. 9.0-10.0</label></div></div><button class="btn-validate" onclick="checkAnswer('q3-2','d',this,'p3')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p3"><p class="q-text">3) Quel fichier permet d'ignorer certains CVE ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q3-3" value="a" id="q3-3a"><label for="q3-3a">A. .dockerignore</label></div><div class="qcm-option"><input type="radio" name="q3-3" value="b" id="q3-3b"><label for="q3-3b">B. .trivyignore</label></div><div class="qcm-option"><input type="radio" name="q3-3" value="c" id="q3-3c"><label for="q3-3c">C. .gitignore</label></div><div class="qcm-option"><input type="radio" name="q3-3" value="d" id="q3-3d"><label for="q3-3d">D. .securityignore</label></div></div><button class="btn-validate" onclick="checkAnswer('q3-3','b',this,'p3')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p3"><p class="q-text">4) Quelle strategie reduit la surface d'attaque d'une image ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q3-4" value="a" id="q3-4a"><label for="q3-4a">A. Utiliser Ubuntu avec tous les paquets</label></div><div class="qcm-option"><input type="radio" name="q3-4" value="b" id="q3-4b"><label for="q3-4b">B. Utiliser Alpine ou des images distroless</label></div><div class="qcm-option"><input type="radio" name="q3-4" value="c" id="q3-4c"><label for="q3-4c">C. Ajouter plus de couches Docker</label></div><div class="qcm-option"><input type="radio" name="q3-4" value="d" id="q3-4d"><label for="q3-4d">D. Ne jamais mettre a jour l'image</label></div></div><button class="btn-validate" onclick="checkAnswer('q3-4','b',this,'p3')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p3"><p class="q-text">5) Comment filtrer pour ne voir que les vulnerabilites CRITICAL et HIGH ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q3-5" value="a" id="q3-5a"><label for="q3-5a">A. --filter CRITICAL,HIGH</label></div><div class="qcm-option"><input type="radio" name="q3-5" value="b" id="q3-5b"><label for="q3-5b">B. --severity CRITICAL,HIGH</label></div><div class="qcm-option"><input type="radio" name="q3-5" value="c" id="q3-5c"><label for="q3-5c">C. --level high</label></div><div class="qcm-option"><input type="radio" name="q3-5" value="d" id="q3-5d"><label for="q3-5d">D. --critical-only</label></div></div><button class="btn-validate" onclick="checkAnswer('q3-5','b',this,'p3')">Valider</button><div class="feedback"></div></div>
+    </div>
+        <div class="next-lesson-container"><button class="btn-next-lesson" onclick="goToNextPage('p4')">Lecon suivante &#10132; 4. Vulnerabilites & Secrets</button></div></div>
+</div>
+
+<!-- PAGE 4 -->
+<div class="page" id="p4">
+    <div class="lesson-header"><h2>4 - Vulnerabilites & Secrets</h2><span class="lesson-score" id="score-p4">0/5</span></div>
+    <div class="tabs-container"><button class="tab-btn active" onclick="switchTab(this,'p4-concepts')">Concepts</button><button class="tab-btn" onclick="switchTab(this,'p4-keys')">Points Cles</button><button class="tab-btn" onclick="switchTab(this,'p4-qcm')">QCM</button></div>
+    <div class="tab-content active" id="p4-concepts"><div class="concepts">
+        <p><strong>Base de donnees CVE :</strong> Trivy maintient sa propre base de donnees de vulnerabilites, mise a jour quotidiennement. Elle agregre les donnees de : NVD (National Vulnerability Database, USA), GHSA (GitHub Security Advisories), et les advisories specifiques des distributions (Alpine, Debian, RHEL, Ubuntu). Au premier scan, Trivy telecharge cette DB (~30 Mo).</p>
+        <p><strong>Paquets OS vs paquets applicatifs :</strong> Trivy distingue deux categories : les paquets OS (apt, apk, rpm — vulnerabilites de l'image de base) et les paquets applicatifs (npm, pip, gem, Maven, Go modules — vulnerabilites de vos dependances). Les deux sont scannes automatiquement.</p>
+        <p><strong>Detection de secrets :</strong> Trivy detecte les secrets exposes dans le code et les images : cles API, tokens, mots de passe, cles SSH, certificats. Il utilise des patterns regex et des heuristiques pour identifier les secrets. Commande : <code>trivy fs --scanners secret .</code></p>
+        <p><strong>Scan de licences :</strong> Trivy peut identifier les licences des dependances (MIT, GPL, Apache, etc.) et alerter si une licence restrictive (GPL, AGPL) est utilisee dans un projet commercial. Utile pour la conformite legale.</p>
+        <p><strong>SBOM (Software Bill of Materials) :</strong> Trivy peut generer un SBOM — un inventaire complet de tous les composants logiciels dans une image ou un projet. Formats supportes : CycloneDX, SPDX. Le SBOM est de plus en plus exige par les reglementations (Executive Order US, NIS2 EU).</p>
+    </div></div>
+    <div class="tab-content" id="p4-keys"><div class="key-points"><ul>
+        <li><strong>DB Trivy = NVD + GHSA + advisories distributions, maj quotidienne.</strong></li>
+        <li><strong>Paquets OS (apt/apk/rpm) + applicatifs (npm/pip/gem/Maven).</strong></li>
+        <li><strong>Detection de secrets : cles API, tokens, mots de passe.</strong></li>
+        <li><strong>Scan de licences pour conformite legale (GPL, MIT, Apache).</strong></li>
+        <li><strong>SBOM = inventaire complet (CycloneDX, SPDX).</strong></li>
+        <li><strong>Premier scan = telechargement DB (~30 Mo), ensuite cache local.</strong></li>
+    </ul></div></div>
+    <div class="tab-content" id="p4-qcm"><div class="qcm-header"><span class="qcm-score-display" id="qcm-score-p4">Score: 0/5</span><button class="btn-reset" onclick="resetQcm('p4')">Recommencer</button></div><div class="qcm-grid" id="qcm-p4">
+        <div class="qcm-question" data-page="p4"><p class="q-text">1) D'ou viennent les donnees de vulnerabilites de Trivy ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q4-1" value="a" id="q4-1a"><label for="q4-1a">A. Uniquement Docker Hub</label></div><div class="qcm-option"><input type="radio" name="q4-1" value="b" id="q4-1b"><label for="q4-1b">B. NVD, GHSA et advisories des distributions</label></div><div class="qcm-option"><input type="radio" name="q4-1" value="c" id="q4-1c"><label for="q4-1c">C. Wikipedia</label></div><div class="qcm-option"><input type="radio" name="q4-1" value="d" id="q4-1d"><label for="q4-1d">D. Stack Overflow</label></div></div><button class="btn-validate" onclick="checkAnswer('q4-1','b',this,'p4')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p4"><p class="q-text">2) Quelle commande detecte les secrets dans un repertoire ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q4-2" value="a" id="q4-2a"><label for="q4-2a">A. trivy secret scan .</label></div><div class="qcm-option"><input type="radio" name="q4-2" value="b" id="q4-2b"><label for="q4-2b">B. trivy fs --scanners secret .</label></div><div class="qcm-option"><input type="radio" name="q4-2" value="c" id="q4-2c"><label for="q4-2c">C. trivy find-secrets</label></div><div class="qcm-option"><input type="radio" name="q4-2" value="d" id="q4-2d"><label for="q4-2d">D. trivy image --secrets</label></div></div><button class="btn-validate" onclick="checkAnswer('q4-2','b',this,'p4')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p4"><p class="q-text">3) Qu'est-ce qu'un SBOM ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q4-3" value="a" id="q4-3a"><label for="q4-3a">A. Un format d'image Docker</label></div><div class="qcm-option"><input type="radio" name="q4-3" value="b" id="q4-3b"><label for="q4-3b">B. Un inventaire complet des composants logiciels</label></div><div class="qcm-option"><input type="radio" name="q4-3" value="c" id="q4-3c"><label for="q4-3c">C. Un outil de monitoring</label></div><div class="qcm-option"><input type="radio" name="q4-3" value="d" id="q4-3d"><label for="q4-3d">D. Un protocole reseau</label></div></div><button class="btn-validate" onclick="checkAnswer('q4-3','b',this,'p4')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p4"><p class="q-text">4) Quels formats de SBOM Trivy supporte-t-il ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q4-4" value="a" id="q4-4a"><label for="q4-4a">A. PDF et Word</label></div><div class="qcm-option"><input type="radio" name="q4-4" value="b" id="q4-4b"><label for="q4-4b">B. CycloneDX et SPDX</label></div><div class="qcm-option"><input type="radio" name="q4-4" value="c" id="q4-4c"><label for="q4-4c">C. HTML et XML</label></div><div class="qcm-option"><input type="radio" name="q4-4" value="d" id="q4-4d"><label for="q4-4d">D. CSV et JSON uniquement</label></div></div><button class="btn-validate" onclick="checkAnswer('q4-4','b',this,'p4')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p4"><p class="q-text">5) Quelle est la difference entre paquets OS et applicatifs ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q4-5" value="a" id="q4-5a"><label for="q4-5a">A. Aucune difference</label></div><div class="qcm-option"><input type="radio" name="q4-5" value="b" id="q4-5b"><label for="q4-5b">B. OS=apt/apk/rpm (image base), Applicatifs=npm/pip/gem (dependances)</label></div><div class="qcm-option"><input type="radio" name="q4-5" value="c" id="q4-5c"><label for="q4-5c">C. OS=Windows, Applicatifs=Linux</label></div><div class="qcm-option"><input type="radio" name="q4-5" value="d" id="q4-5d"><label for="q4-5d">D. OS=gratuit, Applicatifs=payant</label></div></div><button class="btn-validate" onclick="checkAnswer('q4-5','b',this,'p4')">Valider</button><div class="feedback"></div></div>
+    </div>
+        <div class="next-lesson-container"><button class="btn-next-lesson" onclick="goToNextPage('p5')">Lecon suivante &#10132; 5. Scan IaC</button></div></div>
+</div>
+
+<!-- PAGE 5 -->
+<div class="page" id="p5">
+    <div class="lesson-header"><h2>5 - Scan IaC & Misconfigurations</h2><span class="lesson-score" id="score-p5">0/5</span></div>
+    <div class="tabs-container"><button class="tab-btn active" onclick="switchTab(this,'p5-concepts')">Concepts</button><button class="tab-btn" onclick="switchTab(this,'p5-keys')">Points Cles</button><button class="tab-btn" onclick="switchTab(this,'p5-qcm')">QCM</button></div>
+    <div class="tab-content active" id="p5-concepts"><div class="concepts">
+        <p><strong>Scan de misconfigurations :</strong> Trivy ne cherche pas seulement des vulnerabilites connues (CVE) mais aussi des erreurs de configuration. Un Dockerfile qui execute en root, un manifest Kubernetes sans limites de ressources, un bucket S3 public — ce sont des misconfigurations qui ouvrent des failles de securite.</p>
+        <p><strong>Fichiers IaC supportes :</strong> Trivy scanne les fichiers Terraform (.tf), CloudFormation (YAML/JSON), Kubernetes manifests (YAML), Dockerfiles, et Helm charts. Commande : <code>trivy config .</code> ou <code>trivy fs --scanners misconfig .</code></p>
+        <p><strong>Frameworks de conformite :</strong> Trivy peut verifier la conformite avec des standards reconnus : CIS Benchmarks (Docker, Kubernetes), NSA/CISA Kubernetes Hardening Guide, AWS/Azure/GCP best practices. Chaque regle est mappee a un controle de conformite specifique.</p>
+        <p><strong>Policies personnalisees (Rego/OPA) :</strong> En plus des regles integrees, on peut ecrire ses propres politiques de securite en Rego (le langage d'Open Policy Agent). Exemple : interdire les images Docker sans tag specifique, imposer des labels obligatoires sur les pods Kubernetes.</p>
+        <p><strong>Scan Kubernetes en live :</strong> Avec <code>trivy k8s --report summary cluster</code>, Trivy peut scanner un cluster Kubernetes en direct et detecter les workloads vulnerables, les secrets exposes, les RBAC trop permissifs. C'est un audit de securite complet du cluster.</p>
+    </div></div>
+    <div class="tab-content" id="p5-keys"><div class="key-points"><ul>
+        <li><strong>trivy config . = scanner les misconfigurations IaC.</strong></li>
+        <li><strong>Supporte : Terraform, CloudFormation, K8s YAML, Dockerfile, Helm.</strong></li>
+        <li><strong>CIS Benchmarks = standard de conformite de reference.</strong></li>
+        <li><strong>Rego/OPA = langage pour policies personnalisees.</strong></li>
+        <li><strong>trivy k8s = audit securite d'un cluster en live.</strong></li>
+        <li><strong>Misconfig ≠ CVE : erreur de config, pas vulnerabilite connue.</strong></li>
+    </ul></div></div>
+    <div class="tab-content" id="p5-qcm"><div class="qcm-header"><span class="qcm-score-display" id="qcm-score-p5">Score: 0/5</span><button class="btn-reset" onclick="resetQcm('p5')">Recommencer</button></div><div class="qcm-grid" id="qcm-p5">
+        <div class="qcm-question" data-page="p5"><p class="q-text">1) Quelle commande scanne les misconfigurations IaC ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q5-1" value="a" id="q5-1a"><label for="q5-1a">A. trivy image .</label></div><div class="qcm-option"><input type="radio" name="q5-1" value="b" id="q5-1b"><label for="q5-1b">B. trivy config .</label></div><div class="qcm-option"><input type="radio" name="q5-1" value="c" id="q5-1c"><label for="q5-1c">C. trivy vuln .</label></div><div class="qcm-option"><input type="radio" name="q5-1" value="d" id="q5-1d"><label for="q5-1d">D. trivy audit .</label></div></div><button class="btn-validate" onclick="checkAnswer('q5-1','b',this,'p5')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p5"><p class="q-text">2) Quel langage permet d'ecrire des policies personnalisees ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q5-2" value="a" id="q5-2a"><label for="q5-2a">A. Python</label></div><div class="qcm-option"><input type="radio" name="q5-2" value="b" id="q5-2b"><label for="q5-2b">B. JavaScript</label></div><div class="qcm-option"><input type="radio" name="q5-2" value="c" id="q5-2c"><label for="q5-2c">C. Rego (OPA)</label></div><div class="qcm-option"><input type="radio" name="q5-2" value="d" id="q5-2d"><label for="q5-2d">D. YAML</label></div></div><button class="btn-validate" onclick="checkAnswer('q5-2','c',this,'p5')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p5"><p class="q-text">3) Quel standard de conformite CIS fournit-il pour Docker ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q5-3" value="a" id="q5-3a"><label for="q5-3a">A. ISO 27001</label></div><div class="qcm-option"><input type="radio" name="q5-3" value="b" id="q5-3b"><label for="q5-3b">B. CIS Docker Benchmark</label></div><div class="qcm-option"><input type="radio" name="q5-3" value="c" id="q5-3c"><label for="q5-3c">C. OWASP Top 10</label></div><div class="qcm-option"><input type="radio" name="q5-3" value="d" id="q5-3d"><label for="q5-3d">D. PCI-DSS</label></div></div><button class="btn-validate" onclick="checkAnswer('q5-3','b',this,'p5')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p5"><p class="q-text">4) Que detecte trivy k8s sur un cluster ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q5-4" value="a" id="q5-4a"><label for="q5-4a">A. Uniquement les pods en erreur</label></div><div class="qcm-option"><input type="radio" name="q5-4" value="b" id="q5-4b"><label for="q5-4b">B. Workloads vulnerables, secrets exposes, RBAC permissifs</label></div><div class="qcm-option"><input type="radio" name="q5-4" value="c" id="q5-4c"><label for="q5-4c">C. Seulement l'utilisation CPU</label></div><div class="qcm-option"><input type="radio" name="q5-4" value="d" id="q5-4d"><label for="q5-4d">D. Les logs des applications</label></div></div><button class="btn-validate" onclick="checkAnswer('q5-4','b',this,'p5')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p5"><p class="q-text">5) Quelle est la difference entre misconfiguration et CVE ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q5-5" value="a" id="q5-5a"><label for="q5-5a">A. Aucune difference</label></div><div class="qcm-option"><input type="radio" name="q5-5" value="b" id="q5-5b"><label for="q5-5b">B. Misconfig=erreur de configuration, CVE=vulnerabilite connue dans un logiciel</label></div><div class="qcm-option"><input type="radio" name="q5-5" value="c" id="q5-5c"><label for="q5-5c">C. CVE est moins grave</label></div><div class="qcm-option"><input type="radio" name="q5-5" value="d" id="q5-5d"><label for="q5-5d">D. Misconfig ne concerne que Windows</label></div></div><button class="btn-validate" onclick="checkAnswer('q5-5','b',this,'p5')">Valider</button><div class="feedback"></div></div>
+    </div>
+        <div class="next-lesson-container"><button class="btn-next-lesson" onclick="goToNextPage('p6')">Lecon suivante &#10132; 6. CI/CD & Pratiques</button></div></div>
+</div>
+
+<!-- PAGE 6 -->
+<div class="page" id="p6">
+    <div class="lesson-header"><h2>6 - Integration CI/CD & Bonnes Pratiques</h2><span class="lesson-score" id="score-p6">0/5</span></div>
+    <div class="tabs-container"><button class="tab-btn active" onclick="switchTab(this,'p6-concepts')">Concepts</button><button class="tab-btn" onclick="switchTab(this,'p6-keys')">Points Cles</button><button class="tab-btn" onclick="switchTab(this,'p6-qcm')">QCM</button></div>
+    <div class="tab-content active" id="p6-concepts"><div class="concepts">
+        <p><strong>Integration GitHub Actions :</strong> Trivy s'integre nativement dans GitHub Actions avec l'action officielle <code>aquasecurity/trivy-action</code>. On peut scanner les images buildees dans le workflow, echouer le pipeline si des vulnerabilites critiques sont detectees, et publier les resultats dans l'onglet Security de GitHub (format SARIF).</p>
+        <p><strong>Integration Jenkins :</strong> Dans un Jenkinsfile, Trivy s'execute comme une etape shell : <code>sh 'trivy image --exit-code 1 --severity CRITICAL myapp:${BUILD_TAG}'</code>. Le flag <code>--exit-code 1</code> fait echouer le build si des vulnerabilites sont trouvees. On peut aussi utiliser le plugin HTML Publisher pour archiver les rapports.</p>
+        <p><strong>Le flag --exit-code :</strong> C'est le flag le plus important pour le CI/CD. <code>--exit-code 0</code> (defaut) = Trivy rapporte mais ne bloque pas. <code>--exit-code 1</code> = Trivy retourne un code d'erreur si des vulnerabilites sont trouvees, ce qui echoue le pipeline. Combine avec <code>--severity</code> pour ne bloquer que sur CRITICAL/HIGH.</p>
+        <p><strong>Cache de la base de donnees :</strong> En CI/CD, telecharger la DB a chaque build ralentit le pipeline. Solutions : utiliser le cache CI (actions/cache dans GitHub Actions), monter un volume persistant, ou utiliser <code>--skip-db-update</code> avec une DB pre-telechargee. Trivy supporte aussi un serveur de DB centralise.</p>
+        <p><strong>Formats de sortie :</strong> Trivy supporte plusieurs formats de rapport : table (terminal, lisible), JSON (parseable par des outils), SARIF (standard pour les outils de securite, compatible GitHub/Azure DevOps), template (personnalisable avec Go templates). Choix du format : <code>--format json</code>, <code>--format sarif</code>.</p>
+    </div></div>
+    <div class="tab-content" id="p6-keys"><div class="key-points"><ul>
+        <li><strong>--exit-code 1 = echouer le pipeline si vulnerabilites trouvees.</strong></li>
+        <li><strong>GitHub Actions : aquasecurity/trivy-action (officiel).</strong></li>
+        <li><strong>SARIF = format standard pour resultats securite (GitHub Security).</strong></li>
+        <li><strong>Cache DB en CI pour eviter le telechargement a chaque build.</strong></li>
+        <li><strong>Formats : table, JSON, SARIF, template Go.</strong></li>
+        <li><strong>Combiner --exit-code 1 + --severity CRITICAL,HIGH = bloquer intelligemment.</strong></li>
+    </ul></div></div>
+    <div class="tab-content" id="p6-qcm"><div class="qcm-header"><span class="qcm-score-display" id="qcm-score-p6">Score: 0/5</span><button class="btn-reset" onclick="resetQcm('p6')">Recommencer</button></div><div class="qcm-grid" id="qcm-p6">
+        <div class="qcm-question" data-page="p6"><p class="q-text">1) Quel flag fait echouer le pipeline si des CVE sont trouvees ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q6-1" value="a" id="q6-1a"><label for="q6-1a">A. --fail-on-vuln</label></div><div class="qcm-option"><input type="radio" name="q6-1" value="b" id="q6-1b"><label for="q6-1b">B. --exit-code 1</label></div><div class="qcm-option"><input type="radio" name="q6-1" value="c" id="q6-1c"><label for="q6-1c">C. --block true</label></div><div class="qcm-option"><input type="radio" name="q6-1" value="d" id="q6-1d"><label for="q6-1d">D. --strict</label></div></div><button class="btn-validate" onclick="checkAnswer('q6-1','b',this,'p6')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p6"><p class="q-text">2) Quelle action GitHub officielle integre Trivy ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q6-2" value="a" id="q6-2a"><label for="q6-2a">A. actions/trivy-scan</label></div><div class="qcm-option"><input type="radio" name="q6-2" value="b" id="q6-2b"><label for="q6-2b">B. aquasecurity/trivy-action</label></div><div class="qcm-option"><input type="radio" name="q6-2" value="c" id="q6-2c"><label for="q6-2c">C. docker/scan-action</label></div><div class="qcm-option"><input type="radio" name="q6-2" value="d" id="q6-2d"><label for="q6-2d">D. security/trivy-check</label></div></div><button class="btn-validate" onclick="checkAnswer('q6-2','b',this,'p6')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p6"><p class="q-text">3) Quel format est compatible avec l'onglet Security de GitHub ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q6-3" value="a" id="q6-3a"><label for="q6-3a">A. CSV</label></div><div class="qcm-option"><input type="radio" name="q6-3" value="b" id="q6-3b"><label for="q6-3b">B. SARIF</label></div><div class="qcm-option"><input type="radio" name="q6-3" value="c" id="q6-3c"><label for="q6-3c">C. PDF</label></div><div class="qcm-option"><input type="radio" name="q6-3" value="d" id="q6-3d"><label for="q6-3d">D. XML</label></div></div><button class="btn-validate" onclick="checkAnswer('q6-3','b',this,'p6')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p6"><p class="q-text">4) Comment eviter de telecharger la DB a chaque build CI ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q6-4" value="a" id="q6-4a"><label for="q6-4a">A. Desactiver Trivy</label></div><div class="qcm-option"><input type="radio" name="q6-4" value="b" id="q6-4b"><label for="q6-4b">B. Utiliser le cache CI ou --skip-db-update avec DB pre-telechargee</label></div><div class="qcm-option"><input type="radio" name="q6-4" value="c" id="q6-4c"><label for="q6-4c">C. Ne pas scanner en CI</label></div><div class="qcm-option"><input type="radio" name="q6-4" value="d" id="q6-4d"><label for="q6-4d">D. Utiliser un autre outil</label></div></div><button class="btn-validate" onclick="checkAnswer('q6-4','b',this,'p6')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p6"><p class="q-text">5) Quelle combinaison bloque le pipeline uniquement sur les failles graves ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q6-5" value="a" id="q6-5a"><label for="q6-5a">A. --exit-code 1 --severity CRITICAL,HIGH</label></div><div class="qcm-option"><input type="radio" name="q6-5" value="b" id="q6-5b"><label for="q6-5b">B. --block --level high</label></div><div class="qcm-option"><input type="radio" name="q6-5" value="c" id="q6-5c"><label for="q6-5c">C. --fail --critical</label></div><div class="qcm-option"><input type="radio" name="q6-5" value="d" id="q6-5d"><label for="q6-5d">D. --strict --high-only</label></div></div><button class="btn-validate" onclick="checkAnswer('q6-5','a',this,'p6')">Valider</button><div class="feedback"></div></div>
+    </div>
+        <div class="next-lesson-container"><button class="btn-next-lesson" onclick="goToNextPage('cheatsheet')">Voir le Cheat Sheet &#10132;</button></div></div>
+</div>
+
+<!-- CHEAT SHEET -->
+<div class="page" id="cheatsheet">
+    <div class="lesson-header"><h2>Cheat Sheet Trivy</h2><span class="lesson-score">Reference rapide</span></div>
+    <div class="cheat-grid">
+        <div class="cheat-card">
+            <h4>Scan d'images</h4>
+            <code>trivy image nginx:latest
+trivy image --severity CRITICAL,HIGH myapp:v1
+trivy image --exit-code 1 myapp:latest
+trivy image --format json -o results.json myapp:v1</code>
+        </div>
+        <div class="cheat-card">
+            <h4>Scan de filesystem</h4>
+            <code>trivy fs .
+trivy fs --scanners vuln,secret .
+trivy fs --severity HIGH,CRITICAL /path/to/project
+trivy rootfs /</code>
+        </div>
+        <div class="cheat-card">
+            <h4>Scan IaC / Config</h4>
+            <code>trivy config .
+trivy config --severity HIGH ./terraform/
+trivy fs --scanners misconfig .
+trivy config --policy ./custom-policies .</code>
+        </div>
+        <div class="cheat-card">
+            <h4>Scan Kubernetes</h4>
+            <code>trivy k8s --report summary cluster
+trivy k8s --namespace default all
+trivy k8s --report all cluster -o report.json</code>
+        </div>
+        <div class="cheat-card">
+            <h4>SBOM & Licences</h4>
+            <code>trivy image --format cyclonedx myapp:v1
+trivy image --format spdx-json myapp:v1
+trivy image --scanners license myapp:v1
+trivy sbom ./sbom.json</code>
+        </div>
+        <div class="cheat-card">
+            <h4>Options utiles</h4>
+            <code>--exit-code 1       # Echouer si CVE trouvees
+--severity CRITICAL # Filtrer par severite
+--format sarif      # Format pour GitHub Security
+--skip-db-update    # Ne pas maj la DB
+--cache-dir /tmp    # Repertoire de cache
+--timeout 10m       # Timeout du scan</code>
+        </div>
+        <div class="cheat-card">
+            <h4>GitHub Actions</h4>
+            <code>- uses: aquasecurity/trivy-action@master
+  with:
+    image-ref: 'myapp:${{ github.sha }}'
+    format: 'sarif'
+    output: 'trivy-results.sarif'
+    severity: 'CRITICAL,HIGH'</code>
+        </div>
+        <div class="cheat-card">
+            <h4>.trivyignore</h4>
+            <code># Ignorer des CVE specifiques
+CVE-2021-44228
+CVE-2023-12345
+
+# Ignorer avec expiration
+CVE-2022-99999  # exp:2024-12-31</code>
+        </div>
+    </div>
+</div>
+
+<!-- BONUS -->
+<div class="page" id="bonus">
+    <div class="bonus-section">
+        <h2>Bonus - Pipeline Securite & Avance</h2>
+
+        <h3>Pipeline de Securite DevOps</h3>
+        <div class="pipeline-diagram">
+            <div class="pipeline-stage">Code<small>Developpeur</small></div>
+            <span class="pipeline-arrow">&#10132;</span>
+            <div class="pipeline-stage">Commit<small>Git Push</small></div>
+            <span class="pipeline-arrow">&#10132;</span>
+            <div class="pipeline-stage">Build<small>Docker Build</small></div>
+            <span class="pipeline-arrow">&#10132;</span>
+            <div class="pipeline-stage">Scan<small>Trivy</small></div>
+            <span class="pipeline-arrow">&#10132;</span>
+            <div class="pipeline-stage">Gate<small>Pass/Fail</small></div>
+            <span class="pipeline-arrow">&#10132;</span>
+            <div class="pipeline-stage">Deploy<small>Production</small></div>
+        </div>
+
+        <h3>Trivy dans un Jenkinsfile</h3>
+        <div class="code-block">pipeline {
+    agent any
+    stages {
+        stage('Build') {
+            steps {
+                sh 'docker build -t myapp:${BUILD_TAG} .'
+            }
+        }
+        stage('Security Scan') {
+            steps {
+                sh '''
+                    trivy image --exit-code 1 \
+                        --severity CRITICAL,HIGH \
+                        --format table \
+                        myapp:${BUILD_TAG}
+                '''
+            }
+        }
+        stage('Deploy') {
+            when { expression { currentBuild.result == null } }
+            steps {
+                sh 'docker push myapp:${BUILD_TAG}'
+            }
+        }
+    }
+}</div>
+
+        <h3>Trivy dans GitLab CI</h3>
+        <div class="code-block">security_scan:
+  stage: test
+  image: aquasec/trivy:latest
+  script:
+    - trivy image --exit-code 1
+        --severity CRITICAL,HIGH
+        --format json --output trivy-report.json
+        $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+  artifacts:
+    paths:
+      - trivy-report.json
+    when: always</div>
+
+        <h3>Bonnes pratiques en production</h3>
+        <ul>
+            <li><strong>Scanner a chaque build</strong> — pas seulement periodiquement</li>
+            <li><strong>Bloquer sur CRITICAL</strong> — avertir sur HIGH, ignorer LOW</li>
+            <li><strong>Mettre a jour la DB quotidiennement</strong> — nouvelles CVE chaque jour</li>
+            <li><strong>Utiliser des images minimales</strong> — Alpine, distroless, scratch</li>
+            <li><strong>Scanner les images en registre</strong> — meme apres deploiement</li>
+            <li><strong>Generer un SBOM</strong> — conformite et tracabilite</li>
+            <li><strong>Automatiser les PR de mise a jour</strong> — Renovate, Dependabot</li>
+            <li><strong>Combiner avec SonarQube</strong> — securite code + securite deps</li>
+        </ul>
+
+        <h3>Trivy Operator (Kubernetes)</h3>
+        <ul>
+            <li>Deploie Trivy comme un operateur K8s</li>
+            <li>Scan continu de tous les workloads du cluster</li>
+            <li>Rapports sous forme de CRDs (VulnerabilityReport, ConfigAuditReport)</li>
+            <li>Integration avec Prometheus pour les alertes</li>
+            <li>Installation : <code>helm install trivy-operator aqua/trivy-operator</code></li>
+        </ul>
+    </div>
+</div>
+
+    </div>
+
+    <!-- EXAM OVERLAY -->
+    <div class="exam-overlay" id="examOverlay">
+        <div class="exam-container">
+            <button class="btn-close-exam" onclick="closeExam()">&times;</button>
+            <div id="examContent"></div>
+        </div>
+    </div>
+
+    <script>
+    const STORAGE_KEY = 'trivy_progress';
+    const PAGE_TOTALS = { p1:5, p2:5, p3:5, p4:5, p5:5, p6:5 };
+    let pageScores = {};
+    let answeredQuestions = {};
+
+    function saveProgress() {
+        const data = { scores: pageScores, answered: answeredQuestions };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    function loadProgress() {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+            try {
+                const data = JSON.parse(saved);
+                pageScores = data.scores || {};
+                answeredQuestions = data.answered || {};
+                Object.keys(answeredQuestions).forEach(name => {
+                    const radio = document.querySelector(`input[name="${name}"][value="${answeredQuestions[name]}"]`);
+                    if (radio) {
+                        radio.checked = true;
+                        const q = radio.closest('.qcm-question');
+                        const btn = q.querySelector('.btn-validate');
+                        const correct = btn.getAttribute('onclick').match(/'([a-d])'/)?.[1];
+                        const fb = q.querySelector('.feedback');
+                        if (answeredQuestions[name] === correct) {
+                            fb.className = 'feedback correct';
+                            fb.innerHTML = '<strong>Correct !</strong>';
+                            q.classList.add('answered-correct');
+                        } else {
+                            fb.className = 'feedback incorrect';
+                            fb.innerHTML = `<strong>Incorrect.</strong> La bonne reponse est <strong>${correct.toUpperCase()}</strong>.`;
+                            q.classList.add('answered-wrong');
+                        }
+                        fb.style.display = 'block';
+                        q.querySelectorAll('input[type="radio"]').forEach(r => r.disabled = true);
+                        btn.disabled = true; btn.style.opacity = '0.5';
+                    }
+                });
+            } catch(e) {}
+        }
+    }
+
+    function updateAllDisplays() {
+        let totalCorrect = 0, totalQuestions = 0;
+        Object.keys(PAGE_TOTALS).forEach(page => {
+            const score = pageScores[page] || 0;
+            const total = PAGE_TOTALS[page];
+            totalCorrect += score;
+            totalQuestions += total;
+            const scoreEl = document.getElementById(`score-${page}`);
+            if (scoreEl) scoreEl.textContent = `${score}/${total}`;
+            const qcmScore = document.getElementById(`qcm-score-${page}`);
+            if (qcmScore) qcmScore.textContent = `Score: ${score}/${total}`;
+            const badge = document.getElementById(`badge-${page}`);
+            if (badge) badge.textContent = score > 0 ? `${score}/${total}` : '-';
+        });
+        const pct = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
+        const bar = document.getElementById('globalProgressBar');
+        const text = document.getElementById('globalProgressText');
+        if (bar) bar.style.width = pct + '%';
+        if (text) text.textContent = `${pct}% complete (${totalCorrect}/${totalQuestions})`;
+    }
+
+    function checkAnswer(name, correct, btn, page) {
+        const sel = document.querySelector(`input[name="${name}"]:checked`);
+        if (!sel) { alert('Selectionnez une reponse !'); return; }
+        const ans = sel.value;
+        const q = btn.closest('.qcm-question');
+        const fb = q.querySelector('.feedback');
+        fb.style.display = 'block';
+        if (ans === correct) {
+            fb.className = 'feedback correct';
+            fb.innerHTML = '<strong>Correct !</strong> Bien joue.';
+            q.classList.add('answered-correct');
+            pageScores[page] = (pageScores[page] || 0) + 1;
+        } else {
+            fb.className = 'feedback incorrect';
+            fb.innerHTML = `<strong>Incorrect.</strong> La bonne reponse est <strong>${correct.toUpperCase()}</strong>.`;
+            q.classList.add('answered-wrong');
+        }
+        q.querySelectorAll('input[type="radio"]').forEach(r => r.disabled = true);
+        btn.disabled = true; btn.style.opacity = '0.5';
+        answeredQuestions[name] = ans;
+        updateAllDisplays();
+        saveProgress();
+    }
+
+    function resetQcm(page) {
+        const grid = document.getElementById(`qcm-${page}`);
+        if (!grid) return;
+        grid.querySelectorAll('input[type="radio"]').forEach(r => { r.checked = false; r.disabled = false; });
+        grid.querySelectorAll('.btn-validate').forEach(b => { b.disabled = false; b.style.opacity = '1'; });
+        grid.querySelectorAll('.feedback').forEach(f => { f.style.display = 'none'; });
+        grid.querySelectorAll('.qcm-question').forEach(q => { q.classList.remove('answered-correct','answered-wrong'); });
+        grid.querySelectorAll('input[type="radio"]').forEach(r => { delete answeredQuestions[r.name]; });
+        pageScores[page] = 0;
+        updateAllDisplays();
+        saveProgress();
+    }
+
+    let examTimer;
+    function startExam() {
+        const allQ = document.querySelectorAll('.qcm-question[data-page]');
+        const arr = Array.from(allQ);
+        const shuffled = arr.sort(() => Math.random() - 0.5).slice(0, 20);
+        let html = '<div class="exam-header"><h2>Examen Trivy (20 questions)</h2><div class="exam-timer" id="examTimer">10:00</div></div>';
+        shuffled.forEach((q, i) => {
+            const text = q.querySelector('.q-text').textContent;
+            const opts = q.querySelectorAll('.qcm-option');
+            const name = `exam-${i}`;
+            const correct = q.querySelector('.btn-validate').getAttribute('onclick').match(/'([a-d])'/)?.[1] || 'b';
+            html += `<div class="exam-question" data-correct="${correct}"><p>${i+1}) ${text.replace(/^\d+\)\s*/, '')}</p><div class="exam-options">`;
+            opts.forEach(o => {
+                const val = o.querySelector('input').value;
+                const lbl = o.querySelector('label').textContent;
+                html += `<div class="exam-option"><input type="radio" name="${name}" value="${val}"><label>${lbl}</label></div>`;
+            });
+            html += '</div></div>';
+        });
+        html += '<button class="btn-submit-exam" onclick="submitExam()">Soumettre l\'examen</button>';
+        document.getElementById('examContent').innerHTML = html;
+        document.getElementById('examOverlay').classList.add('active');
+        let timeLeft = 600;
+        examTimer = setInterval(() => {
+            timeLeft--;
+            const m = Math.floor(timeLeft / 60);
+            const s = timeLeft % 60;
+            const el = document.getElementById('examTimer');
+            if (el) el.textContent = `${m}:${s.toString().padStart(2,'0')}`;
+            if (timeLeft <= 60 && el) el.classList.add('warning');
+            if (timeLeft <= 0) submitExam();
+        }, 1000);
+    }
+
+    function submitExam() {
+        clearInterval(examTimer);
+        const questions = document.querySelectorAll('#examContent .exam-question');
+        let score = 0;
+        questions.forEach(q => {
+            const correct = q.dataset.correct;
+            const name = q.querySelector('input').name;
+            const sel = document.querySelector(`#examContent input[name="${name}"]:checked`);
+            if (sel && sel.value === correct) score++;
+        });
+        const total = questions.length;
+        const note = Math.round((score / total) * 20);
+        let comment = note >= 16 ? 'Excellent !' : note >= 12 ? 'Bien !' : note >= 10 ? 'Passable' : 'A retravailler';
+        document.getElementById('examContent').innerHTML = `<div class="exam-result"><div class="score-big">${note}/20</div><div class="score-text">${score} bonnes reponses sur ${total}<br>${comment}</div><br><button class="btn-submit-exam" onclick="closeExam()">Fermer</button></div>`;
+    }
+
+    function closeExam() {
+        clearInterval(examTimer);
+        document.getElementById('examOverlay').classList.remove('active');
+    }
+
+    function switchTab(btn, tabId) {
+        const parent = btn.closest('.page');
+        parent.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        parent.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(tabId).classList.add('active');
+    }
+
+    function showPage(pageId, link) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+        window.scrollTo(0, 0);
+        closeMobile();
+        return false;
+    }
+
+    function goToNextPage(pageId) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+        document.querySelectorAll('.nav-link').forEach(l => {
+            l.classList.remove('active');
+            if (l.getAttribute('onclick') && l.getAttribute('onclick').includes("'" + pageId + "'")) {
+                l.classList.add('active');
+            }
+        });
+        window.scrollTo(0, 0);
+        closeMobile();
+    }
+
+    function filterNav() {
+        const q = document.getElementById('searchInput').value.toLowerCase();
+        document.querySelectorAll('#navList li').forEach(li => {
+            const text = li.textContent.toLowerCase();
+            li.classList.toggle('hidden', q && !text.includes(q));
+        });
+    }
+
+    function toggleMobile() {
+        document.getElementById('sidebar').classList.toggle('open');
+        document.getElementById('overlay').classList.toggle('visible');
+        document.getElementById('burgerBtn').classList.toggle('active');
+    }
+    function closeMobile() {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('overlay').classList.remove('visible');
+        document.getElementById('burgerBtn').classList.remove('active');
+    }
+
+    loadProgress();
+    updateAllDisplays();
+    </script>
+</body>
+</html>

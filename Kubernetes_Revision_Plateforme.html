@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kubernetes - Plateforme de Revision Complete</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f4ff;
+            color: #1a1a1a;
+            line-height: 1.7;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            position: fixed; top: 0; left: 0;
+            width: 270px; height: 100vh;
+            background: linear-gradient(180deg, #1a3a6e 0%, #265199 40%, #326ce5 100%);
+            overflow-y: auto; padding: 20px 0; z-index: 100;
+            box-shadow: 4px 0 20px rgba(50,108,229,0.3);
+        }
+        .sidebar-header { padding: 12px 18px 15px; border-bottom: 2px solid rgba(255,255,255,0.15); margin-bottom: 8px; }
+        .sidebar-header h1 { font-size: 1.05em; color: #fff; margin-bottom: 2px; }
+        .sidebar-header p { font-size: 0.72em; color: rgba(255,255,255,0.7); }
+
+        .search-box { padding: 8px 14px; margin-bottom: 8px; }
+        .search-box input {
+            width: 100%; padding: 8px 12px; border-radius: 20px; border: none;
+            background: rgba(255,255,255,0.15); color: #fff; font-size: 0.82em;
+            outline: none; transition: background 0.3s;
+        }
+        .search-box input::placeholder { color: rgba(255,255,255,0.5); }
+        .search-box input:focus { background: rgba(255,255,255,0.25); }
+
+        .sidebar ul { list-style: none; padding: 0; }
+        .sidebar ul li a {
+            display: block; color: rgba(255,255,255,0.85); text-decoration: none;
+            font-size: 0.82em; padding: 9px 18px; border-left: 3px solid transparent;
+            transition: all 0.25s ease;
+        }
+        .sidebar ul li a:hover { background: rgba(255,255,255,0.1); color: #fff; border-left-color: #7dd3fc; }
+        .sidebar ul li a.active { background: linear-gradient(90deg, rgba(125,211,252,0.2), rgba(125,211,252,0.05)); color: #7dd3fc; border-left-color: #7dd3fc; font-weight: 600; }
+        .sidebar ul li a .score-badge {
+            float: right; background: rgba(255,255,255,0.2); color: #7dd3fc;
+            font-size: 0.75em; padding: 1px 7px; border-radius: 10px;
+        }
+        .sidebar ul li.hidden { display: none; }
+        .sidebar::-webkit-scrollbar { width: 6px; }
+        .sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
+
+        .global-progress { padding: 10px 18px; margin-bottom: 5px; }
+        .progress-bar-bg { background: rgba(255,255,255,0.15); border-radius: 10px; height: 8px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #7dd3fc, #38bdf8); border-radius: 10px; transition: width 0.5s ease; width: 0%; }
+        .progress-text { color: rgba(255,255,255,0.8); font-size: 0.7em; margin-top: 4px; text-align: center; }
+
+        .main-content { margin-left: 270px; flex: 1; padding: 25px 35px; max-width: 1100px; }
+        .page { display: none; }
+        .page.active { display: block; }
+
+        .lesson-header {
+            background: linear-gradient(135deg, #326ce5 0%, #1d4ed8 100%);
+            padding: 18px 24px; margin-bottom: 18px; border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(50,108,229,0.3);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .lesson-header h2 { color: #fff; font-size: 1.3em; }
+        .lesson-score { color: #fff; font-size: 0.9em; background: rgba(255,255,255,0.2); padding: 5px 14px; border-radius: 20px; }
+
+        .tabs-container { display: flex; gap: 0; border-bottom: 3px solid #dbeafe; }
+        .tab-btn {
+            padding: 11px 24px; border: none; background: #f5f5f5; color: #666;
+            font-size: 0.92em; font-weight: 600; cursor: pointer;
+            border-radius: 10px 10px 0 0; transition: all 0.3s;
+            border: 1px solid #e0e0e0; border-bottom: none; margin-right: 4px;
+        }
+        .tab-btn:hover { background: #dbeafe; color: #326ce5; }
+        .tab-btn.active { background: #fff; color: #326ce5; border-color: #93c5fd; position: relative; }
+        .tab-btn.active::after { content: ''; position: absolute; bottom: -3px; left: 0; right: 0; height: 3px; background: #fff; }
+
+        .tab-content {
+            display: none; background: #fff; border: 1px solid #e0e0e0; border-top: none;
+            border-radius: 0 0 12px 12px; padding: 22px; min-height: 350px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+        }
+        .tab-content.active { display: block; }
+
+        .concepts p { margin-bottom: 12px; padding: 11px 15px; border-left: 3px solid #326ce5; background: #fafafa; border-radius: 0 8px 8px 0; font-size: 0.93em; }
+        .key-points ul { list-style: none; padding: 0; }
+        .key-points ul li {
+            padding: 11px 15px; margin-bottom: 8px; background: linear-gradient(135deg, #eff6ff, #dbeafe);
+            border-radius: 8px; border-left: 4px solid #326ce5; font-size: 0.93em;
+            transition: transform 0.2s;
+        }
+        .key-points ul li:hover { transform: translateX(4px); }
+        .key-points ul li strong { color: #1e40af; }
+
+        .qcm-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .qcm-score-display { font-size: 0.9em; color: #326ce5; font-weight: 600; }
+        .btn-reset {
+            background: #ff5252; color: white; border: none; padding: 7px 16px;
+            border-radius: 18px; cursor: pointer; font-size: 0.82em; transition: all 0.2s;
+        }
+        .btn-reset:hover { background: #d32f2f; transform: scale(1.05); }
+
+        .qcm-question { margin-bottom: 18px; padding: 16px; background: #fafafa; border-radius: 10px; border: 1px solid #e8e8e8; }
+        .qcm-question.answered-correct { border-color: #66bb6a; background: #f1f8f1; }
+        .qcm-question.answered-wrong { border-color: #ef5350; background: #fff5f5; }
+        .qcm-question p.q-text { font-weight: 600; margin-bottom: 12px; color: #1e3a5f; font-size: 0.92em; }
+        .qcm-options { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; }
+        .qcm-option { display: flex; align-items: center; padding: 7px 10px; border-radius: 6px; cursor: pointer; transition: background 0.2s; font-size: 0.88em; }
+        .qcm-option:hover { background: #eff6ff; }
+        .qcm-option input[type="radio"] { margin-right: 8px; accent-color: #326ce5; width: 15px; height: 15px; }
+        .qcm-option label { cursor: pointer; flex: 1; }
+
+        .btn-validate {
+            background: linear-gradient(135deg, #326ce5, #1d4ed8); color: white; border: none;
+            padding: 8px 20px; border-radius: 18px; cursor: pointer; font-size: 0.85em;
+            margin-top: 8px; transition: transform 0.2s; box-shadow: 0 3px 10px rgba(50,108,229,0.3);
+        }
+        .btn-validate:hover { transform: translateY(-2px); }
+        .feedback { display: none; margin-top: 8px; padding: 10px; border-radius: 8px; font-size: 0.85em; line-height: 1.5; }
+        .feedback.correct { background: linear-gradient(135deg, #e8f5e9, #c8e6c9); border: 1px solid #66bb6a; color: #1B5E20; }
+        .feedback.incorrect { background: linear-gradient(135deg, #fce4ec, #ffcdd2); border: 1px solid #ef5350; color: #b71c1c; }
+
+        .exam-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); z-index: 500; justify-content: center; align-items: center;
+        }
+        .exam-overlay.active { display: flex; }
+        .exam-container {
+            background: #fff; width: 90%; max-width: 800px; max-height: 90vh;
+            border-radius: 16px; padding: 30px; overflow-y: auto; position: relative;
+        }
+        .exam-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #dbeafe; }
+        .exam-header h2 { color: #1e3a5f; font-size: 1.3em; }
+        .exam-timer { font-size: 1.3em; font-weight: 700; color: #d32f2f; background: #fce4ec; padding: 8px 18px; border-radius: 25px; }
+        .exam-timer.warning { animation: pulse 1s infinite; }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .exam-question { margin-bottom: 20px; padding: 15px; background: #fafafa; border-radius: 10px; border: 1px solid #e0e0e0; }
+        .exam-question p { font-weight: 600; margin-bottom: 10px; color: #1a1a1a; font-size: 0.92em; }
+        .exam-options { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; }
+        .exam-option { display: flex; align-items: center; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 0.88em; }
+        .exam-option:hover { background: #eff6ff; }
+        .exam-option input { margin-right: 8px; accent-color: #326ce5; }
+        .btn-submit-exam {
+            display: block; margin: 20px auto 0; background: linear-gradient(135deg, #326ce5, #1d4ed8);
+            color: #fff; border: none; padding: 12px 40px; border-radius: 25px;
+            font-size: 1em; font-weight: 600; cursor: pointer; transition: transform 0.2s;
+        }
+        .btn-submit-exam:hover { transform: scale(1.05); }
+        .exam-result { text-align: center; padding: 30px; }
+        .exam-result .score-big { font-size: 3em; font-weight: 700; color: #1e3a5f; }
+        .exam-result .score-text { font-size: 1.1em; color: #666; margin-top: 10px; }
+        .btn-close-exam { position: absolute; top: 15px; right: 20px; background: none; border: none; font-size: 1.5em; cursor: pointer; color: #999; }
+        .btn-start-exam {
+            display: block; margin: 15px auto; background: linear-gradient(135deg, #326ce5, #1d4ed8);
+            color: #fff; border: none; padding: 12px 30px; border-radius: 25px;
+            font-size: 0.95em; font-weight: 600; cursor: pointer; transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(50,108,229,0.3);
+        }
+        .btn-start-exam:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(50,108,229,0.4); }
+
+        .cheat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .cheat-card { background: #fff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 15px; }
+        .cheat-card h4 { color: #326ce5; margin-bottom: 8px; font-size: 0.95em; border-bottom: 2px solid #dbeafe; padding-bottom: 5px; }
+        .cheat-card code { display: block; background: #1a1a2e; color: #7dd3fc; padding: 8px 12px; border-radius: 6px; font-size: 0.8em; margin: 4px 0; white-space: pre-wrap; }
+        .cheat-card ul { padding-left: 16px; font-size: 0.85em; }
+        .cheat-card li { margin-bottom: 3px; }
+
+        .pipeline-diagram { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 0; padding: 20px 10px; margin: 15px 0; }
+        .pipeline-stage {
+            background: linear-gradient(135deg, #326ce5, #1d4ed8); color: #fff;
+            padding: 12px 18px; border-radius: 8px; font-size: 0.82em; font-weight: 600;
+            text-align: center; min-width: 90px; position: relative;
+            box-shadow: 0 3px 10px rgba(50,108,229,0.3); transition: transform 0.2s;
+        }
+        .pipeline-stage:hover { transform: scale(1.08); }
+        .pipeline-stage small { display: block; font-weight: 400; opacity: 0.8; font-size: 0.85em; }
+        .pipeline-arrow { color: #326ce5; font-size: 1.4em; margin: 0 6px; }
+
+        .bonus-section h2 { color:#fff; font-size:1.3em; background:linear-gradient(135deg,#326ce5,#1d4ed8); padding:16px 22px; border-radius:12px; margin-bottom:18px; }
+        .bonus-section h3 { color:#1d4ed8; margin:20px 0 8px; padding-left:10px; border-left:3px solid #326ce5; }
+        .bonus-section ul { padding-left:18px; margin-bottom:12px; }
+        .bonus-section li { margin-bottom:6px; font-size:0.92em; }
+        .code-block { background:linear-gradient(135deg,#1a1a2e,#16213e); color:#7dd3fc; padding:14px 18px; border-radius:8px; font-family:Consolas,monospace; font-size:0.82em; overflow-x:auto; margin:8px 0 15px; white-space:pre-wrap; border:1px solid #0f3460; }
+
+        .next-lesson-container { text-align: center; margin-top: 25px; padding-top: 20px; border-top: 2px dashed #e0e0e0; }
+        .btn-next-lesson {
+            background: linear-gradient(135deg, #00c853, #00796b); color: #fff; border: none;
+            padding: 14px 32px; border-radius: 30px; font-size: 0.95em; font-weight: 600;
+            cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(0,200,83,0.3);
+            display: inline-flex; align-items: center; gap: 8px;
+        }
+        .btn-next-lesson:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,200,83,0.4); }
+
+        .burger-btn { display:none; position:fixed; top:12px; left:12px; z-index:200; background:linear-gradient(135deg,#326ce5,#1d4ed8); border:none; border-radius:10px; padding:10px 12px; cursor:pointer; flex-direction:column; gap:5px; }
+        .burger-btn span { display:block; width:22px; height:3px; background:white; border-radius:2px; transition:transform 0.3s,opacity 0.3s; }
+        .burger-btn.active span:nth-child(1) { transform:rotate(45deg) translate(5px,6px); }
+        .burger-btn.active span:nth-child(2) { opacity:0; }
+        .burger-btn.active span:nth-child(3) { transform:rotate(-45deg) translate(5px,-6px); }
+        .overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.3); z-index:90; }
+        @media (max-width:900px) {
+            .burger-btn { display:flex; }
+            .sidebar { left:-280px; transition:left 0.3s; z-index:150; }
+            .sidebar.open { left:0; }
+            .overlay.visible { display:block; }
+            .main-content { margin-left:0; padding:18px 12px; padding-top:55px; }
+            .qcm-options,.exam-options { grid-template-columns:1fr; }
+            .cheat-grid { grid-template-columns:1fr; }
+            .pipeline-diagram { flex-direction:column; }
+            .pipeline-arrow { transform:rotate(90deg); }
+        }
+    </style>
+</head>
+<body>
+    <button class="burger-btn" id="burgerBtn" onclick="toggleMobile()"><span></span><span></span><span></span></button>
+    <div class="overlay" id="overlay" onclick="closeMobile()"></div>
+
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h1>Kubernetes - Revision</h1>
+            <p>Orchestration de Conteneurs</p>
+        </div>
+        <div class="global-progress">
+            <div class="progress-bar-bg"><div class="progress-bar-fill" id="globalProgressBar"></div></div>
+            <div class="progress-text" id="globalProgressText">0% complete</div>
+        </div>
+        <div class="search-box"><input type="text" id="searchInput" placeholder="Rechercher..." oninput="filterNav()"></div>
+        <ul id="navList">
+            <li><a href="#" class="nav-link active" onclick="showPage('p1',this)">1. Problematique <span class="score-badge" id="badge-p1">-</span></a></li>
+            <li><a href="#" class="nav-link" onclick="showPage('p2',this)">2. Presentation <span class="score-badge" id="badge-p2">-</span></a></li>
+            <li><a href="#" class="nav-link" onclick="showPage('p3',this)">3. Concepts <span class="score-badge" id="badge-p3">-</span></a></li>
+            <li><a href="#" class="nav-link" onclick="showPage('p4',this)">4. Architecture <span class="score-badge" id="badge-p4">-</span></a></li>
+            <li><a href="#" class="nav-link" onclick="showPage('p5',this)">5. Communication <span class="score-badge" id="badge-p5">-</span></a></li>
+            <li><a href="#" class="nav-link" onclick="showPage('p6',this)">6. Installation <span class="score-badge" id="badge-p6">-</span></a></li>
+            <li><a href="#" class="nav-link" onclick="showPage('p7',this)">7. Commandes <span class="score-badge" id="badge-p7">-</span></a></li>
+            <li><a href="#" class="nav-link" onclick="showPage('p8',this)">8. Projet fil rouge <span class="score-badge" id="badge-p8">-</span></a></li>
+            <li><a href="#" class="nav-link" onclick="showPage('p9',this)">9. References <span class="score-badge" id="badge-p9">-</span></a></li>
+            <li><a href="#" class="nav-link" onclick="showPage('cheatsheet',this)">Cheat Sheet</a></li>
+            <li><a href="#" class="nav-link" onclick="showPage('bonus',this)">Bonus</a></li>
+        </ul>
+        <button class="btn-start-exam" onclick="startExam()">Mode Examen (10 min)</button>
+    </nav>
+
+    <div class="main-content">
+
+<!-- PAGE 1 - Problematique -->
+<div class="page active" id="p1">
+    <div class="lesson-header"><h2>1 - Problematique : Pourquoi orchestrer des conteneurs ?</h2><span class="lesson-score" id="score-p1">0/5</span></div>
+    <div class="tabs-container">
+        <button class="tab-btn active" onclick="switchTab(this,'p1-concepts')">Concepts</button>
+        <button class="tab-btn" onclick="switchTab(this,'p1-keys')">Points Cles</button>
+        <button class="tab-btn" onclick="switchTab(this,'p1-qcm')">QCM</button>
+    </div>
+    <div class="tab-content active" id="p1-concepts">
+        <div class="concepts">
+            <p><strong>Le probleme des conteneurs isoles :</strong> Docker permet de creer des conteneurs, mais en production, une application moderne peut necessiter des dizaines voire des centaines de conteneurs. Gerer manuellement le lancement, l'arret, la mise a jour et la surveillance de chaque conteneur devient rapidement impossible. Imaginez un chef d'orchestre qui devrait diriger 100 musiciens un par un, sans partition commune.</p>
+            <p><strong>La mise a l'echelle (scaling) :</strong> Quand le trafic augmente (par exemple lors d'un Black Friday), il faut lancer davantage de conteneurs pour absorber la charge. Quand le trafic diminue, il faut en reduire le nombre pour economiser des ressources. Faire cela manuellement 24h/24 est impensable. C'est comme si un restaurateur devait embaucher et licencier des serveurs en temps reel selon le nombre de clients.</p>
+            <p><strong>La haute disponibilite :</strong> Si un serveur tombe en panne, les conteneurs qui y tournaient doivent etre automatiquement relances sur un autre serveur, sans interruption de service pour l'utilisateur. Sans orchestrateur, un administrateur devrait etre de garde en permanence pour reagir aux pannes.</p>
+            <p><strong>La complexite du deploiement :</strong> Mettre a jour une application sans temps d'arret (rolling update) necessite de remplacer progressivement les anciens conteneurs par les nouveaux. Si une erreur survient, il faut pouvoir revenir en arriere instantanement (rollback). Gerer cela a la main est source d'erreurs et de stress.</p>
+            <p><strong>L'orchestration comme solution :</strong> Un orchestrateur de conteneurs est un logiciel qui automatise tout cela : deploiement, mise a l'echelle, repartition de charge, auto-reparation, mises a jour progressives et rollback. Kubernetes est devenu le standard mondial pour cette tache. Il transforme un ensemble de serveurs en une plateforme unifiee ou deployer des applications.</p>
+        </div>
+    </div>
+    <div class="tab-content" id="p1-keys">
+        <div class="key-points"><ul>
+            <li><strong>Conteneurs isoles = ingerable en production a grande echelle.</strong> L'orchestration automatise la gestion.</li>
+            <li><strong>Scaling automatique = adapter le nombre de conteneurs au trafic.</strong></li>
+            <li><strong>Haute disponibilite = relancer automatiquement les conteneurs en cas de panne.</strong></li>
+            <li><strong>Rolling update = mise a jour sans interruption de service.</strong></li>
+            <li><strong>Rollback = retour instantane a la version precedente en cas de probleme.</strong></li>
+            <li><strong>Kubernetes = orchestrateur standard de l'industrie.</strong></li>
+        </ul></div>
+    </div>
+    <div class="tab-content" id="p1-qcm">
+        <div class="qcm-header"><span class="qcm-score-display" id="qcm-score-p1">Score: 0/5</span><button class="btn-reset" onclick="resetQcm('p1')">Recommencer</button></div>
+        <div class="qcm-grid" id="qcm-p1">
+            <div class="qcm-question" data-page="p1"><p class="q-text">1) Quel probleme principal un orchestrateur de conteneurs resout-il en production ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q1-1" value="a" id="q1-1a"><label for="q1-1a">A. La creation d'images Docker</label></div><div class="qcm-option"><input type="radio" name="q1-1" value="b" id="q1-1b"><label for="q1-1b">B. La gestion manuelle de centaines de conteneurs</label></div><div class="qcm-option"><input type="radio" name="q1-1" value="c" id="q1-1c"><label for="q1-1c">C. L'ecriture du code applicatif</label></div><div class="qcm-option"><input type="radio" name="q1-1" value="d" id="q1-1d"><label for="q1-1d">D. La configuration du reseau physique</label></div></div><button class="btn-validate" onclick="checkAnswer('q1-1','b',this,'p1')">Valider</button><div class="feedback"></div></div>
+            <div class="qcm-question" data-page="p1"><p class="q-text">2) Qu'est-ce que le scaling automatique dans le contexte de l'orchestration de conteneurs ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q1-2" value="a" id="q1-2a"><label for="q1-2a">A. Augmenter la taille des conteneurs existants</label></div><div class="qcm-option"><input type="radio" name="q1-2" value="b" id="q1-2b"><label for="q1-2b">B. Changer le langage de programmation</label></div><div class="qcm-option"><input type="radio" name="q1-2" value="c" id="q1-2c"><label for="q1-2c">C. Adapter automatiquement le nombre de conteneurs selon la charge</label></div><div class="qcm-option"><input type="radio" name="q1-2" value="d" id="q1-2d"><label for="q1-2d">D. Redemarrer le serveur principal</label></div></div><button class="btn-validate" onclick="checkAnswer('q1-2','c',this,'p1')">Valider</button><div class="feedback"></div></div>
+            <div class="qcm-question" data-page="p1"><p class="q-text">3) Que signifie la haute disponibilite (high availability) dans Kubernetes ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q1-3" value="a" id="q1-3a"><label for="q1-3a">A. Le cluster est accessible uniquement en heures de bureau</label></div><div class="qcm-option"><input type="radio" name="q1-3" value="b" id="q1-3b"><label for="q1-3b">B. Les serveurs sont tres puissants</label></div><div class="qcm-option"><input type="radio" name="q1-3" value="c" id="q1-3c"><label for="q1-3c">C. Le service continue meme en cas de panne d'un serveur</label></div><div class="qcm-option"><input type="radio" name="q1-3" value="d" id="q1-3d"><label for="q1-3d">D. Le code est toujours a jour</label></div></div><button class="btn-validate" onclick="checkAnswer('q1-3','c',this,'p1')">Valider</button><div class="feedback"></div></div>
+            <div class="qcm-question" data-page="p1"><p class="q-text">4) Qu'est-ce qu'un rolling update permet de faire ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q1-4" value="a" id="q1-4a"><label for="q1-4a">A. Supprimer tous les conteneurs d'un coup</label></div><div class="qcm-option"><input type="radio" name="q1-4" value="b" id="q1-4b"><label for="q1-4b">B. Mettre a jour l'application progressivement sans interruption de service</label></div><div class="qcm-option"><input type="radio" name="q1-4" value="c" id="q1-4c"><label for="q1-4c">C. Sauvegarder la base de donnees</label></div><div class="qcm-option"><input type="radio" name="q1-4" value="d" id="q1-4d"><label for="q1-4d">D. Augmenter la RAM des serveurs</label></div></div><button class="btn-validate" onclick="checkAnswer('q1-4','b',this,'p1')">Valider</button><div class="feedback"></div></div>
+            <div class="qcm-question" data-page="p1"><p class="q-text">5) Quel est le role d'un rollback dans l'orchestration de conteneurs ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q1-5" value="a" id="q1-5a"><label for="q1-5a">A. Supprimer definitivement une application</label></div><div class="qcm-option"><input type="radio" name="q1-5" value="b" id="q1-5b"><label for="q1-5b">B. Dupliquer un conteneur</label></div><div class="qcm-option"><input type="radio" name="q1-5" value="c" id="q1-5c"><label for="q1-5c">C. Migrer vers un autre cloud</label></div><div class="qcm-option"><input type="radio" name="q1-5" value="d" id="q1-5d"><label for="q1-5d">D. Revenir instantanement a la version precedente en cas d'erreur</label></div></div><button class="btn-validate" onclick="checkAnswer('q1-5','d',this,'p1')">Valider</button><div class="feedback"></div></div>
+        </div>
+        <div class="next-lesson-container"><button class="btn-next-lesson" onclick="goToNextPage('p2')">Lecon suivante &#10132; 2. Presentation</button></div>
+    </div>
+</div>
+
+<!-- PAGE 2 - Presentation -->
+<div class="page" id="p2">
+    <div class="lesson-header"><h2>2 - Presentation de Kubernetes</h2><span class="lesson-score" id="score-p2">0/5</span></div>
+    <div class="tabs-container"><button class="tab-btn active" onclick="switchTab(this,'p2-concepts')">Concepts</button><button class="tab-btn" onclick="switchTab(this,'p2-keys')">Points Cles</button><button class="tab-btn" onclick="switchTab(this,'p2-qcm')">QCM</button></div>
+    <div class="tab-content active" id="p2-concepts"><div class="concepts">
+        <p><strong>Origine et histoire :</strong> Kubernetes a ete cree par Google en 2014 et est inspire de Borg, le systeme interne de Google qui gere des milliards de conteneurs chaque semaine. Google a rendu Kubernetes open source pour partager 15 ans d'experience en orchestration de conteneurs avec la communaute mondiale.</p>
+        <p><strong>Qu'est-ce que Kubernetes :</strong> Kubernetes (souvent abrege K8s — le "8" represente les 8 lettres entre le K et le S) est une plateforme open source d'orchestration de conteneurs. Elle automatise le deploiement, la mise a l'echelle et la gestion des applications conteneurisees sur un cluster de machines.</p>
+        <p><strong>La CNCF (Cloud Native Computing Foundation) :</strong> Depuis 2015, Kubernetes est heberge par la CNCF, une fondation sous la Linux Foundation. La CNCF regroupe des geants comme Google, Microsoft, Amazon, Red Hat et assure la gouvernance neutre du projet. Kubernetes a ete le premier projet "graduate" de la CNCF.</p>
+        <p><strong>Pourquoi K8s domine :</strong> Kubernetes est devenu le standard de facto pour l'orchestration car il est portable (fonctionne sur n'importe quel cloud ou on-premise), extensible (architecture par plugins), a une enorme communaute (plus de 3000 contributeurs), et est supporte par tous les grands fournisseurs cloud (AWS EKS, Google GKE, Azure AKS).</p>
+        <p><strong>Ce que Kubernetes n'est PAS :</strong> Kubernetes n'est pas un PaaS (Platform as a Service) complet. Il ne fournit pas de base de donnees integree, de middleware ou de pipeline CI/CD. Il ne construit pas les images Docker non plus. C'est une couche d'infrastructure qui orchestre les conteneurs, sur laquelle on bâtit le reste.</p>
+    </div></div>
+    <div class="tab-content" id="p2-keys"><div class="key-points"><ul>
+        <li><strong>Cree par Google en 2014, inspire de Borg (15 ans d'experience).</strong></li>
+        <li><strong>K8s = abreviation (K + 8 lettres + s).</strong></li>
+        <li><strong>Heberge par la CNCF (Cloud Native Computing Foundation) depuis 2015.</strong></li>
+        <li><strong>Standard de facto : portable, extensible, enorme communaute.</strong></li>
+        <li><strong>Supporte par AWS (EKS), Google (GKE), Azure (AKS).</strong></li>
+        <li><strong>N'est PAS un PaaS complet : pas de CI/CD, pas de DB integree.</strong></li>
+    </ul></div></div>
+    <div class="tab-content" id="p2-qcm"><div class="qcm-header"><span class="qcm-score-display" id="qcm-score-p2">Score: 0/5</span><button class="btn-reset" onclick="resetQcm('p2')">Recommencer</button></div><div class="qcm-grid" id="qcm-p2">
+        <div class="qcm-question" data-page="p2"><p class="q-text">1) Quelle entreprise a cree Kubernetes et en quelle annee ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q2-1" value="a" id="q2-1a"><label for="q2-1a">A. Google en 2014</label></div><div class="qcm-option"><input type="radio" name="q2-1" value="b" id="q2-1b"><label for="q2-1b">B. Microsoft en 2016</label></div><div class="qcm-option"><input type="radio" name="q2-1" value="c" id="q2-1c"><label for="q2-1c">C. Amazon en 2012</label></div><div class="qcm-option"><input type="radio" name="q2-1" value="d" id="q2-1d"><label for="q2-1d">D. Red Hat en 2018</label></div></div><button class="btn-validate" onclick="checkAnswer('q2-1','a',this,'p2')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p2"><p class="q-text">2) Que signifie l'abreviation K8s ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q2-2" value="a" id="q2-2a"><label for="q2-2a">A. La version 8 de Kubernetes</label></div><div class="qcm-option"><input type="radio" name="q2-2" value="b" id="q2-2b"><label for="q2-2b">B. Un cluster de 8 noeuds</label></div><div class="qcm-option"><input type="radio" name="q2-2" value="c" id="q2-2c"><label for="q2-2c">C. K + 8 lettres + s (Kubernetes)</label></div><div class="qcm-option"><input type="radio" name="q2-2" value="d" id="q2-2d"><label for="q2-2d">D. 8 composants principaux</label></div></div><button class="btn-validate" onclick="checkAnswer('q2-2','c',this,'p2')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p2"><p class="q-text">3) Quelle fondation heberge Kubernetes depuis 2015 ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q2-3" value="a" id="q2-3a"><label for="q2-3a">A. Apache Foundation</label></div><div class="qcm-option"><input type="radio" name="q2-3" value="b" id="q2-3b"><label for="q2-3b">B. Mozilla Foundation</label></div><div class="qcm-option"><input type="radio" name="q2-3" value="c" id="q2-3c"><label for="q2-3c">C. Eclipse Foundation</label></div><div class="qcm-option"><input type="radio" name="q2-3" value="d" id="q2-3d"><label for="q2-3d">D. CNCF (Cloud Native Computing Foundation)</label></div></div><button class="btn-validate" onclick="checkAnswer('q2-3','d',this,'p2')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p2"><p class="q-text">4) De quel systeme interne de Google Kubernetes s'inspire-t-il ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q2-4" value="a" id="q2-4a"><label for="q2-4a">A. MapReduce</label></div><div class="qcm-option"><input type="radio" name="q2-4" value="b" id="q2-4b"><label for="q2-4b">B. BigTable</label></div><div class="qcm-option"><input type="radio" name="q2-4" value="c" id="q2-4c"><label for="q2-4c">C. Borg</label></div><div class="qcm-option"><input type="radio" name="q2-4" value="d" id="q2-4d"><label for="q2-4d">D. Spanner</label></div></div><button class="btn-validate" onclick="checkAnswer('q2-4','c',this,'p2')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p2"><p class="q-text">5) Laquelle de ces affirmations est FAUSSE concernant Kubernetes ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q2-5" value="a" id="q2-5a"><label for="q2-5a">A. Kubernetes est un PaaS complet avec base de donnees integree</label></div><div class="qcm-option"><input type="radio" name="q2-5" value="b" id="q2-5b"><label for="q2-5b">B. Kubernetes orchestre des conteneurs</label></div><div class="qcm-option"><input type="radio" name="q2-5" value="c" id="q2-5c"><label for="q2-5c">C. Kubernetes est open source</label></div><div class="qcm-option"><input type="radio" name="q2-5" value="d" id="q2-5d"><label for="q2-5d">D. Kubernetes est portable multi-cloud</label></div></div><button class="btn-validate" onclick="checkAnswer('q2-5','a',this,'p2')">Valider</button><div class="feedback"></div></div>
+    </div>
+        <div class="next-lesson-container"><button class="btn-next-lesson" onclick="goToNextPage('p3')">Lecon suivante &#10132; 3. Concepts</button></div></div>
+</div>
+
+<!-- PAGE 3 - Concepts -->
+<div class="page" id="p3">
+    <div class="lesson-header"><h2>3 - Concepts fondamentaux de Kubernetes</h2><span class="lesson-score" id="score-p3">0/6</span></div>
+    <div class="tabs-container"><button class="tab-btn active" onclick="switchTab(this,'p3-concepts')">Concepts</button><button class="tab-btn" onclick="switchTab(this,'p3-keys')">Points Cles</button><button class="tab-btn" onclick="switchTab(this,'p3-qcm')">QCM</button></div>
+    <div class="tab-content active" id="p3-concepts"><div class="concepts">
+        <p><strong>Pod :</strong> Le Pod est la plus petite unite deployable dans Kubernetes. Il contient un ou plusieurs conteneurs qui partagent le meme reseau et le meme stockage. Pensez a un Pod comme un appartement : les colocataires (conteneurs) partagent la meme adresse et les memes pieces communes. En general, on met un seul conteneur par Pod.</p>
+        <p><strong>Node :</strong> Un Node est une machine physique ou virtuelle dans le cluster Kubernetes. Il execute les Pods. Il existe deux types de Nodes : les Master Nodes (qui gerent le cluster) et les Worker Nodes (qui executent les applications). C'est comme les travailleurs d'une usine : chacun execute une partie du travail.</p>
+        <p><strong>ReplicaSet :</strong> Un ReplicaSet garantit qu'un nombre specifie de replicas (copies) d'un Pod fonctionne a tout moment. Si un Pod meurt, le ReplicaSet en cree un nouveau automatiquement. C'est comme un manager qui s'assure qu'il y a toujours exactement 3 caissiers a la caisse.</p>
+        <p><strong>Deployment :</strong> Un Deployment est un objet de haut niveau qui gere les ReplicaSets et permet les mises a jour declaratives. On declare l'etat desire (ex: 3 replicas de mon app en version 2.0) et Kubernetes se charge d'y arriver. C'est la maniere recommandee de deployer des applications stateless.</p>
+        <p><strong>Service :</strong> Un Service est une abstraction qui expose un ensemble de Pods sous une adresse IP stable et un nom DNS. Les Pods sont ephemeres (ils peuvent mourir et renaitre avec une nouvelle IP), mais le Service fournit un point d'acces permanent. C'est comme un standard telephonique : le numero ne change pas meme si les operateurs changent.</p>
+        <p><strong>Ingress et Gateway API :</strong> L'Ingress gere l'acces HTTP/HTTPS externe au cluster en definissant des regles de routage (ex: /api va au service A, /web va au service B). La Gateway API est le successeur plus moderne et plus flexible de l'Ingress, avec une meilleure separation des responsabilites entre les equipes plateforme et developpement.</p>
+        <p><strong>ConfigMap et Secret :</strong> Un ConfigMap stocke des donnees de configuration (variables d'environnement, fichiers de config) de maniere non confidentielle. Un Secret stocke des donnees sensibles (mots de passe, tokens, cles) encodees en base64. Les deux permettent de separer la configuration du code applicatif.</p>
+        <p><strong>Volumes et StatefulSet :</strong> Les Volumes permettent de stocker des donnees de maniere persistante, independamment du cycle de vie des Pods (un PersistentVolume survit a la destruction d'un Pod). Un StatefulSet est concu pour les applications avec etat (bases de donnees) : il garantit un identifiant stable, un stockage persistant et un ordre de deploiement.</p>
+        <p><strong>Namespace, DaemonSet, Job/CronJob :</strong> Un Namespace isole logiquement les ressources dans un cluster (comme des dossiers). Un DaemonSet garantit qu'un Pod tourne sur CHAQUE Node (ex: agent de monitoring). Un Job execute une tache ponctuelle jusqu'a sa completion, et un CronJob la planifie selon un horaire (comme un cron Unix).</p>
+    </div></div>
+    <div class="tab-content" id="p3-keys"><div class="key-points"><ul>
+        <li><strong>Pod = plus petite unite, 1+ conteneurs partageant reseau/stockage.</strong></li>
+        <li><strong>Node = machine qui execute les Pods (Master ou Worker).</strong></li>
+        <li><strong>ReplicaSet = maintient N copies d'un Pod en vie.</strong></li>
+        <li><strong>Deployment = gere ReplicaSets + mises a jour declaratives.</strong></li>
+        <li><strong>Service = IP stable pour acceder aux Pods ephemeres.</strong></li>
+        <li><strong>Ingress/Gateway API = routage HTTP/HTTPS externe.</strong></li>
+        <li><strong>ConfigMap (config) / Secret (donnees sensibles).</strong></li>
+        <li><strong>StatefulSet = apps avec etat (DB), stockage persistant.</strong></li>
+        <li><strong>Namespace = isolation logique, DaemonSet = 1 Pod/Node, Job = tache ponctuelle.</strong></li>
+    </ul></div></div>
+    <div class="tab-content" id="p3-qcm"><div class="qcm-header"><span class="qcm-score-display" id="qcm-score-p3">Score: 0/6</span><button class="btn-reset" onclick="resetQcm('p3')">Recommencer</button></div><div class="qcm-grid" id="qcm-p3">
+        <div class="qcm-question" data-page="p3"><p class="q-text">1) Quelle est la plus petite unite deployable dans Kubernetes ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q3-1" value="a" id="q3-1a"><label for="q3-1a">A. Le conteneur</label></div><div class="qcm-option"><input type="radio" name="q3-1" value="b" id="q3-1b"><label for="q3-1b">B. Le Node</label></div><div class="qcm-option"><input type="radio" name="q3-1" value="c" id="q3-1c"><label for="q3-1c">C. Le Pod</label></div><div class="qcm-option"><input type="radio" name="q3-1" value="d" id="q3-1d"><label for="q3-1d">D. Le Deployment</label></div></div><button class="btn-validate" onclick="checkAnswer('q3-1','c',this,'p3')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p3"><p class="q-text">2) Quel objet Kubernetes garantit qu'un nombre precis de replicas de Pods fonctionne en permanence ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q3-2" value="a" id="q3-2a"><label for="q3-2a">A. Le ReplicaSet</label></div><div class="qcm-option"><input type="radio" name="q3-2" value="b" id="q3-2b"><label for="q3-2b">B. Le Service</label></div><div class="qcm-option"><input type="radio" name="q3-2" value="c" id="q3-2c"><label for="q3-2c">C. L'Ingress</label></div><div class="qcm-option"><input type="radio" name="q3-2" value="d" id="q3-2d"><label for="q3-2d">D. Le Namespace</label></div></div><button class="btn-validate" onclick="checkAnswer('q3-2','a',this,'p3')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p3"><p class="q-text">3) A quoi sert un Service dans Kubernetes ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q3-3" value="a" id="q3-3a"><label for="q3-3a">A. Construire des images Docker</label></div><div class="qcm-option"><input type="radio" name="q3-3" value="b" id="q3-3b"><label for="q3-3b">B. Fournir une IP stable pour acceder a un groupe de Pods</label></div><div class="qcm-option"><input type="radio" name="q3-3" value="c" id="q3-3c"><label for="q3-3c">C. Stocker des mots de passe</label></div><div class="qcm-option"><input type="radio" name="q3-3" value="d" id="q3-3d"><label for="q3-3d">D. Planifier des taches recurrentes</label></div></div><button class="btn-validate" onclick="checkAnswer('q3-3','b',this,'p3')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p3"><p class="q-text">4) Quelle est la difference principale entre un ConfigMap et un Secret ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q3-4" value="a" id="q3-4a"><label for="q3-4a">A. Le ConfigMap est plus rapide</label></div><div class="qcm-option"><input type="radio" name="q3-4" value="b" id="q3-4b"><label for="q3-4b">B. Le Secret est reserve aux bases de donnees</label></div><div class="qcm-option"><input type="radio" name="q3-4" value="c" id="q3-4c"><label for="q3-4c">C. Le ConfigMap stocke des donnees non sensibles, le Secret des donnees sensibles</label></div><div class="qcm-option"><input type="radio" name="q3-4" value="d" id="q3-4d"><label for="q3-4d">D. Il n'y a aucune difference</label></div></div><button class="btn-validate" onclick="checkAnswer('q3-4','c',this,'p3')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p3"><p class="q-text">5) Quel objet Kubernetes est specialement concu pour les applications avec etat comme les bases de donnees ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q3-5" value="a" id="q3-5a"><label for="q3-5a">A. Le Deployment</label></div><div class="qcm-option"><input type="radio" name="q3-5" value="b" id="q3-5b"><label for="q3-5b">B. Le DaemonSet</label></div><div class="qcm-option"><input type="radio" name="q3-5" value="c" id="q3-5c"><label for="q3-5c">C. Le Job</label></div><div class="qcm-option"><input type="radio" name="q3-5" value="d" id="q3-5d"><label for="q3-5d">D. Le StatefulSet</label></div></div><button class="btn-validate" onclick="checkAnswer('q3-5','d',this,'p3')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p3"><p class="q-text">6) Quel est le role d'un DaemonSet dans Kubernetes ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q3-6" value="a" id="q3-6a"><label for="q3-6a">A. Exposer des Pods a l'exterieur du cluster</label></div><div class="qcm-option"><input type="radio" name="q3-6" value="b" id="q3-6b"><label for="q3-6b">B. Garantir qu'un Pod tourne sur chaque Node du cluster</label></div><div class="qcm-option"><input type="radio" name="q3-6" value="c" id="q3-6c"><label for="q3-6c">C. Planifier des taches a heure fixe</label></div><div class="qcm-option"><input type="radio" name="q3-6" value="d" id="q3-6d"><label for="q3-6d">D. Gerer les mises a jour progressives</label></div></div><button class="btn-validate" onclick="checkAnswer('q3-6','b',this,'p3')">Valider</button><div class="feedback"></div></div>
+    </div>
+        <div class="next-lesson-container"><button class="btn-next-lesson" onclick="goToNextPage('p4')">Lecon suivante &#10132; 4. Architecture</button></div></div>
+</div>
+
+<!-- PAGE 4 - Architecture -->
+<div class="page" id="p4">
+    <div class="lesson-header"><h2>4 - Architecture de Kubernetes</h2><span class="lesson-score" id="score-p4">0/5</span></div>
+    <div class="tabs-container"><button class="tab-btn active" onclick="switchTab(this,'p4-concepts')">Concepts</button><button class="tab-btn" onclick="switchTab(this,'p4-keys')">Points Cles</button><button class="tab-btn" onclick="switchTab(this,'p4-qcm')">QCM</button></div>
+    <div class="tab-content active" id="p4-concepts"><div class="concepts">
+        <p><strong>Le Control Plane (Plan de controle) :</strong> C'est le "cerveau" du cluster Kubernetes. Il prend toutes les decisions globales : sur quel Node placer un Pod, comment reagir a une panne, quand scaler. Il est generalement deploye sur des Master Nodes separes des Worker Nodes pour la fiabilite.</p>
+        <p><strong>API Server (kube-apiserver) :</strong> C'est la porte d'entree unique du cluster. Toute commande kubectl, toute requete interne passe par l'API Server. Il valide les requetes, les authentifie et les enregistre dans etcd. C'est le standard telephonique central : rien ne se fait sans passer par lui.</p>
+        <p><strong>etcd :</strong> C'est la base de donnees cle-valeur distribuee qui stocke TOUT l'etat du cluster (quels Pods existent, sur quels Nodes, quelles configurations). Si etcd est perdu, le cluster est perdu. C'est la memoire du cluster, comme un registre officiel qui contient toutes les informations vitales.</p>
+        <p><strong>Scheduler (kube-scheduler) :</strong> Quand un nouveau Pod doit etre cree, le Scheduler decide sur quel Node le placer. Il prend en compte les ressources disponibles (CPU, RAM), les contraintes (affinites, tolerations) et l'equilibrage de charge. C'est comme un directeur d'hotel qui assigne les chambres aux clients selon les disponibilites.</p>
+        <p><strong>Controller Manager (kube-controller-manager) :</strong> Il execute les boucles de controle qui surveillent l'etat du cluster et agissent pour le ramener vers l'etat desire. Par exemple, le ReplicaSet Controller verifie que le bon nombre de Pods existe, le Node Controller detecte les pannes de Nodes. C'est un ensemble de "gardiens" automatiques.</p>
+        <p><strong>kubelet :</strong> C'est l'agent qui tourne sur CHAQUE Worker Node. Il recoit les instructions de l'API Server et s'assure que les conteneurs d'un Pod sont en cours d'execution et en bonne sante. C'est le contremaître sur le terrain qui execute les ordres du management.</p>
+        <p><strong>kube-proxy :</strong> C'est le composant reseau qui tourne sur chaque Node. Il maintient les regles reseau (iptables ou IPVS) qui permettent la communication vers les Pods via les Services. Quand un client accede a un Service, kube-proxy redirige le trafic vers le bon Pod.</p>
+        <p><strong>Container Runtime :</strong> C'est le logiciel responsable de l'execution effective des conteneurs. Kubernetes supporte plusieurs runtimes via l'interface CRI (Container Runtime Interface) : containerd (le plus repandu), CRI-O, et d'autres. Docker n'est plus supporte directement depuis Kubernetes 1.24.</p>
+    </div></div>
+    <div class="tab-content" id="p4-keys"><div class="key-points"><ul>
+        <li><strong>Control Plane = cerveau du cluster (decisions globales).</strong></li>
+        <li><strong>API Server = porte d'entree unique, valide et route tout.</strong></li>
+        <li><strong>etcd = base cle-valeur qui stocke TOUT l'etat du cluster.</strong></li>
+        <li><strong>Scheduler = decide sur quel Node placer chaque Pod.</strong></li>
+        <li><strong>Controller Manager = boucles de controle (etat desire vs actuel).</strong></li>
+        <li><strong>kubelet = agent sur chaque Worker, execute les Pods.</strong></li>
+        <li><strong>kube-proxy = regles reseau pour les Services sur chaque Node.</strong></li>
+        <li><strong>Container Runtime = containerd (CRI), Docker retire depuis v1.24.</strong></li>
+    </ul></div></div>
+    <div class="tab-content" id="p4-qcm"><div class="qcm-header"><span class="qcm-score-display" id="qcm-score-p4">Score: 0/5</span><button class="btn-reset" onclick="resetQcm('p4')">Recommencer</button></div><div class="qcm-grid" id="qcm-p4">
+        <div class="qcm-question" data-page="p4"><p class="q-text">1) Quel composant du Control Plane stocke tout l'etat du cluster Kubernetes ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q4-1" value="a" id="q4-1a"><label for="q4-1a">A. Le Scheduler</label></div><div class="qcm-option"><input type="radio" name="q4-1" value="b" id="q4-1b"><label for="q4-1b">B. etcd</label></div><div class="qcm-option"><input type="radio" name="q4-1" value="c" id="q4-1c"><label for="q4-1c">C. Le Controller Manager</label></div><div class="qcm-option"><input type="radio" name="q4-1" value="d" id="q4-1d"><label for="q4-1d">D. kubelet</label></div></div><button class="btn-validate" onclick="checkAnswer('q4-1','b',this,'p4')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p4"><p class="q-text">2) Quel est le role du kube-scheduler dans l'architecture Kubernetes ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q4-2" value="a" id="q4-2a"><label for="q4-2a">A. Stocker les configurations</label></div><div class="qcm-option"><input type="radio" name="q4-2" value="b" id="q4-2b"><label for="q4-2b">B. Executer les conteneurs</label></div><div class="qcm-option"><input type="radio" name="q4-2" value="c" id="q4-2c"><label for="q4-2c">C. Decider sur quel Node placer un nouveau Pod</label></div><div class="qcm-option"><input type="radio" name="q4-2" value="d" id="q4-2d"><label for="q4-2d">D. Gerer le reseau entre les Pods</label></div></div><button class="btn-validate" onclick="checkAnswer('q4-2','c',this,'p4')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p4"><p class="q-text">3) Quel agent tourne sur chaque Worker Node pour gerer les Pods localement ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q4-3" value="a" id="q4-3a"><label for="q4-3a">A. kube-proxy</label></div><div class="qcm-option"><input type="radio" name="q4-3" value="b" id="q4-3b"><label for="q4-3b">B. etcd</label></div><div class="qcm-option"><input type="radio" name="q4-3" value="c" id="q4-3c"><label for="q4-3c">C. kube-apiserver</label></div><div class="qcm-option"><input type="radio" name="q4-3" value="d" id="q4-3d"><label for="q4-3d">D. kubelet</label></div></div><button class="btn-validate" onclick="checkAnswer('q4-3','d',this,'p4')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p4"><p class="q-text">4) Quel container runtime est le plus utilise avec Kubernetes actuellement ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q4-4" value="a" id="q4-4a"><label for="q4-4a">A. containerd</label></div><div class="qcm-option"><input type="radio" name="q4-4" value="b" id="q4-4b"><label for="q4-4b">B. Docker Engine directement</label></div><div class="qcm-option"><input type="radio" name="q4-4" value="c" id="q4-4c"><label for="q4-4c">C. VirtualBox</label></div><div class="qcm-option"><input type="radio" name="q4-4" value="d" id="q4-4d"><label for="q4-4d">D. VMware</label></div></div><button class="btn-validate" onclick="checkAnswer('q4-4','a',this,'p4')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p4"><p class="q-text">5) Quel composant est la porte d'entree unique par laquelle transitent toutes les requetes du cluster ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q4-5" value="a" id="q4-5a"><label for="q4-5a">A. kubelet</label></div><div class="qcm-option"><input type="radio" name="q4-5" value="b" id="q4-5b"><label for="q4-5b">B. kube-proxy</label></div><div class="qcm-option"><input type="radio" name="q4-5" value="c" id="q4-5c"><label for="q4-5c">C. kube-apiserver</label></div><div class="qcm-option"><input type="radio" name="q4-5" value="d" id="q4-5d"><label for="q4-5d">D. etcd</label></div></div><button class="btn-validate" onclick="checkAnswer('q4-5','c',this,'p4')">Valider</button><div class="feedback"></div></div>
+    </div>
+        <div class="next-lesson-container"><button class="btn-next-lesson" onclick="goToNextPage('p5')">Lecon suivante &#10132; 5. Communication</button></div></div>
+</div>
+
+<!-- PAGE 5 - Communication -->
+<div class="page" id="p5">
+    <div class="lesson-header"><h2>5 - Communication et Reseau dans Kubernetes</h2><span class="lesson-score" id="score-p5">0/5</span></div>
+    <div class="tabs-container"><button class="tab-btn active" onclick="switchTab(this,'p5-concepts')">Concepts</button><button class="tab-btn" onclick="switchTab(this,'p5-keys')">Points Cles</button><button class="tab-btn" onclick="switchTab(this,'p5-qcm')">QCM</button></div>
+    <div class="tab-content active" id="p5-concepts"><div class="concepts">
+        <p><strong>ClusterIP :</strong> C'est le type de Service par defaut. Il attribue une adresse IP interne au cluster, accessible uniquement depuis l'interieur. Les autres Pods du cluster peuvent joindre ce Service via son ClusterIP ou son nom DNS. C'est comme un numero de telephone interne dans une entreprise : il ne fonctionne pas depuis l'exterieur.</p>
+        <p><strong>NodePort :</strong> Ce type de Service ouvre un port fixe (entre 30000 et 32767) sur CHAQUE Node du cluster. Le trafic arrivant sur ce port est redirige vers le Service. C'est simple mais limite : on expose directement les Nodes, ce qui n'est pas ideal en production. C'est utile pour le developpement ou les tests.</p>
+        <p><strong>LoadBalancer :</strong> Ce type de Service provisionne automatiquement un repartiteur de charge (load balancer) externe aupres du fournisseur cloud (AWS ELB, Azure LB, GCP LB). Le trafic arrive sur le LB qui le distribue aux Nodes. C'est la methode standard pour exposer un Service en production sur le cloud.</p>
+        <p><strong>Ingress :</strong> Un Ingress est un objet qui definit des regles de routage HTTP/HTTPS vers les Services. Un Ingress Controller (comme Nginx Ingress ou Traefik) implemente ces regles. L'avantage est de pouvoir router plusieurs domaines/chemins vers differents Services avec un seul point d'entree et un seul certificat TLS.</p>
+        <p><strong>CoreDNS :</strong> CoreDNS est le serveur DNS interne du cluster Kubernetes. Il permet aux Pods de se trouver par nom. Par exemple, un Pod peut acceder au Service "mon-api" simplement en utilisant l'URL http://mon-api.default.svc.cluster.local. Chaque Service recoit automatiquement une entree DNS.</p>
+        <p><strong>Network Policies :</strong> Les Network Policies sont des regles de pare-feu au niveau du Pod. Par defaut, tous les Pods peuvent communiquer entre eux. Les Network Policies permettent de restreindre le trafic entrant (ingress) et sortant (egress) de certains Pods. C'est essentiel pour la securite : par exemple, seul le backend peut acceder a la base de donnees.</p>
+    </div></div>
+    <div class="tab-content" id="p5-keys"><div class="key-points"><ul>
+        <li><strong>ClusterIP = IP interne uniquement, type par defaut.</strong></li>
+        <li><strong>NodePort = port fixe (30000-32767) sur chaque Node, pour dev/tests.</strong></li>
+        <li><strong>LoadBalancer = LB externe du cloud, standard en production.</strong></li>
+        <li><strong>Ingress = routage HTTP/HTTPS, plusieurs domaines/chemins vers un point d'entree.</strong></li>
+        <li><strong>CoreDNS = resolution de noms interne (service.namespace.svc.cluster.local).</strong></li>
+        <li><strong>Network Policies = pare-feu au niveau Pod, restreindre les communications.</strong></li>
+    </ul></div></div>
+    <div class="tab-content" id="p5-qcm"><div class="qcm-header"><span class="qcm-score-display" id="qcm-score-p5">Score: 0/5</span><button class="btn-reset" onclick="resetQcm('p5')">Recommencer</button></div><div class="qcm-grid" id="qcm-p5">
+        <div class="qcm-question" data-page="p5"><p class="q-text">1) Quel est le type de Service par defaut dans Kubernetes ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q5-1" value="a" id="q5-1a"><label for="q5-1a">A. NodePort</label></div><div class="qcm-option"><input type="radio" name="q5-1" value="b" id="q5-1b"><label for="q5-1b">B. LoadBalancer</label></div><div class="qcm-option"><input type="radio" name="q5-1" value="c" id="q5-1c"><label for="q5-1c">C. ClusterIP</label></div><div class="qcm-option"><input type="radio" name="q5-1" value="d" id="q5-1d"><label for="q5-1d">D. ExternalName</label></div></div><button class="btn-validate" onclick="checkAnswer('q5-1','c',this,'p5')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p5"><p class="q-text">2) Dans quelle plage de ports un NodePort est-il attribue par defaut ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q5-2" value="a" id="q5-2a"><label for="q5-2a">A. 80-443</label></div><div class="qcm-option"><input type="radio" name="q5-2" value="b" id="q5-2b"><label for="q5-2b">B. 8000-9000</label></div><div class="qcm-option"><input type="radio" name="q5-2" value="c" id="q5-2c"><label for="q5-2c">C. 1024-5000</label></div><div class="qcm-option"><input type="radio" name="q5-2" value="d" id="q5-2d"><label for="q5-2d">D. 30000-32767</label></div></div><button class="btn-validate" onclick="checkAnswer('q5-2','d',this,'p5')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p5"><p class="q-text">3) Quel composant assure la resolution DNS interne dans un cluster Kubernetes ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q5-3" value="a" id="q5-3a"><label for="q5-3a">A. kube-proxy</label></div><div class="qcm-option"><input type="radio" name="q5-3" value="b" id="q5-3b"><label for="q5-3b">B. CoreDNS</label></div><div class="qcm-option"><input type="radio" name="q5-3" value="c" id="q5-3c"><label for="q5-3c">C. etcd</label></div><div class="qcm-option"><input type="radio" name="q5-3" value="d" id="q5-3d"><label for="q5-3d">D. kubelet</label></div></div><button class="btn-validate" onclick="checkAnswer('q5-3','b',this,'p5')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p5"><p class="q-text">4) A quoi servent les Network Policies dans Kubernetes ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q5-4" value="a" id="q5-4a"><label for="q5-4a">A. Accelerer le reseau entre les Pods</label></div><div class="qcm-option"><input type="radio" name="q5-4" value="b" id="q5-4b"><label for="q5-4b">B. Restreindre le trafic reseau entre les Pods (pare-feu)</label></div><div class="qcm-option"><input type="radio" name="q5-4" value="c" id="q5-4c"><label for="q5-4c">C. Configurer les noms de domaine publics</label></div><div class="qcm-option"><input type="radio" name="q5-4" value="d" id="q5-4d"><label for="q5-4d">D. Gerer les certificats TLS</label></div></div><button class="btn-validate" onclick="checkAnswer('q5-4','b',this,'p5')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p5"><p class="q-text">5) Quel type de Service provisionne automatiquement un repartiteur de charge externe sur le cloud ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q5-5" value="a" id="q5-5a"><label for="q5-5a">A. ClusterIP</label></div><div class="qcm-option"><input type="radio" name="q5-5" value="b" id="q5-5b"><label for="q5-5b">B. NodePort</label></div><div class="qcm-option"><input type="radio" name="q5-5" value="c" id="q5-5c"><label for="q5-5c">C. Ingress</label></div><div class="qcm-option"><input type="radio" name="q5-5" value="d" id="q5-5d"><label for="q5-5d">D. LoadBalancer</label></div></div><button class="btn-validate" onclick="checkAnswer('q5-5','d',this,'p5')">Valider</button><div class="feedback"></div></div>
+    </div>
+        <div class="next-lesson-container"><button class="btn-next-lesson" onclick="goToNextPage('p6')">Lecon suivante &#10132; 6. Installation</button></div></div>
+</div>
+
+<!-- PAGE 6 - Installation -->
+<div class="page" id="p6">
+    <div class="lesson-header"><h2>6 - Installation de Kubernetes</h2><span class="lesson-score" id="score-p6">0/5</span></div>
+    <div class="tabs-container"><button class="tab-btn active" onclick="switchTab(this,'p6-concepts')">Concepts</button><button class="tab-btn" onclick="switchTab(this,'p6-keys')">Points Cles</button><button class="tab-btn" onclick="switchTab(this,'p6-qcm')">QCM</button></div>
+    <div class="tab-content active" id="p6-concepts"><div class="concepts">
+        <p><strong>Minikube :</strong> Minikube est un outil qui permet de lancer un cluster Kubernetes local sur une seule machine (dans une VM ou un conteneur Docker). C'est ideal pour l'apprentissage et le developpement. Il cree un cluster a un seul Node avec tout le necessaire. C'est comme avoir un mini-laboratoire personnel pour s'exercer sans risque.</p>
+        <p><strong>kubeadm :</strong> kubeadm est l'outil officiel pour installer un cluster Kubernetes "from scratch" sur des serveurs existants. Il gere l'initialisation du Control Plane (kubeadm init) et l'ajout de Worker Nodes (kubeadm join). C'est la methode standard pour les environnements on-premise ou les VMs en production. Il demande plus de configuration manuelle mais offre un controle total.</p>
+        <p><strong>k3s :</strong> k3s est une distribution Kubernetes ultra-legere creee par Rancher (SUSE). Elle est conçue pour l'IoT, l'edge computing et les environnements a ressources limitees. Toute l'installation tient dans un seul binaire de moins de 100 Mo. Elle supprime les composants non essentiels et utilise SQLite au lieu d'etcd par defaut.</p>
+        <p><strong>Services manages (EKS, GKE, AKS) :</strong> Les grands fournisseurs cloud proposent des clusters Kubernetes geres : Amazon EKS (Elastic Kubernetes Service), Google GKE (Google Kubernetes Engine), Azure AKS (Azure Kubernetes Service). Le Control Plane est gere par le cloud provider (maintenance, mises a jour, haute disponibilite), l'utilisateur ne gere que ses Worker Nodes et ses applications.</p>
+        <p><strong>kubectl :</strong> kubectl est l'outil en ligne de commande (CLI) pour interagir avec un cluster Kubernetes. Il communique avec l'API Server et permet de deployer des applications, inspecter des ressources, consulter des logs et debugger. C'est l'equivalent d'un tableau de bord en ligne de commande, indispensable au quotidien pour tout operateur Kubernetes.</p>
+    </div></div>
+    <div class="tab-content" id="p6-keys"><div class="key-points"><ul>
+        <li><strong>Minikube = cluster local 1 Node pour dev/apprentissage.</strong></li>
+        <li><strong>kubeadm = installation officielle from scratch (on-premise).</strong></li>
+        <li><strong>k3s = distribution ultra-legere (IoT, edge, 100 Mo).</strong></li>
+        <li><strong>EKS (AWS), GKE (Google), AKS (Azure) = clusters manages.</strong></li>
+        <li><strong>kubectl = CLI indispensable pour piloter le cluster.</strong></li>
+        <li><strong>Managed = Control Plane gere par le cloud, vous gerez les apps.</strong></li>
+    </ul></div></div>
+    <div class="tab-content" id="p6-qcm"><div class="qcm-header"><span class="qcm-score-display" id="qcm-score-p6">Score: 0/5</span><button class="btn-reset" onclick="resetQcm('p6')">Recommencer</button></div><div class="qcm-grid" id="qcm-p6">
+        <div class="qcm-question" data-page="p6"><p class="q-text">1) Quel outil permet de lancer un cluster Kubernetes local a un seul Node pour le developpement ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q6-1" value="a" id="q6-1a"><label for="q6-1a">A. kubeadm</label></div><div class="qcm-option"><input type="radio" name="q6-1" value="b" id="q6-1b"><label for="q6-1b">B. Minikube</label></div><div class="qcm-option"><input type="radio" name="q6-1" value="c" id="q6-1c"><label for="q6-1c">C. Helm</label></div><div class="qcm-option"><input type="radio" name="q6-1" value="d" id="q6-1d"><label for="q6-1d">D. Terraform</label></div></div><button class="btn-validate" onclick="checkAnswer('q6-1','b',this,'p6')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p6"><p class="q-text">2) Quelle commande kubeadm initialise un cluster sur le premier noeud Master ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q6-2" value="a" id="q6-2a"><label for="q6-2a">A. kubeadm start</label></div><div class="qcm-option"><input type="radio" name="q6-2" value="b" id="q6-2b"><label for="q6-2b">B. kubeadm create</label></div><div class="qcm-option"><input type="radio" name="q6-2" value="c" id="q6-2c"><label for="q6-2c">C. kubeadm init</label></div><div class="qcm-option"><input type="radio" name="q6-2" value="d" id="q6-2d"><label for="q6-2d">D. kubeadm deploy</label></div></div><button class="btn-validate" onclick="checkAnswer('q6-2','c',this,'p6')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p6"><p class="q-text">3) Quelle est la particularite de k3s par rapport a Kubernetes standard ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q6-3" value="a" id="q6-3a"><label for="q6-3a">A. C'est une version payante de Kubernetes</label></div><div class="qcm-option"><input type="radio" name="q6-3" value="b" id="q6-3b"><label for="q6-3b">B. C'est une distribution ultra-legere pour l'IoT et l'edge</label></div><div class="qcm-option"><input type="radio" name="q6-3" value="c" id="q6-3c"><label for="q6-3c">C. Elle ne supporte que Linux</label></div><div class="qcm-option"><input type="radio" name="q6-3" value="d" id="q6-3d"><label for="q6-3d">D. Elle necessite un minimum de 10 Nodes</label></div></div><button class="btn-validate" onclick="checkAnswer('q6-3','b',this,'p6')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p6"><p class="q-text">4) Quel est le service Kubernetes manage d'Amazon Web Services ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q6-4" value="a" id="q6-4a"><label for="q6-4a">A. AKS</label></div><div class="qcm-option"><input type="radio" name="q6-4" value="b" id="q6-4b"><label for="q6-4b">B. GKE</label></div><div class="qcm-option"><input type="radio" name="q6-4" value="c" id="q6-4c"><label for="q6-4c">C. ECS</label></div><div class="qcm-option"><input type="radio" name="q6-4" value="d" id="q6-4d"><label for="q6-4d">D. EKS</label></div></div><button class="btn-validate" onclick="checkAnswer('q6-4','d',this,'p6')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p6"><p class="q-text">5) Avec quel composant du cluster kubectl communique-t-il pour envoyer des commandes ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q6-5" value="a" id="q6-5a"><label for="q6-5a">A. L'API Server (kube-apiserver)</label></div><div class="qcm-option"><input type="radio" name="q6-5" value="b" id="q6-5b"><label for="q6-5b">B. etcd directement</label></div><div class="qcm-option"><input type="radio" name="q6-5" value="c" id="q6-5c"><label for="q6-5c">C. kubelet sur chaque Node</label></div><div class="qcm-option"><input type="radio" name="q6-5" value="d" id="q6-5d"><label for="q6-5d">D. Le Scheduler</label></div></div><button class="btn-validate" onclick="checkAnswer('q6-5','a',this,'p6')">Valider</button><div class="feedback"></div></div>
+    </div>
+        <div class="next-lesson-container"><button class="btn-next-lesson" onclick="goToNextPage('p7')">Lecon suivante &#10132; 7. Commandes</button></div></div>
+</div>
+
+<!-- PAGE 7 - Commandes de base -->
+<div class="page" id="p7">
+    <div class="lesson-header"><h2>7 - Commandes kubectl de base</h2><span class="lesson-score" id="score-p7">0/5</span></div>
+    <div class="tabs-container"><button class="tab-btn active" onclick="switchTab(this,'p7-concepts')">Concepts</button><button class="tab-btn" onclick="switchTab(this,'p7-keys')">Points Cles</button><button class="tab-btn" onclick="switchTab(this,'p7-qcm')">QCM</button></div>
+    <div class="tab-content active" id="p7-concepts"><div class="concepts">
+        <p><strong>kubectl get :</strong> Cette commande liste les ressources d'un type donne. Par exemple, "kubectl get pods" affiche tous les Pods du namespace courant, "kubectl get nodes" liste les Nodes du cluster, "kubectl get services" liste les Services. L'option "-o wide" ajoute des colonnes supplementaires (IP, Node). C'est la commande la plus utilisee pour avoir une vue d'ensemble.</p>
+        <p><strong>kubectl describe :</strong> Cette commande affiche des informations detaillees sur une ressource specifique. "kubectl describe pod mon-pod" montre les events, l'etat des conteneurs, les volumes montes, les conditions, etc. C'est essentiel pour le debug : si un Pod ne demarre pas, describe montre pourquoi (image introuvable, ressources insuffisantes, erreur de permission).</p>
+        <p><strong>kubectl apply :</strong> Cette commande applique une configuration declarative depuis un fichier YAML. "kubectl apply -f deployment.yaml" cree ou met a jour les ressources decrites dans le fichier. C'est la methode declarative recommandee : on declare l'etat desire et Kubernetes se charge de l'atteindre. Si la ressource existe deja, elle est mise a jour.</p>
+        <p><strong>kubectl delete :</strong> Cette commande supprime des ressources. "kubectl delete pod mon-pod" supprime un Pod, "kubectl delete -f fichier.yaml" supprime toutes les ressources definies dans le fichier. Attention : supprimer un Deployment supprime aussi ses Pods. La suppression est definitive, il n'y a pas de corbeille.</p>
+        <p><strong>kubectl logs et exec :</strong> "kubectl logs mon-pod" affiche les logs (stdout/stderr) d'un conteneur dans un Pod. L'option "-f" suit les logs en temps reel (comme tail -f). "kubectl exec -it mon-pod -- /bin/bash" ouvre un terminal interactif dans le conteneur, ce qui est tres utile pour le debug en direct.</p>
+        <p><strong>kubectl scale et rollout :</strong> "kubectl scale deployment mon-app --replicas=5" change le nombre de replicas a la volee. "kubectl rollout status deployment/mon-app" verifie l'avancement d'une mise a jour. "kubectl rollout undo deployment/mon-app" effectue un rollback vers la version precedente. Ces commandes sont critiques pour la gestion operationnelle.</p>
+    </div></div>
+    <div class="tab-content" id="p7-keys"><div class="key-points"><ul>
+        <li><strong>kubectl get = lister les ressources (pods, nodes, services).</strong></li>
+        <li><strong>kubectl describe = details + events pour le debug.</strong></li>
+        <li><strong>kubectl apply -f = deploiement declaratif via YAML.</strong></li>
+        <li><strong>kubectl delete = supprimer des ressources (irreversible).</strong></li>
+        <li><strong>kubectl logs -f = logs en temps reel d'un Pod.</strong></li>
+        <li><strong>kubectl exec -it = terminal interactif dans un conteneur.</strong></li>
+        <li><strong>kubectl scale = ajuster le nombre de replicas.</strong></li>
+        <li><strong>kubectl rollout undo = rollback vers version precedente.</strong></li>
+    </ul></div></div>
+    <div class="tab-content" id="p7-qcm"><div class="qcm-header"><span class="qcm-score-display" id="qcm-score-p7">Score: 0/5</span><button class="btn-reset" onclick="resetQcm('p7')">Recommencer</button></div><div class="qcm-grid" id="qcm-p7">
+        <div class="qcm-question" data-page="p7"><p class="q-text">1) Quelle commande kubectl permet de deployer une application a partir d'un fichier YAML de maniere declarative ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q7-1" value="a" id="q7-1a"><label for="q7-1a">A. kubectl create</label></div><div class="qcm-option"><input type="radio" name="q7-1" value="b" id="q7-1b"><label for="q7-1b">B. kubectl run</label></div><div class="qcm-option"><input type="radio" name="q7-1" value="c" id="q7-1c"><label for="q7-1c">C. kubectl apply -f</label></div><div class="qcm-option"><input type="radio" name="q7-1" value="d" id="q7-1d"><label for="q7-1d">D. kubectl deploy</label></div></div><button class="btn-validate" onclick="checkAnswer('q7-1','c',this,'p7')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p7"><p class="q-text">2) Quelle commande utilise-t-on pour voir les events et diagnostiquer un Pod en echec ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q7-2" value="a" id="q7-2a"><label for="q7-2a">A. kubectl get pod</label></div><div class="qcm-option"><input type="radio" name="q7-2" value="b" id="q7-2b"><label for="q7-2b">B. kubectl describe pod</label></div><div class="qcm-option"><input type="radio" name="q7-2" value="c" id="q7-2c"><label for="q7-2c">C. kubectl logs pod</label></div><div class="qcm-option"><input type="radio" name="q7-2" value="d" id="q7-2d"><label for="q7-2d">D. kubectl status pod</label></div></div><button class="btn-validate" onclick="checkAnswer('q7-2','b',this,'p7')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p7"><p class="q-text">3) Quelle commande permet de revenir a la version precedente d'un Deployment apres une mise a jour defaillante ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q7-3" value="a" id="q7-3a"><label for="q7-3a">A. kubectl delete deployment</label></div><div class="qcm-option"><input type="radio" name="q7-3" value="b" id="q7-3b"><label for="q7-3b">B. kubectl restart deployment</label></div><div class="qcm-option"><input type="radio" name="q7-3" value="c" id="q7-3c"><label for="q7-3c">C. kubectl reset deployment</label></div><div class="qcm-option"><input type="radio" name="q7-3" value="d" id="q7-3d"><label for="q7-3d">D. kubectl rollout undo deployment</label></div></div><button class="btn-validate" onclick="checkAnswer('q7-3','d',this,'p7')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p7"><p class="q-text">4) Comment ouvrir un terminal interactif dans un conteneur d'un Pod en cours d'execution ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q7-4" value="a" id="q7-4a"><label for="q7-4a">A. kubectl exec -it mon-pod -- /bin/bash</label></div><div class="qcm-option"><input type="radio" name="q7-4" value="b" id="q7-4b"><label for="q7-4b">B. kubectl ssh mon-pod</label></div><div class="qcm-option"><input type="radio" name="q7-4" value="c" id="q7-4c"><label for="q7-4c">C. kubectl connect mon-pod</label></div><div class="qcm-option"><input type="radio" name="q7-4" value="d" id="q7-4d"><label for="q7-4d">D. kubectl terminal mon-pod</label></div></div><button class="btn-validate" onclick="checkAnswer('q7-4','a',this,'p7')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p7"><p class="q-text">5) Quelle commande permet de modifier dynamiquement le nombre de replicas d'un Deployment ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q7-5" value="a" id="q7-5a"><label for="q7-5a">A. kubectl resize</label></div><div class="qcm-option"><input type="radio" name="q7-5" value="b" id="q7-5b"><label for="q7-5b">B. kubectl scale deployment --replicas=N</label></div><div class="qcm-option"><input type="radio" name="q7-5" value="c" id="q7-5c"><label for="q7-5c">C. kubectl replicate</label></div><div class="qcm-option"><input type="radio" name="q7-5" value="d" id="q7-5d"><label for="q7-5d">D. kubectl set replicas</label></div></div><button class="btn-validate" onclick="checkAnswer('q7-5','b',this,'p7')">Valider</button><div class="feedback"></div></div>
+    </div>
+        <div class="next-lesson-container"><button class="btn-next-lesson" onclick="goToNextPage('p8')">Lecon suivante &#10132; 8. Projet fil rouge</button></div></div>
+</div>
+
+<!-- PAGE 8 - Demo / Projet fil rouge -->
+<div class="page" id="p8">
+    <div class="lesson-header"><h2>8 - Projet fil rouge : Deployer une application complete</h2><span class="lesson-score" id="score-p8">0/5</span></div>
+    <div class="tabs-container"><button class="tab-btn active" onclick="switchTab(this,'p8-concepts')">Concepts</button><button class="tab-btn" onclick="switchTab(this,'p8-keys')">Points Cles</button><button class="tab-btn" onclick="switchTab(this,'p8-qcm')">QCM</button></div>
+    <div class="tab-content active" id="p8-concepts"><div class="concepts">
+        <p><strong>Deployer une application :</strong> Pour deployer une application sur Kubernetes, on cree un fichier YAML definissant un Deployment. Ce fichier specifie le nom de l'image Docker, le nombre de replicas, les ports, les limites de ressources (CPU/RAM) et les variables d'environnement. La commande "kubectl apply -f deployment.yaml" envoie cette declaration au cluster qui cree les Pods correspondants.</p>
+        <p><strong>Exposer avec un Service :</strong> Une fois les Pods crees, il faut les exposer via un Service. Le Service de type ClusterIP rend l'application accessible a l'interieur du cluster. Pour un acces externe, on utilise un Service LoadBalancer ou un Ingress. Le Service selectionne les Pods via des labels (ex: app=mon-api) et repartit la charge entre eux.</p>
+        <p><strong>Configurer avec ConfigMaps et Ingress :</strong> Les ConfigMaps permettent de passer des variables d'environnement sans les coder en dur dans l'image. L'Ingress definit les regles de routage HTTP : par exemple, app.example.com/api pointe vers le Service backend et app.example.com pointe vers le Service frontend. Un Ingress Controller (Nginx) implemente ces regles.</p>
+        <p><strong>Horizontal Pod Autoscaler (HPA) :</strong> Le HPA surveille les metriques (CPU, memoire, metriques custom) et ajuste automatiquement le nombre de replicas. Par exemple, "si l'utilisation CPU depasse 70%, ajouter des Pods jusqu'a un maximum de 10". Quand la charge diminue, le HPA reduit le nombre de Pods. C'est le scaling automatique en action.</p>
+        <p><strong>Bonnes pratiques de deploiement :</strong> Toujours definir des limites de ressources (requests et limits) pour eviter qu'un Pod consomme toutes les ressources du Node. Utiliser des health checks (readinessProbe et livenessProbe) pour que Kubernetes sache si le Pod est pret a recevoir du trafic ou doit etre redemarre. Versionner les images (jamais "latest" en production).</p>
+    </div></div>
+    <div class="tab-content" id="p8-keys"><div class="key-points"><ul>
+        <li><strong>Deployment YAML = image + replicas + ports + resources.</strong></li>
+        <li><strong>Service = expose les Pods via labels, repartit la charge.</strong></li>
+        <li><strong>ConfigMap = configuration externalisee (variables d'env).</strong></li>
+        <li><strong>Ingress + Controller = routage HTTP/HTTPS avec regles.</strong></li>
+        <li><strong>HPA = scaling automatique base sur CPU/memoire.</strong></li>
+        <li><strong>Bonnes pratiques : limits/requests, probes, pas de "latest".</strong></li>
+    </ul></div></div>
+    <div class="tab-content" id="p8-qcm"><div class="qcm-header"><span class="qcm-score-display" id="qcm-score-p8">Score: 0/5</span><button class="btn-reset" onclick="resetQcm('p8')">Recommencer</button></div><div class="qcm-grid" id="qcm-p8">
+        <div class="qcm-question" data-page="p8"><p class="q-text">1) Quel objet Kubernetes utilise-t-on pour ajuster automatiquement le nombre de replicas selon la charge CPU ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q8-1" value="a" id="q8-1a"><label for="q8-1a">A. Le ReplicaSet</label></div><div class="qcm-option"><input type="radio" name="q8-1" value="b" id="q8-1b"><label for="q8-1b">B. Le Deployment</label></div><div class="qcm-option"><input type="radio" name="q8-1" value="c" id="q8-1c"><label for="q8-1c">C. Le Horizontal Pod Autoscaler (HPA)</label></div><div class="qcm-option"><input type="radio" name="q8-1" value="d" id="q8-1d"><label for="q8-1d">D. Le DaemonSet</label></div></div><button class="btn-validate" onclick="checkAnswer('q8-1','c',this,'p8')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p8"><p class="q-text">2) Comment un Service Kubernetes identifie-t-il les Pods auxquels envoyer le trafic ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q8-2" value="a" id="q8-2a"><label for="q8-2a">A. Par leur adresse IP fixe</label></div><div class="qcm-option"><input type="radio" name="q8-2" value="b" id="q8-2b"><label for="q8-2b">B. Par leur nom de conteneur</label></div><div class="qcm-option"><input type="radio" name="q8-2" value="c" id="q8-2c"><label for="q8-2c">C. Par un systeme de labels (selecteurs)</label></div><div class="qcm-option"><input type="radio" name="q8-2" value="d" id="q8-2d"><label for="q8-2d">D. Par leur numero de port uniquement</label></div></div><button class="btn-validate" onclick="checkAnswer('q8-2','c',this,'p8')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p8"><p class="q-text">3) Pourquoi est-il deconseille d'utiliser le tag "latest" pour les images en production ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q8-3" value="a" id="q8-3a"><label for="q8-3a">A. Parce que "latest" est plus lent a telecharger</label></div><div class="qcm-option"><input type="radio" name="q8-3" value="b" id="q8-3b"><label for="q8-3b">B. Parce qu'on ne controle pas quelle version est deployee et le rollback est impossible</label></div><div class="qcm-option"><input type="radio" name="q8-3" value="c" id="q8-3c"><label for="q8-3c">C. Parce que Kubernetes refuse le tag "latest"</label></div><div class="qcm-option"><input type="radio" name="q8-3" value="d" id="q8-3d"><label for="q8-3d">D. Parce que les registres Docker ne supportent pas "latest"</label></div></div><button class="btn-validate" onclick="checkAnswer('q8-3','b',this,'p8')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p8"><p class="q-text">4) A quoi sert une readinessProbe dans un Deployment Kubernetes ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q8-4" value="a" id="q8-4a"><label for="q8-4a">A. A verifier si le Pod est pret a recevoir du trafic</label></div><div class="qcm-option"><input type="radio" name="q8-4" value="b" id="q8-4b"><label for="q8-4b">B. A supprimer le Pod apres un delai</label></div><div class="qcm-option"><input type="radio" name="q8-4" value="c" id="q8-4c"><label for="q8-4c">C. A redemarrer le Node</label></div><div class="qcm-option"><input type="radio" name="q8-4" value="d" id="q8-4d"><label for="q8-4d">D. A sauvegarder les logs</label></div></div><button class="btn-validate" onclick="checkAnswer('q8-4','a',this,'p8')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p8"><p class="q-text">5) Quelle est la difference entre "requests" et "limits" dans la definition des ressources d'un Pod ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q8-5" value="a" id="q8-5a"><label for="q8-5a">A. Il n'y a aucune difference</label></div><div class="qcm-option"><input type="radio" name="q8-5" value="b" id="q8-5b"><label for="q8-5b">B. Requests = minimum garanti, Limits = maximum autorise</label></div><div class="qcm-option"><input type="radio" name="q8-5" value="c" id="q8-5c"><label for="q8-5c">C. Requests = maximum, Limits = minimum</label></div><div class="qcm-option"><input type="radio" name="q8-5" value="d" id="q8-5d"><label for="q8-5d">D. Les deux sont ignores par Kubernetes</label></div></div><button class="btn-validate" onclick="checkAnswer('q8-5','b',this,'p8')">Valider</button><div class="feedback"></div></div>
+    </div>
+        <div class="next-lesson-container"><button class="btn-next-lesson" onclick="goToNextPage('p9')">Lecon suivante &#10132; 9. References</button></div></div>
+</div>
+
+<!-- PAGE 9 - References -->
+<div class="page" id="p9">
+    <div class="lesson-header"><h2>9 - References et Ecosysteme Kubernetes</h2><span class="lesson-score" id="score-p9">0/5</span></div>
+    <div class="tabs-container"><button class="tab-btn active" onclick="switchTab(this,'p9-concepts')">Concepts</button><button class="tab-btn" onclick="switchTab(this,'p9-keys')">Points Cles</button><button class="tab-btn" onclick="switchTab(this,'p9-qcm')">QCM</button></div>
+    <div class="tab-content active" id="p9-concepts"><div class="concepts">
+        <p><strong>Helm :</strong> Helm est le gestionnaire de paquets de Kubernetes, souvent appele le "apt/yum de Kubernetes". Il permet d'installer des applications complexes (ex: Prometheus, Grafana, Nginx) en une seule commande via des "charts" (paquets preconfigures). Un chart Helm regroupe tous les fichiers YAML necessaires avec des valeurs parametrables.</p>
+        <p><strong>Prometheus et Grafana :</strong> Prometheus est l'outil de monitoring standard de l'ecosysteme Kubernetes (projet CNCF). Il collecte les metriques des Pods et des Nodes. Grafana est l'outil de visualisation qui cree des tableaux de bord a partir des donnees Prometheus. Ensemble, ils forment la stack de monitoring de reference pour Kubernetes.</p>
+        <p><strong>Istio et les Service Meshes :</strong> Un Service Mesh est une couche d'infrastructure qui gere la communication entre les microservices (chiffrement mTLS, observabilite, routage avance). Istio est le Service Mesh le plus connu pour Kubernetes. Il ajoute un proxy sidecar (Envoy) a chaque Pod pour intercepter et gerer le trafic reseau.</p>
+        <p><strong>GitOps et ArgoCD :</strong> GitOps est une pratique ou l'etat desire du cluster est stocke dans un depot Git. Un outil comme ArgoCD surveille le depot et synchronise automatiquement le cluster avec le contenu du Git. Tout changement passe par un commit Git, ce qui offre un historique complet, la revue de code et le rollback facile.</p>
+        <p><strong>Certifications Kubernetes :</strong> La CNCF propose des certifications officielles : CKA (Certified Kubernetes Administrator) pour l'administration de clusters, CKAD (Certified Kubernetes Application Developer) pour le developpement d'applications sur Kubernetes, et CKS (Certified Kubernetes Security Specialist) pour la securite. Ce sont des examens pratiques tres respectes dans l'industrie.</p>
+    </div></div>
+    <div class="tab-content" id="p9-keys"><div class="key-points"><ul>
+        <li><strong>Helm = gestionnaire de paquets, "charts" pour deployer des apps complexes.</strong></li>
+        <li><strong>Prometheus + Grafana = monitoring + visualisation standard.</strong></li>
+        <li><strong>Istio = Service Mesh (mTLS, observabilite, proxy Envoy).</strong></li>
+        <li><strong>GitOps + ArgoCD = etat du cluster versionne dans Git.</strong></li>
+        <li><strong>CKA / CKAD / CKS = certifications officielles CNCF.</strong></li>
+    </ul></div></div>
+    <div class="tab-content" id="p9-qcm"><div class="qcm-header"><span class="qcm-score-display" id="qcm-score-p9">Score: 0/5</span><button class="btn-reset" onclick="resetQcm('p9')">Recommencer</button></div><div class="qcm-grid" id="qcm-p9">
+        <div class="qcm-question" data-page="p9"><p class="q-text">1) Quel outil est souvent appele le "gestionnaire de paquets de Kubernetes" ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q9-1" value="a" id="q9-1a"><label for="q9-1a">A. Terraform</label></div><div class="qcm-option"><input type="radio" name="q9-1" value="b" id="q9-1b"><label for="q9-1b">B. Ansible</label></div><div class="qcm-option"><input type="radio" name="q9-1" value="c" id="q9-1c"><label for="q9-1c">C. Helm</label></div><div class="qcm-option"><input type="radio" name="q9-1" value="d" id="q9-1d"><label for="q9-1d">D. Docker Compose</label></div></div><button class="btn-validate" onclick="checkAnswer('q9-1','c',this,'p9')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p9"><p class="q-text">2) Quel outil de monitoring est le standard CNCF pour collecter les metriques Kubernetes ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q9-2" value="a" id="q9-2a"><label for="q9-2a">A. Nagios</label></div><div class="qcm-option"><input type="radio" name="q9-2" value="b" id="q9-2b"><label for="q9-2b">B. Prometheus</label></div><div class="qcm-option"><input type="radio" name="q9-2" value="c" id="q9-2c"><label for="q9-2c">C. Zabbix</label></div><div class="qcm-option"><input type="radio" name="q9-2" value="d" id="q9-2d"><label for="q9-2d">D. Datadog</label></div></div><button class="btn-validate" onclick="checkAnswer('q9-2','b',this,'p9')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p9"><p class="q-text">3) Qu'est-ce que le GitOps dans le contexte de Kubernetes ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q9-3" value="a" id="q9-3a"><label for="q9-3a">A. Utiliser Git pour stocker le code source uniquement</label></div><div class="qcm-option"><input type="radio" name="q9-3" value="b" id="q9-3b"><label for="q9-3b">B. Versionner l'etat desire du cluster dans Git et synchroniser automatiquement</label></div><div class="qcm-option"><input type="radio" name="q9-3" value="c" id="q9-3c"><label for="q9-3c">C. Un plugin Git pour Kubernetes</label></div><div class="qcm-option"><input type="radio" name="q9-3" value="d" id="q9-3d"><label for="q9-3d">D. Un outil de CI/CD de GitHub</label></div></div><button class="btn-validate" onclick="checkAnswer('q9-3','b',this,'p9')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p9"><p class="q-text">4) Quelle certification CNCF valide les competences d'administration de clusters Kubernetes ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q9-4" value="a" id="q9-4a"><label for="q9-4a">A. CKA (Certified Kubernetes Administrator)</label></div><div class="qcm-option"><input type="radio" name="q9-4" value="b" id="q9-4b"><label for="q9-4b">B. AWS Solutions Architect</label></div><div class="qcm-option"><input type="radio" name="q9-4" value="c" id="q9-4c"><label for="q9-4c">C. CompTIA Linux+</label></div><div class="qcm-option"><input type="radio" name="q9-4" value="d" id="q9-4d"><label for="q9-4d">D. RHCE</label></div></div><button class="btn-validate" onclick="checkAnswer('q9-4','a',this,'p9')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p9"><p class="q-text">5) Quel est le role d'un Service Mesh comme Istio dans un cluster Kubernetes ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q9-5" value="a" id="q9-5a"><label for="q9-5a">A. Remplacer Kubernetes entierement</label></div><div class="qcm-option"><input type="radio" name="q9-5" value="b" id="q9-5b"><label for="q9-5b">B. Creer des images Docker</label></div><div class="qcm-option"><input type="radio" name="q9-5" value="c" id="q9-5c"><label for="q9-5c">C. Gerer la communication entre microservices (chiffrement, observabilite, routage)</label></div><div class="qcm-option"><input type="radio" name="q9-5" value="d" id="q9-5d"><label for="q9-5d">D. Stocker les secrets du cluster</label></div></div><button class="btn-validate" onclick="checkAnswer('q9-5','c',this,'p9')">Valider</button><div class="feedback"></div></div>
+    </div>
+        <div class="next-lesson-container"><button class="btn-next-lesson" onclick="goToNextPage('cheatsheet')">Lecon suivante &#10132; Cheat Sheet</button></div></div>
+</div>
+
+<!-- CHEAT SHEET -->
+<div class="page" id="cheatsheet">
+    <div class="lesson-header"><h2>Cheat Sheet Kubernetes</h2></div>
+    <div class="cheat-grid">
+        <div class="cheat-card"><h4>Informations cluster</h4><code>kubectl cluster-info
+kubectl get nodes
+kubectl get namespaces
+kubectl api-resources
+kubectl version --short</code></div>
+        <div class="cheat-card"><h4>Gestion des Pods</h4><code>kubectl get pods
+kubectl get pods -o wide
+kubectl describe pod mon-pod
+kubectl logs mon-pod -f
+kubectl exec -it mon-pod -- /bin/bash
+kubectl delete pod mon-pod</code></div>
+        <div class="cheat-card"><h4>Deployments</h4><code>kubectl apply -f deployment.yaml
+kubectl get deployments
+kubectl scale deployment mon-app --replicas=5
+kubectl rollout status deployment/mon-app
+kubectl rollout undo deployment/mon-app
+kubectl set image deployment/mon-app conteneur=image:v2</code></div>
+        <div class="cheat-card"><h4>Services et Reseau</h4><code>kubectl get services
+kubectl expose deployment mon-app --port=80 --type=LoadBalancer
+kubectl get ingress
+kubectl describe service mon-service
+kubectl port-forward svc/mon-service 8080:80</code></div>
+        <div class="cheat-card"><h4>ConfigMaps et Secrets</h4><code>kubectl create configmap ma-config --from-literal=CLE=valeur
+kubectl create secret generic mon-secret --from-literal=MDP=pass123
+kubectl get configmaps
+kubectl get secrets
+kubectl describe configmap ma-config</code></div>
+        <div class="cheat-card"><h4>Namespaces</h4><code>kubectl get ns
+kubectl create namespace mon-ns
+kubectl get pods -n mon-ns
+kubectl config set-context --current --namespace=mon-ns
+kubectl delete namespace mon-ns</code></div>
+        <div class="cheat-card"><h4>Debug et Diagnostic</h4><code>kubectl describe pod mon-pod
+kubectl logs mon-pod --previous
+kubectl get events --sort-by='.lastTimestamp'
+kubectl top pods
+kubectl top nodes</code></div>
+        <div class="cheat-card"><h4>Autoscaling (HPA)</h4><code>kubectl autoscale deployment mon-app \
+  --min=2 --max=10 --cpu-percent=70
+kubectl get hpa
+kubectl describe hpa mon-app
+kubectl delete hpa mon-app</code></div>
+    </div>
+</div>
+
+<!-- BONUS -->
+<div class="page" id="bonus">
+    <div class="bonus-section">
+        <h2>Bonus - Architecture et Flux Kubernetes</h2>
+        <h3>Architecture d'un cluster Kubernetes</h3>
+        <div class="pipeline-diagram">
+            <div class="pipeline-stage" style="background:linear-gradient(135deg,#1e40af,#1e3a8a)">Control Plane<small>Master Node</small></div>
+            <span class="pipeline-arrow">&#10132;</span>
+            <div class="pipeline-stage" style="background:linear-gradient(135deg,#326ce5,#2563eb)">API Server<small>Porte d'entree</small></div>
+            <span class="pipeline-arrow">&#10132;</span>
+            <div class="pipeline-stage" style="background:linear-gradient(135deg,#7c3aed,#6d28d9)">etcd<small>Base cle-valeur</small></div>
+            <span class="pipeline-arrow">&#10132;</span>
+            <div class="pipeline-stage" style="background:linear-gradient(135deg,#0891b2,#0e7490)">Scheduler<small>Placement</small></div>
+            <span class="pipeline-arrow">&#10132;</span>
+            <div class="pipeline-stage" style="background:linear-gradient(135deg,#059669,#047857)">Controller Mgr<small>Boucles</small></div>
+        </div>
+        <div class="pipeline-diagram">
+            <div class="pipeline-stage" style="background:linear-gradient(135deg,#d97706,#b45309)">Worker Node<small>Execution</small></div>
+            <span class="pipeline-arrow">&#10132;</span>
+            <div class="pipeline-stage" style="background:linear-gradient(135deg,#dc2626,#b91c1c)">kubelet<small>Agent</small></div>
+            <span class="pipeline-arrow">&#10132;</span>
+            <div class="pipeline-stage" style="background:linear-gradient(135deg,#9333ea,#7e22ce)">kube-proxy<small>Reseau</small></div>
+            <span class="pipeline-arrow">&#10132;</span>
+            <div class="pipeline-stage" style="background:linear-gradient(135deg,#0d9488,#0f766e)">containerd<small>Runtime</small></div>
+            <span class="pipeline-arrow">&#10132;</span>
+            <div class="pipeline-stage" style="background:linear-gradient(135deg,#4f46e5,#4338ca)">Pods<small>Applications</small></div>
+        </div>
+
+        <h3>Flux de deploiement d'une application</h3>
+        <div class="pipeline-diagram">
+            <div class="pipeline-stage" style="background:linear-gradient(135deg,#374151,#1f2937)">Developer<small>kubectl apply</small></div>
+            <span class="pipeline-arrow">&#10132;</span>
+            <div class="pipeline-stage" style="background:linear-gradient(135deg,#326ce5,#2563eb)">API Server<small>Validation</small></div>
+            <span class="pipeline-arrow">&#10132;</span>
+            <div class="pipeline-stage" style="background:linear-gradient(135deg,#7c3aed,#6d28d9)">etcd<small>Stockage</small></div>
+            <span class="pipeline-arrow">&#10132;</span>
+            <div class="pipeline-stage" style="background:linear-gradient(135deg,#0891b2,#0e7490)">Scheduler<small>Choix Node</small></div>
+            <span class="pipeline-arrow">&#10132;</span>
+            <div class="pipeline-stage" style="background:linear-gradient(135deg,#dc2626,#b91c1c)">kubelet<small>Creation Pod</small></div>
+            <span class="pipeline-arrow">&#10132;</span>
+            <div class="pipeline-stage" style="background:linear-gradient(135deg,#059669,#047857)">Running<small>App demarree</small></div>
+        </div>
+
+        <h3>Types de Services Kubernetes</h3>
+        <ul>
+            <li><strong style="color:#326ce5">ClusterIP</strong> - Accessible uniquement depuis l'interieur du cluster (type par defaut)</li>
+            <li><strong style="color:#d97706">NodePort</strong> - Expose un port (30000-32767) sur chaque Node du cluster</li>
+            <li><strong style="color:#059669">LoadBalancer</strong> - Provisionne un LB externe (cloud), standard en production</li>
+            <li><strong style="color:#7c3aed">Ingress</strong> - Routage HTTP/HTTPS avec regles (domaines, chemins, TLS)</li>
+        </ul>
+
+        <h3>Objets Kubernetes principaux</h3>
+        <ul>
+            <li><strong>Pod</strong> = plus petite unite, 1+ conteneurs</li>
+            <li><strong>ReplicaSet</strong> = garantit N replicas d'un Pod</li>
+            <li><strong>Deployment</strong> = gere ReplicaSets + rolling updates</li>
+            <li><strong>Service</strong> = IP stable + load balancing</li>
+            <li><strong>Ingress</strong> = routage HTTP/HTTPS externe</li>
+            <li><strong>ConfigMap / Secret</strong> = configuration externalisee</li>
+            <li><strong>PersistentVolume</strong> = stockage persistant</li>
+            <li><strong>StatefulSet</strong> = apps avec etat (DB)</li>
+            <li><strong>DaemonSet</strong> = 1 Pod par Node</li>
+            <li><strong>Job / CronJob</strong> = taches ponctuelles / planifiees</li>
+        </ul>
+
+        <h3>Commandes essentielles</h3>
+        <div class="code-block"># Deployer une application
+kubectl apply -f deployment.yaml
+
+# Verifier l'etat des pods
+kubectl get pods -o wide
+
+# Diagnostiquer un pod en erreur
+kubectl describe pod mon-pod
+kubectl logs mon-pod
+
+# Scaler un deployment
+kubectl scale deployment mon-app --replicas=5
+
+# Mise a jour rolling
+kubectl set image deployment/mon-app app=mon-image:v2.0
+
+# Rollback en cas d'erreur
+kubectl rollout undo deployment/mon-app
+
+# Port-forward pour tester localement
+kubectl port-forward svc/mon-service 8080:80
+
+# Autoscaling
+kubectl autoscale deployment mon-app --min=2 --max=10 --cpu-percent=70</div>
+    </div>
+</div>
+
+    </div><!-- fin main-content -->
+
+    <!-- Exam Overlay -->
+    <div class="exam-overlay" id="examOverlay">
+        <div class="exam-container">
+            <button class="btn-close-exam" onclick="closeExam()">&times;</button>
+            <div id="examContent"></div>
+        </div>
+    </div>
+
+    <script>
+    // Justifications for each question
+    const justifications = {
+        'q1-1': "En production, une application peut necessiter des centaines de conteneurs. Les gerer manuellement (lancement, arret, mise a jour, surveillance) est impossible. L'orchestrateur automatise toutes ces taches.",
+        'q1-2': "Le scaling automatique consiste a augmenter ou diminuer le nombre de conteneurs en fonction de la charge reelle. On ne change pas la taille du conteneur, mais leur nombre pour absorber le trafic.",
+        'q1-3': "La haute disponibilite signifie que le service reste accessible meme si un serveur tombe en panne. Kubernetes relance automatiquement les Pods sur d'autres Nodes sans intervention humaine.",
+        'q1-4': "Un rolling update remplace progressivement les anciens conteneurs par les nouveaux, sans jamais couper le service. A aucun moment tous les conteneurs ne sont arretes en meme temps.",
+        'q1-5': "Le rollback permet de revenir instantanement a la version precedente d'une application si la nouvelle version contient des bugs. C'est un filet de securite essentiel en production.",
+        'q2-1': "Google a cree Kubernetes en 2014, en s'appuyant sur 15 ans d'experience avec son systeme interne Borg. Microsoft, Amazon et Red Hat sont des contributeurs mais pas les createurs.",
+        'q2-2': "K8s est une abreviation de Kubernetes ou le 8 represente les 8 lettres entre le K initial et le S final (ubernete). Ce n'est ni une version ni un nombre de composants.",
+        'q2-3': "La CNCF (Cloud Native Computing Foundation) heberge Kubernetes depuis 2015. Elle est sous la Linux Foundation et assure une gouvernance neutre du projet.",
+        'q2-4': "Borg est le systeme interne de Google qui gere les conteneurs a l'echelle de leurs data centers. Kubernetes en est directement inspire pour les concepts d'orchestration et de scheduling.",
+        'q2-5': "Kubernetes n'est PAS un PaaS complet. Il ne fournit pas de base de donnees integree, de middleware, ni de pipeline CI/CD. C'est une plateforme d'orchestration de conteneurs sur laquelle on construit le reste.",
+        'q3-1': "Le Pod est la plus petite unite deployable dans Kubernetes. Un conteneur seul n'existe pas en tant que ressource Kubernetes. Le Pod encapsule un ou plusieurs conteneurs partageant le meme reseau.",
+        'q3-2': "Le ReplicaSet surveille en permanence le nombre de Pods en vie et maintient exactement le nombre voulu. Si un Pod meurt, il en cree un nouveau automatiquement.",
+        'q3-3': "Un Service fournit une adresse IP stable (et un nom DNS) pour acceder a un groupe de Pods. Comme les Pods sont ephemeres et changent d'IP, le Service offre un point d'acces permanent.",
+        'q3-4': "Le ConfigMap stocke des configurations non sensibles (variables, fichiers), tandis que le Secret est dedie aux donnees sensibles (mots de passe, tokens) avec un encodage base64 et des protections d'acces.",
+        'q3-5': "Le StatefulSet garantit un identifiant reseau stable, un stockage persistant par Pod et un ordre de deploiement/suppression. C'est indispensable pour les bases de donnees et applications avec etat.",
+        'q3-6': "Un DaemonSet s'assure qu'exactement un Pod de ce type tourne sur chaque Node du cluster. C'est utile pour les agents de monitoring, les collecteurs de logs ou les plugins reseau.",
+        'q4-1': "etcd est la base de donnees cle-valeur distribuee qui contient l'integralite de l'etat du cluster. Si etcd est perdu, le cluster perd toute sa configuration et son etat.",
+        'q4-2': "Le Scheduler recoit les Pods non assignes et decide sur quel Node les placer en tenant compte des ressources disponibles, des contraintes d'affinite et de l'equilibrage de charge.",
+        'q4-3': "kubelet est l'agent present sur chaque Worker Node. Il communique avec l'API Server, recoit les specifications de Pods et s'assure que les conteneurs sont en execution et en bonne sante.",
+        'q4-4': "containerd est le container runtime le plus utilise avec Kubernetes. Docker n'est plus supporte directement depuis la version 1.24. containerd est plus leger car il n'inclut pas les outils CLI Docker.",
+        'q4-5': "L'API Server (kube-apiserver) est le point d'entree unique du cluster. Toutes les commandes kubectl, les requetes des controleurs et la communication interne transitent par lui.",
+        'q5-1': "ClusterIP est le type de Service par defaut dans Kubernetes. Il assigne une IP virtuelle interne accessible uniquement depuis l'interieur du cluster.",
+        'q5-2': "Les NodePorts sont attribues dans la plage 30000-32767 par defaut. Ce sont des ports eleves reserves pour eviter les conflits avec les services systeme du Node.",
+        'q5-3': "CoreDNS est le serveur DNS interne du cluster Kubernetes. Il cree automatiquement des entrees DNS pour chaque Service, permettant la decouverte par nom (ex: mon-service.default.svc.cluster.local).",
+        'q5-4': "Les Network Policies agissent comme un pare-feu au niveau des Pods. Par defaut, tous les Pods communiquent librement. Les policies permettent de restreindre qui peut parler a qui.",
+        'q5-5': "Le type LoadBalancer provisionne automatiquement un repartiteur de charge aupres du fournisseur cloud (AWS ELB, Azure LB, GCP LB). C'est la methode standard pour exposer un Service en production.",
+        'q6-1': "Minikube cree un cluster Kubernetes complet a un seul Node sur la machine locale. C'est l'outil ideal pour l'apprentissage et le developpement sans avoir besoin d'infrastructure cloud.",
+        'q6-2': "kubeadm init initialise le Control Plane sur le premier noeud Master. Ensuite, kubeadm join permet d'ajouter des Worker Nodes au cluster avec le token genere par init.",
+        'q6-3': "k3s est une distribution ultra-legere (moins de 100 Mo) concue pour l'IoT et l'edge computing. Elle supprime les composants non essentiels et utilise SQLite au lieu d'etcd.",
+        'q6-4': "EKS (Elastic Kubernetes Service) est le service Kubernetes manage d'Amazon Web Services. AKS est celui d'Azure, GKE celui de Google. ECS est le service de conteneurs proprietaire d'AWS, pas Kubernetes.",
+        'q6-5': "kubectl communique exclusivement avec l'API Server (kube-apiserver). C'est l'API Server qui ensuite route les requetes vers etcd, le Scheduler ou les kubelets selon les besoins.",
+        'q7-1': "kubectl apply -f est la methode declarative recommandee. On declare l'etat desire dans un fichier YAML et Kubernetes se charge d'atteindre cet etat. La ressource est creee ou mise a jour.",
+        'q7-2': "kubectl describe affiche les details complets d'une ressource, y compris les events (evenements). Les events revelent pourquoi un Pod a echoue (image introuvable, ressources insuffisantes, etc.).",
+        'q7-3': "kubectl rollout undo deployment revient a la revision precedente du Deployment. C'est le mecanisme de rollback integre qui permet de retourner a un etat fonctionnel rapidement.",
+        'q7-4': "kubectl exec -it mon-pod -- /bin/bash ouvre un shell interactif (-i = stdin, -t = terminal) dans le conteneur du Pod. Le -- separe les arguments kubectl des arguments de la commande.",
+        'q7-5': "kubectl scale deployment --replicas=N modifie le nombre de replicas en temps reel. C'est une commande imperative rapide pour ajuster le scaling sans modifier le fichier YAML.",
+        'q8-1': "Le HPA (Horizontal Pod Autoscaler) surveille des metriques comme l'utilisation CPU et ajuste automatiquement le nombre de replicas. Le ReplicaSet maintient un nombre fixe, il ne s'adapte pas a la charge.",
+        'q8-2': "Les Services utilisent des selecteurs de labels pour identifier les Pods cibles. Tous les Pods portant le label correspondant (ex: app=mon-api) recoivent du trafic via le Service.",
+        'q8-3': "Le tag 'latest' peut changer a tout moment sans controle. On ne sait pas quelle version tourne reellement, et Kubernetes ne detectera pas de changement d'image pour un rollout, rendant le rollback impossible.",
+        'q8-4': "La readinessProbe verifie si le Pod est pret a recevoir du trafic. Tant qu'elle echoue, le Pod est retire du Service. C'est different de la livenessProbe qui redemarre le Pod en cas d'echec.",
+        'q8-5': "Requests est le minimum garanti de ressources pour le Pod (utilise par le Scheduler). Limits est le maximum que le Pod peut consommer avant d'etre throttle (CPU) ou tue (memoire).",
+        'q9-1': "Helm est le gestionnaire de paquets officiel de Kubernetes. Un chart Helm regroupe tous les manifestes YAML necessaires avec des valeurs parametrables pour deployer une application en une commande.",
+        'q9-2': "Prometheus est un projet CNCF concu specifiquement pour le monitoring des systemes cloud-native. Il utilise un modele de collecte par pull et un langage de requete PromQL.",
+        'q9-3': "Le GitOps consiste a stocker tout l'etat desire du cluster dans un depot Git. Un outil comme ArgoCD surveille le depot et synchronise automatiquement le cluster, offrant tracabilite et rollback facile.",
+        'q9-4': "CKA (Certified Kubernetes Administrator) est la certification officielle CNCF pour les administrateurs de clusters. C'est un examen pratique en environnement reel, tres respecte dans l'industrie.",
+        'q9-5': "Un Service Mesh comme Istio gere la communication inter-services : chiffrement mutuel TLS, observabilite du trafic, routage avance, retry et circuit-breaking, via des proxies sidecar Envoy."
+    };
+
+    // Score tracking
+    const pageScores = {};
+    const pageTotals = {p1:5, p2:5, p3:6, p4:5, p5:5, p6:5, p7:5, p8:5, p9:5};
+    const allPages = Object.keys(pageTotals);
+    allPages.forEach(p => pageScores[p] = 0);
+
+    // Load saved progress
+    const answeredQuestions = JSON.parse(localStorage.getItem('kubernetes_answered') || '{}');
+
+    function loadProgress() {
+        const saved = localStorage.getItem('kubernetes_progress');
+        if (saved) {
+            const data = JSON.parse(saved);
+            Object.assign(pageScores, data.scores || {});
+            updateAllDisplays();
+            if (data.answered) {
+                Object.assign(answeredQuestions, data.answered);
+                Object.entries(data.answered).forEach(([name, info]) => {
+                    const ans = info.selected || info;
+                    const correct = info.correct || null;
+                    const radio = document.querySelector(`input[name="${name}"][value="${ans}"]`);
+                    if (radio) {
+                        radio.checked = true;
+                        const q = radio.closest('.qcm-question');
+                        if (q) {
+                            document.querySelectorAll(`input[name="${name}"]`).forEach(r => r.disabled = true);
+                            const btn = q.querySelector('.btn-validate');
+                            if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; }
+                            const fb = q.querySelector('.feedback');
+                            if (fb && correct) {
+                                fb.style.display = 'block';
+                                const justif = justifications[name] || '';
+                                if (ans === correct) {
+                                    fb.className = 'feedback correct';
+                                    fb.innerHTML = `<strong>Correct ! (${correct.toUpperCase()})</strong><br><em>${justif}</em>`;
+                                    q.classList.add('answered-correct');
+                                } else {
+                                    fb.className = 'feedback incorrect';
+                                    fb.innerHTML = `<strong>Incorrect.</strong> La bonne reponse est <strong>${correct.toUpperCase()}</strong>.<br><em>${justif}</em>`;
+                                    q.classList.add('answered-wrong');
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+    }
+
+    function saveProgress() {
+        localStorage.setItem('kubernetes_progress', JSON.stringify({ scores: pageScores, answered: answeredQuestions }));
+    }
+
+    function updateAllDisplays() {
+        let totalCorrect = 0, totalQuestions = 0;
+        allPages.forEach(p => {
+            const s = pageScores[p] || 0;
+            const t = pageTotals[p];
+            totalCorrect += s;
+            totalQuestions += t;
+            const scoreEl = document.getElementById(`score-${p}`);
+            if (scoreEl) scoreEl.textContent = `${s}/${t}`;
+            const qcmScoreEl = document.getElementById(`qcm-score-${p}`);
+            if (qcmScoreEl) qcmScoreEl.textContent = `Score: ${s}/${t}`;
+            const badge = document.getElementById(`badge-${p}`);
+            if (badge) badge.textContent = s > 0 ? `${s}/${t}` : '-';
+        });
+        const pct = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
+        document.getElementById('globalProgressBar').style.width = pct + '%';
+        document.getElementById('globalProgressText').textContent = `${totalCorrect}/${totalQuestions} (${pct}%)`;
+    }
+
+    function checkAnswer(name, correct, btn, page) {
+        const sel = document.querySelector(`input[name="${name}"]:checked`);
+        const fb = btn.nextElementSibling;
+        if (!sel) { fb.style.display='block'; fb.className='feedback incorrect'; fb.innerHTML='<strong>Selectionnez une reponse.</strong>'; return; }
+        const ans = sel.value;
+        const q = btn.closest('.qcm-question');
+        const justif = justifications[name] || '';
+        fb.style.display = 'block';
+        if (ans === correct) {
+            fb.className = 'feedback correct';
+            fb.innerHTML = `<strong>Correct ! (${correct.toUpperCase()})</strong><br><em>${justif}</em>`;
+            q.classList.add('answered-correct');
+            pageScores[page] = (pageScores[page] || 0) + 1;
+        } else {
+            fb.className = 'feedback incorrect';
+            fb.innerHTML = `<strong>Incorrect.</strong> La bonne reponse est <strong>${correct.toUpperCase()}</strong>.<br><em>${justif}</em>`;
+            q.classList.add('answered-wrong');
+        }
+        document.querySelectorAll(`input[name="${name}"]`).forEach(r => r.disabled = true);
+        btn.disabled = true; btn.style.opacity = '0.5';
+        answeredQuestions[name] = { selected: ans, correct: correct };
+        updateAllDisplays();
+        saveProgress();
+    }
+
+    function resetQcm(page) {
+        const grid = document.getElementById(`qcm-${page}`);
+        if (!grid) return;
+        grid.querySelectorAll('input[type="radio"]').forEach(r => { r.checked = false; r.disabled = false; });
+        grid.querySelectorAll('.btn-validate').forEach(b => { b.disabled = false; b.style.opacity = '1'; });
+        grid.querySelectorAll('.feedback').forEach(f => { f.style.display = 'none'; });
+        grid.querySelectorAll('.qcm-question').forEach(q => { q.classList.remove('answered-correct','answered-wrong'); });
+        grid.querySelectorAll('input[type="radio"]').forEach(r => { delete answeredQuestions[r.name]; });
+        pageScores[page] = 0;
+        updateAllDisplays();
+        saveProgress();
+    }
+
+    // Exam Mode
+    let examTimer;
+    function startExam() {
+        const allQ = document.querySelectorAll('.qcm-question[data-page]');
+        const arr = Array.from(allQ);
+        const shuffled = arr.sort(() => Math.random() - 0.5).slice(0, 20);
+        let html = '<div class="exam-header"><h2>Examen Kubernetes (20 questions)</h2><div class="exam-timer" id="examTimer">10:00</div></div>';
+        shuffled.forEach((q, i) => {
+            const text = q.querySelector('.q-text').textContent;
+            const opts = q.querySelectorAll('.qcm-option');
+            const name = `exam-${i}`;
+            const correct = q.querySelector('.btn-validate').getAttribute('onclick').match(/'([a-d])'/)?.[1] || 'b';
+            html += `<div class="exam-question" data-correct="${correct}"><p>${i+1}) ${text.replace(/^\d+\)\s*/, '')}</p><div class="exam-options">`;
+            opts.forEach(o => {
+                const val = o.querySelector('input').value;
+                const lbl = o.querySelector('label').textContent;
+                html += `<div class="exam-option"><input type="radio" name="${name}" value="${val}"><label>${lbl}</label></div>`;
+            });
+            html += '</div></div>';
+        });
+        html += '<button class="btn-submit-exam" onclick="submitExam()">Soumettre l\'examen</button>';
+        document.getElementById('examContent').innerHTML = html;
+        document.getElementById('examOverlay').classList.add('active');
+        let timeLeft = 600;
+        examTimer = setInterval(() => {
+            timeLeft--;
+            const m = Math.floor(timeLeft / 60);
+            const s = timeLeft % 60;
+            const el = document.getElementById('examTimer');
+            if (el) el.textContent = `${m}:${s.toString().padStart(2,'0')}`;
+            if (timeLeft <= 60 && el) el.classList.add('warning');
+            if (timeLeft <= 0) submitExam();
+        }, 1000);
+    }
+
+    function submitExam() {
+        clearInterval(examTimer);
+        const questions = document.querySelectorAll('#examContent .exam-question');
+        let score = 0;
+        questions.forEach(q => {
+            const correct = q.dataset.correct;
+            const name = q.querySelector('input').name;
+            const sel = document.querySelector(`#examContent input[name="${name}"]:checked`);
+            if (sel && sel.value === correct) score++;
+        });
+        const total = questions.length;
+        const note = Math.round((score / total) * 20);
+        let colorClass = '';
+        let comment = '';
+        if (note >= 14) { comment = 'Excellent !'; colorClass = 'color:#059669'; }
+        else if (note >= 10) { comment = 'Passable, continuez vos revisions !'; colorClass = 'color:#d97706'; }
+        else { comment = 'A retravailler, reprenez les lecons !'; colorClass = 'color:#dc2626'; }
+        document.getElementById('examContent').innerHTML = `<div class="exam-result"><div class="score-big" style="${colorClass}">${note}/20</div><div class="score-text">${score} bonnes reponses sur ${total}<br><strong>${comment}</strong></div><br><button class="btn-submit-exam" onclick="closeExam()">Fermer</button></div>`;
+    }
+
+    function closeExam() {
+        clearInterval(examTimer);
+        document.getElementById('examOverlay').classList.remove('active');
+    }
+
+    // Navigation
+    function switchTab(btn, tabId) {
+        const parent = btn.closest('.page');
+        parent.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        parent.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(tabId).classList.add('active');
+    }
+
+    function showPage(pageId, link) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+        window.scrollTo(0, 0);
+        closeMobile();
+        return false;
+    }
+
+    function goToNextPage(pageId) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+        document.querySelectorAll('.nav-link').forEach(l => {
+            l.classList.remove('active');
+            if (l.getAttribute('onclick') && l.getAttribute('onclick').includes("'" + pageId + "'")) {
+                l.classList.add('active');
+            }
+        });
+        window.scrollTo(0, 0);
+        closeMobile();
+    }
+
+    function filterNav() {
+        const q = document.getElementById('searchInput').value.toLowerCase();
+        document.querySelectorAll('#navList li').forEach(li => {
+            const text = li.textContent.toLowerCase();
+            li.classList.toggle('hidden', q && !text.includes(q));
+        });
+    }
+
+    function toggleMobile() {
+        document.getElementById('sidebar').classList.toggle('open');
+        document.getElementById('overlay').classList.toggle('visible');
+        document.getElementById('burgerBtn').classList.toggle('active');
+    }
+    function closeMobile() {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('overlay').classList.remove('visible');
+        document.getElementById('burgerBtn').classList.remove('active');
+    }
+
+    // Init
+    loadProgress();
+    updateAllDisplays();
+    </script>
+</body>
+</html>

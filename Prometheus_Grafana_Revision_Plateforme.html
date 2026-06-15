@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prometheus & Grafana - Plateforme de Revision Complete</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #fff8f0;
+            color: #1a1a1a;
+            line-height: 1.7;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            position: fixed; top: 0; left: 0;
+            width: 270px; height: 100vh;
+            background: linear-gradient(180deg, #bf360c 0%, #d84315 40%, #e6522c 100%);
+            overflow-y: auto; padding: 20px 0; z-index: 100;
+            box-shadow: 4px 0 20px rgba(230,82,44,0.3);
+        }
+        .sidebar-header { padding: 12px 18px 15px; border-bottom: 2px solid rgba(255,255,255,0.15); margin-bottom: 8px; }
+        .sidebar-header h1 { font-size: 1.05em; color: #fff; margin-bottom: 2px; }
+        .sidebar-header p { font-size: 0.72em; color: rgba(255,255,255,0.7); }
+
+        .search-box { padding: 8px 14px; margin-bottom: 8px; }
+        .search-box input {
+            width: 100%; padding: 8px 12px; border-radius: 20px; border: none;
+            background: rgba(255,255,255,0.15); color: #fff; font-size: 0.82em;
+            outline: none; transition: background 0.3s;
+        }
+        .search-box input::placeholder { color: rgba(255,255,255,0.5); }
+        .search-box input:focus { background: rgba(255,255,255,0.25); }
+
+        .sidebar ul { list-style: none; padding: 0; }
+        .sidebar ul li a {
+            display: block; color: rgba(255,255,255,0.85); text-decoration: none;
+            font-size: 0.82em; padding: 9px 18px; border-left: 3px solid transparent;
+            transition: all 0.25s ease;
+        }
+        .sidebar ul li a:hover { background: rgba(255,255,255,0.1); color: #fff; border-left-color: #ffcc80; }
+        .sidebar ul li a.active { background: linear-gradient(90deg, rgba(255,204,128,0.2), rgba(255,204,128,0.05)); color: #ffcc80; border-left-color: #ffcc80; font-weight: 600; }
+        .sidebar ul li a .score-badge {
+            float: right; background: rgba(255,255,255,0.2); color: #ffcc80;
+            font-size: 0.75em; padding: 1px 7px; border-radius: 10px;
+        }
+        .sidebar ul li.hidden { display: none; }
+        .sidebar::-webkit-scrollbar { width: 6px; }
+        .sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
+
+        /* Progress bar global */
+        .global-progress { padding: 10px 18px; margin-bottom: 5px; }
+        .progress-bar-bg { background: rgba(255,255,255,0.15); border-radius: 10px; height: 8px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #ffcc80, #ff9800); border-radius: 10px; transition: width 0.5s ease; width: 0%; }
+        .progress-text { color: rgba(255,255,255,0.8); font-size: 0.7em; margin-top: 4px; text-align: center; }
+
+        .main-content { margin-left: 270px; flex: 1; padding: 25px 35px; max-width: 1100px; }
+        .page { display: none; }
+        .page.active { display: block; }
+
+        .lesson-header {
+            background: linear-gradient(135deg, #e6522c 0%, #ff6e40 100%);
+            padding: 18px 24px; margin-bottom: 18px; border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(230,82,44,0.3);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .lesson-header h2 { color: #fff; font-size: 1.3em; }
+        .lesson-score { color: #fff; font-size: 0.9em; background: rgba(255,255,255,0.2); padding: 5px 14px; border-radius: 20px; }
+
+        .tabs-container { display: flex; gap: 0; border-bottom: 3px solid #ffccbc; }
+        .tab-btn {
+            padding: 11px 24px; border: none; background: #f5f5f5; color: #666;
+            font-size: 0.92em; font-weight: 600; cursor: pointer;
+            border-radius: 10px 10px 0 0; transition: all 0.3s;
+            border: 1px solid #e0e0e0; border-bottom: none; margin-right: 4px;
+        }
+        .tab-btn:hover { background: #fbe9e7; color: #e6522c; }
+        .tab-btn.active { background: #fff; color: #e6522c; border-color: #ffab91; position: relative; }
+        .tab-btn.active::after { content: ''; position: absolute; bottom: -3px; left: 0; right: 0; height: 3px; background: #fff; }
+
+        .tab-content {
+            display: none; background: #fff; border: 1px solid #e0e0e0; border-top: none;
+            border-radius: 0 0 12px 12px; padding: 22px; min-height: 350px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+        }
+        .tab-content.active { display: block; }
+
+        .concepts p { margin-bottom: 12px; padding: 11px 15px; border-left: 3px solid #e6522c; background: #fff8f0; border-radius: 0 8px 8px 0; font-size: 0.93em; }
+        .key-points ul { list-style: none; padding: 0; }
+        .key-points ul li {
+            padding: 11px 15px; margin-bottom: 8px; background: linear-gradient(135deg, #fff3e0, #fbe9e7);
+            border-radius: 8px; border-left: 4px solid #ff6e40; font-size: 0.93em;
+            transition: transform 0.2s;
+        }
+        .key-points ul li:hover { transform: translateX(4px); }
+        .key-points ul li strong { color: #bf360c; }
+
+        .qcm-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .qcm-score-display { font-size: 0.9em; color: #e6522c; font-weight: 600; }
+        .btn-reset {
+            background: #ff5252; color: white; border: none; padding: 7px 16px;
+            border-radius: 18px; cursor: pointer; font-size: 0.82em; transition: all 0.2s;
+        }
+        .btn-reset:hover { background: #d32f2f; transform: scale(1.05); }
+
+        .qcm-question { margin-bottom: 18px; padding: 16px; background: #fafafa; border-radius: 10px; border: 1px solid #e8e8e8; }
+        .qcm-question.answered-correct { border-color: #66bb6a; background: #f1f8f1; }
+        .qcm-question.answered-wrong { border-color: #ef5350; background: #fff5f5; }
+        .qcm-question p.q-text { font-weight: 600; margin-bottom: 12px; color: #bf360c; font-size: 0.92em; }
+        .qcm-options { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; }
+        .qcm-option { display: flex; align-items: center; padding: 7px 10px; border-radius: 6px; cursor: pointer; transition: background 0.2s; font-size: 0.88em; }
+        .qcm-option:hover { background: #fbe9e7; }
+        .qcm-option input[type="radio"] { margin-right: 8px; accent-color: #e6522c; width: 15px; height: 15px; }
+        .qcm-option label { cursor: pointer; flex: 1; }
+
+        .btn-validate {
+            background: linear-gradient(135deg, #e6522c, #ff6e40); color: white; border: none;
+            padding: 8px 20px; border-radius: 18px; cursor: pointer; font-size: 0.85em;
+            margin-top: 8px; transition: transform 0.2s; box-shadow: 0 3px 10px rgba(230,82,44,0.3);
+        }
+        .btn-validate:hover { transform: translateY(-2px); }
+        .feedback { display: none; margin-top: 8px; padding: 10px; border-radius: 8px; font-size: 0.85em; line-height: 1.5; }
+        .feedback.correct { background: linear-gradient(135deg, #e8f5e9, #c8e6c9); border: 1px solid #66bb6a; color: #1B5E20; }
+        .feedback.incorrect { background: linear-gradient(135deg, #fce4ec, #ffcdd2); border: 1px solid #ef5350; color: #b71c1c; }
+
+        /* Exam Mode */
+        .exam-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); z-index: 500; justify-content: center; align-items: center;
+        }
+        .exam-overlay.active { display: flex; }
+        .exam-container {
+            background: #fff; width: 90%; max-width: 800px; max-height: 90vh;
+            border-radius: 16px; padding: 30px; overflow-y: auto; position: relative;
+        }
+        .exam-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #ffccbc; }
+        .exam-header h2 { color: #bf360c; font-size: 1.3em; }
+        .exam-timer { font-size: 1.3em; font-weight: 700; color: #d32f2f; background: #fce4ec; padding: 8px 18px; border-radius: 25px; }
+        .exam-timer.warning { animation: pulse 1s infinite; }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .exam-question { margin-bottom: 20px; padding: 15px; background: #fafafa; border-radius: 10px; border: 1px solid #e0e0e0; }
+        .exam-question p { font-weight: 600; margin-bottom: 10px; color: #1a1a1a; font-size: 0.92em; }
+        .exam-options { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; }
+        .exam-option { display: flex; align-items: center; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 0.88em; }
+        .exam-option:hover { background: #fbe9e7; }
+        .exam-option input { margin-right: 8px; accent-color: #e6522c; }
+        .btn-submit-exam {
+            display: block; margin: 20px auto 0; background: linear-gradient(135deg, #e6522c, #ff6e40);
+            color: #fff; border: none; padding: 12px 40px; border-radius: 25px;
+            font-size: 1em; font-weight: 600; cursor: pointer; transition: transform 0.2s;
+        }
+        .btn-submit-exam:hover { transform: scale(1.05); }
+        .exam-result { text-align: center; padding: 30px; }
+        .exam-result .score-big { font-size: 3em; font-weight: 700; color: #bf360c; }
+        .exam-result .score-text { font-size: 1.1em; color: #666; margin-top: 10px; }
+        .btn-close-exam { position: absolute; top: 15px; right: 20px; background: none; border: none; font-size: 1.5em; cursor: pointer; color: #999; }
+        .btn-start-exam {
+            display: block; margin: 15px auto; background: linear-gradient(135deg, #e6522c, #bf360c);
+            color: #fff; border: none; padding: 12px 30px; border-radius: 25px;
+            font-size: 0.95em; font-weight: 600; cursor: pointer; transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(230,82,44,0.3);
+        }
+        .btn-start-exam:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(230,82,44,0.4); }
+
+        /* Cheat Sheet */
+        .cheat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .cheat-card { background: #fff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 15px; }
+        .cheat-card h4 { color: #e6522c; margin-bottom: 8px; font-size: 0.95em; border-bottom: 2px solid #ffccbc; padding-bottom: 5px; }
+        .cheat-card code { display: block; background: #1a1a2e; color: #ffcc80; padding: 8px 12px; border-radius: 6px; font-size: 0.8em; margin: 4px 0; white-space: pre-wrap; }
+        .cheat-card ul { padding-left: 16px; font-size: 0.85em; }
+        .cheat-card li { margin-bottom: 3px; }
+
+        /* Pipeline Diagram */
+        .pipeline-diagram { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 0; padding: 20px 10px; margin: 15px 0; }
+        .pipeline-stage {
+            background: linear-gradient(135deg, #e6522c, #ff6e40); color: #fff;
+            padding: 12px 18px; border-radius: 8px; font-size: 0.82em; font-weight: 600;
+            text-align: center; min-width: 90px; position: relative;
+            box-shadow: 0 3px 10px rgba(230,82,44,0.3); transition: transform 0.2s;
+        }
+        .pipeline-stage:hover { transform: scale(1.08); }
+        .pipeline-stage small { display: block; font-weight: 400; opacity: 0.8; font-size: 0.85em; }
+        .pipeline-arrow { color: #e6522c; font-size: 1.4em; margin: 0 6px; }
+
+        /* Bonus */
+        .bonus-section h2 { color:#fff; font-size:1.3em; background:linear-gradient(135deg,#e6522c,#bf360c); padding:16px 22px; border-radius:12px; margin-bottom:18px; }
+        .bonus-section h3 { color:#bf360c; margin:20px 0 8px; padding-left:10px; border-left:3px solid #ff6e40; }
+        .bonus-section ul { padding-left:18px; margin-bottom:12px; }
+        .bonus-section li { margin-bottom:6px; font-size:0.92em; }
+        .code-block { background:linear-gradient(135deg,#1a1a2e,#16213e); color:#ffcc80; padding:14px 18px; border-radius:8px; font-family:Consolas,monospace; font-size:0.82em; overflow-x:auto; margin:8px 0 15px; white-space:pre-wrap; border:1px solid #0f3460; }
+
+        /* Next Lesson Button */
+        .next-lesson-container { text-align: center; margin-top: 25px; padding-top: 20px; border-top: 2px dashed #e0e0e0; }
+        .btn-next-lesson {
+            background: linear-gradient(135deg, #ff6e40, #e6522c); color: #fff; border: none;
+            padding: 14px 32px; border-radius: 30px; font-size: 0.95em; font-weight: 600;
+            cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(230,82,44,0.3);
+            display: inline-flex; align-items: center; gap: 8px;
+        }
+        .btn-next-lesson:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(230,82,44,0.4); }
+
+        /* Mobile */
+        .burger-btn { display:none; position:fixed; top:12px; left:12px; z-index:200; background:linear-gradient(135deg,#e6522c,#ff6e40); border:none; border-radius:10px; padding:10px 12px; cursor:pointer; flex-direction:column; gap:5px; }
+        .burger-btn span { display:block; width:22px; height:3px; background:white; border-radius:2px; transition:transform 0.3s,opacity 0.3s; }
+        .burger-btn.active span:nth-child(1) { transform:rotate(45deg) translate(5px,6px); }
+        .burger-btn.active span:nth-child(2) { opacity:0; }
+        .burger-btn.active span:nth-child(3) { transform:rotate(-45deg) translate(5px,-6px); }
+        .overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.3); z-index:90; }
+        @media (max-width:900px) {
+            .burger-btn { display:flex; }
+            .sidebar { left:-280px; transition:left 0.3s; z-index:150; }
+            .sidebar.open { left:0; }
+            .overlay.visible { display:block; }
+            .main-content { margin-left:0; padding:18px 12px; padding-top:55px; }
+            .qcm-options,.exam-options { grid-template-columns:1fr; }
+            .cheat-grid { grid-template-columns:1fr; }
+            .pipeline-diagram { flex-direction:column; }
+            .pipeline-arrow { transform:rotate(90deg); }
+        }
+    </style>
+</head>
+<body>
+    <button class="burger-btn" id="burgerBtn" onclick="toggleMobile()"><span></span><span></span><span></span></button>
+    <div class="overlay" id="overlay" onclick="closeMobile()"></div>
+
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h1>Prometheus & Grafana</h1>
+            <p>Formation Monitoring Complete</p>
+        </div>
+        <div class="global-progress">
+            <div class="progress-bar-bg"><div class="progress-bar-fill" id="globalProgressBar"></div></div>
+            <div class="progress-text" id="globalProgressText">0% complete</div>
+        </div>
+        <div class="search-box"><input type="text" id="searchInput" placeholder="Rechercher..." oninput="filterNav()"></div>
+        <ul id="navList">
+            <li><a href="#" class="nav-link active" onclick="showPage('p1',this)">1. Problematique <span class="score-badge" id="badge-p1">-</span></a></li>
+            <li><a href="#" class="nav-link" onclick="showPage('p2',this)">2. Presentation <span class="score-badge" id="badge-p2">-</span></a></li>
+            <li><a href="#" class="nav-link" onclick="showPage('p3',this)">3. Concepts <span class="score-badge" id="badge-p3">-</span></a></li>
+            <li><a href="#" class="nav-link" onclick="showPage('p4',this)">4. Architecture <span class="score-badge" id="badge-p4">-</span></a></li>
+            <li><a href="#" class="nav-link" onclick="showPage('p5',this)">5. Installation <span class="score-badge" id="badge-p5">-</span></a></li>
+            <li><a href="#" class="nav-link" onclick="showPage('p6',this)">6. Demo / Projet <span class="score-badge" id="badge-p6">-</span></a></li>
+            <li><a href="#" class="nav-link" onclick="showPage('p7',this)">7. References <span class="score-badge" id="badge-p7">-</span></a></li>
+            <li><a href="#" class="nav-link" onclick="showPage('cheatsheet',this)">Cheat Sheet</a></li>
+            <li><a href="#" class="nav-link" onclick="showPage('bonus',this)">Bonus</a></li>
+        </ul>
+        <button class="btn-start-exam" onclick="startExam()">Mode Examen (10 min)</button>
+    </nav>
+
+    <div class="main-content">
+
+<!-- PAGE 1 -->
+<div class="page active" id="p1">
+    <div class="lesson-header"><h2>1 - Problematique du Monitoring</h2><span class="lesson-score" id="score-p1">0/5</span></div>
+    <div class="tabs-container">
+        <button class="tab-btn active" onclick="switchTab(this,'p1-concepts')">Concepts</button>
+        <button class="tab-btn" onclick="switchTab(this,'p1-keys')">Points Cles</button>
+        <button class="tab-btn" onclick="switchTab(this,'p1-qcm')">QCM</button>
+    </div>
+    <div class="tab-content active" id="p1-concepts">
+        <div class="concepts">
+            <p><strong>Pourquoi le monitoring est-il indispensable ?</strong> Imaginez une application en production sans aucune visibilite : vous ne savez pas si elle fonctionne correctement, si la charge augmente dangereusement, ou si un disque est presque plein. Sans monitoring, vous decouvrez les problemes APRES que les utilisateurs les signalent — souvent trop tard. Le monitoring transforme une approche reactive ("on repare quand ca casse") en approche proactive ("on anticipe avant que ca casse").</p>
+            <p><strong>Consequences de l'absence d'observabilite :</strong> Sans observabilite, les equipes naviguent a l'aveugle. Les pannes durent plus longtemps (MTTR eleve), les causes racines sont difficiles a identifier, la scalabilite est impossible a planifier, et les SLA sont violes frequemment. Chaque minute d'indisponibilite coute de l'argent (pertes de revenus, reputation degradee, penalites contractuelles). Amazon estime qu'une minute de panne lui coute environ 220 000 dollars.</p>
+            <p><strong>MTTR (Mean Time To Recovery) :</strong> Le temps moyen de recuperation apres une panne. C'est un indicateur critique : plus il est bas, meilleure est votre capacite de reaction. Le monitoring reduit drastiquement le MTTR car il permet de detecter les problemes immediatement (alertes), de diagnostiquer rapidement (metriques, dashboards) et de verifier la resolution (retour a la normale). Un bon MTTR en production est inferieur a 30 minutes.</p>
+            <p><strong>SLA, SLO et SLI — Les trois piliers de la fiabilite :</strong> Le SLA (Service Level Agreement) est le contrat avec le client ("99.9% de disponibilite/mois"). Le SLO (Service Level Objective) est l'objectif interne plus strict ("99.95%") pour avoir une marge de securite. Le SLI (Service Level Indicator) est la metrique reelle mesuree ("temps de reponse < 200ms pour 99% des requetes"). Sans monitoring, impossible de mesurer les SLI et donc de savoir si on respecte ses SLO/SLA.</p>
+            <p><strong>Les trois piliers de l'observabilite :</strong> 1) Les Metriques (donnees numeriques dans le temps — Prometheus). 2) Les Logs (evenements textuels detailles — Loki, ELK). 3) Les Traces (suivi d'une requete a travers les microservices — Jaeger, Tempo). Ensemble, ils offrent une vision complete du systeme. Prometheus et Grafana couvrent principalement le pilier "Metriques" avec une integration possible aux logs et traces.</p>
+        </div>
+    </div>
+    <div class="tab-content" id="p1-keys">
+        <div class="key-points"><ul>
+            <li><strong>Sans monitoring = navigation a l'aveugle.</strong> Pannes decouvertes par les utilisateurs.</li>
+            <li><strong>MTTR = temps de recuperation.</strong> Le monitoring le reduit drastiquement.</li>
+            <li><strong>SLA = contrat client, SLO = objectif interne, SLI = metrique reelle.</strong></li>
+            <li><strong>3 piliers observabilite : Metriques, Logs, Traces.</strong></li>
+            <li><strong>Proactif vs Reactif.</strong> Anticiper plutot que subir.</li>
+        </ul></div>
+    </div>
+    <div class="tab-content" id="p1-qcm">
+        <div class="qcm-header"><span class="qcm-score-display" id="qcm-score-p1">Score: 0/5</span><button class="btn-reset" onclick="resetQcm('p1')">Recommencer</button></div>
+        <div class="qcm-grid" id="qcm-p1">
+            <div class="qcm-question" data-page="p1"><p class="q-text">1) Pourquoi le monitoring est-il considere comme indispensable en production ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q1-1" value="a" id="q1-1a"><label for="q1-1a">Pour accelerer le deploiement</label></div><div class="qcm-option"><input type="radio" name="q1-1" value="b" id="q1-1b"><label for="q1-1b">Pour detecter et anticiper les problemes avant les utilisateurs</label></div><div class="qcm-option"><input type="radio" name="q1-1" value="c" id="q1-1c"><label for="q1-1c">Pour remplacer les tests automatises</label></div><div class="qcm-option"><input type="radio" name="q1-1" value="d" id="q1-1d"><label for="q1-1d">Pour reduire le nombre de serveurs</label></div></div><button class="btn-validate" onclick="checkAnswer('q1-1','b',this,'p1')">Valider</button><div class="feedback"></div></div>
+            <div class="qcm-question" data-page="p1"><p class="q-text">2) Que signifie l'acronyme MTTR et pourquoi est-il important ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q1-2" value="a" id="q1-2a"><label for="q1-2a">Mean Time To Release — temps de livraison</label></div><div class="qcm-option"><input type="radio" name="q1-2" value="b" id="q1-2b"><label for="q1-2b">Mean Time To Recovery — temps moyen de recuperation apres panne</label></div><div class="qcm-option"><input type="radio" name="q1-2" value="c" id="q1-2c"><label for="q1-2c">Maximum Time To Respond — delai maximal de reponse</label></div><div class="qcm-option"><input type="radio" name="q1-2" value="d" id="q1-2d"><label for="q1-2d">Minimum Time To Run — temps minimal d'execution</label></div></div><button class="btn-validate" onclick="checkAnswer('q1-2','b',this,'p1')">Valider</button><div class="feedback"></div></div>
+            <div class="qcm-question" data-page="p1"><p class="q-text">3) Quelle est la difference entre un SLA et un SLO ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q1-3" value="a" id="q1-3a"><label for="q1-3a">Le SLA est le contrat client, le SLO est l'objectif interne plus strict</label></div><div class="qcm-option"><input type="radio" name="q1-3" value="b" id="q1-3b"><label for="q1-3b">Ce sont des synonymes</label></div><div class="qcm-option"><input type="radio" name="q1-3" value="c" id="q1-3c"><label for="q1-3c">Le SLO est pour le client, le SLA est interne</label></div><div class="qcm-option"><input type="radio" name="q1-3" value="d" id="q1-3d"><label for="q1-3d">Le SLA mesure la performance, le SLO mesure la disponibilite</label></div></div><button class="btn-validate" onclick="checkAnswer('q1-3','a',this,'p1')">Valider</button><div class="feedback"></div></div>
+            <div class="qcm-question" data-page="p1"><p class="q-text">4) Quels sont les trois piliers de l'observabilite ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q1-4" value="a" id="q1-4a"><label for="q1-4a">CPU, RAM, Disque</label></div><div class="qcm-option"><input type="radio" name="q1-4" value="b" id="q1-4b"><label for="q1-4b">Metriques, Logs, Traces</label></div><div class="qcm-option"><input type="radio" name="q1-4" value="c" id="q1-4c"><label for="q1-4c">Alertes, Dashboards, Rapports</label></div><div class="qcm-option"><input type="radio" name="q1-4" value="d" id="q1-4d"><label for="q1-4d">Disponibilite, Latence, Erreurs</label></div></div><button class="btn-validate" onclick="checkAnswer('q1-4','b',this,'p1')">Valider</button><div class="feedback"></div></div>
+            <div class="qcm-question" data-page="p1"><p class="q-text">5) A quoi correspond le SLI dans le contexte du monitoring ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q1-5" value="a" id="q1-5a"><label for="q1-5a">Un contrat commercial avec le client</label></div><div class="qcm-option"><input type="radio" name="q1-5" value="b" id="q1-5b"><label for="q1-5b">Un objectif de performance interne</label></div><div class="qcm-option"><input type="radio" name="q1-5" value="c" id="q1-5c"><label for="q1-5c">La metrique reelle mesuree qui indique la sante du service</label></div><div class="qcm-option"><input type="radio" name="q1-5" value="d" id="q1-5d"><label for="q1-5d">Un outil de visualisation de donnees</label></div></div><button class="btn-validate" onclick="checkAnswer('q1-5','c',this,'p1')">Valider</button><div class="feedback"></div></div>
+        </div>
+        <div class="next-lesson-container"><button class="btn-next-lesson" onclick="goToNextPage('p2')">Lecon suivante &#10132; 2. Presentation</button></div>
+    </div>
+</div>
+
+<!-- PAGE 2 -->
+<div class="page" id="p2">
+    <div class="lesson-header"><h2>2 - Presentation Prometheus & Grafana</h2><span class="lesson-score" id="score-p2">0/5</span></div>
+    <div class="tabs-container"><button class="tab-btn active" onclick="switchTab(this,'p2-concepts')">Concepts</button><button class="tab-btn" onclick="switchTab(this,'p2-keys')">Points Cles</button><button class="tab-btn" onclick="switchTab(this,'p2-qcm')">QCM</button></div>
+    <div class="tab-content active" id="p2-concepts"><div class="concepts">
+        <p><strong>Prometheus — Qu'est-ce que c'est ?</strong> Prometheus est un systeme de monitoring et d'alerte open source, originalement developpe par SoundCloud en 2012, puis donne a la CNCF (Cloud Native Computing Foundation) en 2016. C'est le deuxieme projet a avoir obtenu le statut "graduated" de la CNCF apres Kubernetes. Il est ecrit en Go et specialise dans la collecte de metriques numeriques sous forme de series temporelles (time series).</p>
+        <p><strong>Le modele Pull-based :</strong> Contrairement a d'autres systemes (comme Graphite ou StatsD qui recoivent des donnees poussees), Prometheus va CHERCHER les metriques aupres des cibles (targets) — c'est le modele "pull". Toutes les X secondes (scrape_interval, par defaut 15s), Prometheus interroge les endpoints /metrics de chaque service. Avantages : pas besoin de configurer chaque service pour pousser, detection automatique des services down (pas de reponse = alerte).</p>
+        <p><strong>Time Series (series temporelles) :</strong> Prometheus stocke toutes les donnees sous forme de series temporelles : une suite de valeurs horodatees (timestamp + valeur). Chaque serie est identifiee par un nom de metrique et un ensemble de labels (cles/valeurs). Exemple : http_requests_total{method="GET", status="200"} = nombre de requetes GET reussies. Cette approche dimensionnelle est extremement flexible pour filtrer et agreger les donnees.</p>
+        <p><strong>Grafana — Qu'est-ce que c'est ?</strong> Grafana est une plateforme de visualisation open source creee en 2014 par Torkel Odegaard. Elle ne collecte PAS de donnees elle-meme — elle se connecte a des sources de donnees (Prometheus, InfluxDB, Elasticsearch, MySQL, etc.) et les affiche sous forme de dashboards interactifs avec des graphiques, jauges, tableaux et alertes visuelles. Grafana est le standard de facto pour la visualisation de metriques.</p>
+        <p><strong>Historique et alternatives :</strong> Avant Prometheus : Nagios (1999, checks actifs, pas de metriques riches), Zabbix (2001, agent-based), Graphite (2008, push-based). Alternatives modernes : InfluxDB + Telegraf (push-based, SQL-like), Datadog (SaaS payant), Victoria Metrics (compatible Prometheus, meilleure retention), Thanos/Cortex (Prometheus multi-cluster). Prometheus + Grafana reste la stack la plus populaire en environnement cloud-native.</p>
+    </div></div>
+    <div class="tab-content" id="p2-keys"><div class="key-points"><ul>
+        <li><strong>Prometheus = CNCF graduated, Go, pull-based, time series.</strong></li>
+        <li><strong>Pull = Prometheus va chercher les metriques (scrape).</strong></li>
+        <li><strong>Grafana = visualisation, multi-sources, dashboards.</strong></li>
+        <li><strong>Cree par SoundCloud (2012), CNCF (2016).</strong></li>
+        <li><strong>Alternatives : Datadog (SaaS), Victoria Metrics, Thanos.</strong></li>
+    </ul></div></div>
+    <div class="tab-content" id="p2-qcm"><div class="qcm-header"><span class="qcm-score-display" id="qcm-score-p2">Score: 0/5</span><button class="btn-reset" onclick="resetQcm('p2')">Recommencer</button></div><div class="qcm-grid" id="qcm-p2">
+        <div class="qcm-question" data-page="p2"><p class="q-text">1) Quelle organisation a accorde le statut "graduated" a Prometheus ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q2-1" value="a" id="q2-1a"><label for="q2-1a">Apache Foundation</label></div><div class="qcm-option"><input type="radio" name="q2-1" value="b" id="q2-1b"><label for="q2-1b">CNCF (Cloud Native Computing Foundation)</label></div><div class="qcm-option"><input type="radio" name="q2-1" value="c" id="q2-1c"><label for="q2-1c">Linux Foundation directement</label></div><div class="qcm-option"><input type="radio" name="q2-1" value="d" id="q2-1d"><label for="q2-1d">Google Open Source</label></div></div><button class="btn-validate" onclick="checkAnswer('q2-1','b',this,'p2')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p2"><p class="q-text">2) Comment fonctionne le modele de collecte de metriques de Prometheus ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q2-2" value="a" id="q2-2a"><label for="q2-2a">Les services poussent les metriques vers Prometheus (push)</label></div><div class="qcm-option"><input type="radio" name="q2-2" value="b" id="q2-2b"><label for="q2-2b">Prometheus va chercher les metriques aupres des targets (pull)</label></div><div class="qcm-option"><input type="radio" name="q2-2" value="c" id="q2-2c"><label for="q2-2c">Un agent intermediaire transfere les donnees</label></div><div class="qcm-option"><input type="radio" name="q2-2" value="d" id="q2-2d"><label for="q2-2d">Les metriques sont ecrites directement en base</label></div></div><button class="btn-validate" onclick="checkAnswer('q2-2','b',this,'p2')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p2"><p class="q-text">3) Quel est le role principal de Grafana dans la stack de monitoring ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q2-3" value="a" id="q2-3a"><label for="q2-3a">Collecter les metriques des services</label></div><div class="qcm-option"><input type="radio" name="q2-3" value="b" id="q2-3b"><label for="q2-3b">Stocker les donnees de series temporelles</label></div><div class="qcm-option"><input type="radio" name="q2-3" value="c" id="q2-3c"><label for="q2-3c">Visualiser les donnees sous forme de dashboards interactifs</label></div><div class="qcm-option"><input type="radio" name="q2-3" value="d" id="q2-3d"><label for="q2-3d">Envoyer des alertes par email</label></div></div><button class="btn-validate" onclick="checkAnswer('q2-3','c',this,'p2')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p2"><p class="q-text">4) Dans quel langage de programmation Prometheus est-il ecrit ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q2-4" value="a" id="q2-4a"><label for="q2-4a">Java</label></div><div class="qcm-option"><input type="radio" name="q2-4" value="b" id="q2-4b"><label for="q2-4b">Python</label></div><div class="qcm-option"><input type="radio" name="q2-4" value="c" id="q2-4c"><label for="q2-4c">Go</label></div><div class="qcm-option"><input type="radio" name="q2-4" value="d" id="q2-4d"><label for="q2-4d">Rust</label></div></div><button class="btn-validate" onclick="checkAnswer('q2-4','c',this,'p2')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p2"><p class="q-text">5) Quelle entreprise a originalement developpe Prometheus avant de le donner a la CNCF ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q2-5" value="a" id="q2-5a"><label for="q2-5a">Google</label></div><div class="qcm-option"><input type="radio" name="q2-5" value="b" id="q2-5b"><label for="q2-5b">Netflix</label></div><div class="qcm-option"><input type="radio" name="q2-5" value="c" id="q2-5c"><label for="q2-5c">SoundCloud</label></div><div class="qcm-option"><input type="radio" name="q2-5" value="d" id="q2-5d"><label for="q2-5d">Facebook</label></div></div><button class="btn-validate" onclick="checkAnswer('q2-5','c',this,'p2')">Valider</button><div class="feedback"></div></div>
+    </div>
+        <div class="next-lesson-container"><button class="btn-next-lesson" onclick="goToNextPage('p3')">Lecon suivante &#10132; 3. Concepts</button></div></div>
+</div>
+
+<!-- PAGE 3 -->
+<div class="page" id="p3">
+    <div class="lesson-header"><h2>3 - Concepts fondamentaux</h2><span class="lesson-score" id="score-p3">0/6</span></div>
+    <div class="tabs-container"><button class="tab-btn active" onclick="switchTab(this,'p3-concepts')">Concepts</button><button class="tab-btn" onclick="switchTab(this,'p3-keys')">Points Cles</button><button class="tab-btn" onclick="switchTab(this,'p3-qcm')">QCM</button></div>
+    <div class="tab-content active" id="p3-concepts"><div class="concepts">
+        <p><strong>Targets et Scraping :</strong> Une target est un endpoint HTTP que Prometheus interroge regulierement (scrape). Chaque target expose un endpoint /metrics au format texte specifique. Le scrape_interval (par defaut 15 secondes) definit la frequence de collecte. Si une target ne repond plus, Prometheus le detecte immediatement et peut declencher une alerte "instance down".</p>
+        <p><strong>Types de metriques — Counter :</strong> Un compteur qui ne fait que monter (ou se remettre a zero au redemarrage). Exemples : nombre total de requetes HTTP (http_requests_total), nombre d'erreurs (errors_total). On utilise rate() pour calculer le taux par seconde. JAMAIS utiliser un counter pour une valeur qui peut diminuer (comme la memoire libre).</p>
+        <p><strong>Types de metriques — Gauge :</strong> Une jauge qui peut monter ET descendre. Exemples : temperature CPU, memoire utilisee, nombre de goroutines actives, nombre de connexions en cours. Contrairement au counter, on peut lire directement la valeur d'un gauge sans appliquer rate().</p>
+        <p><strong>Types de metriques — Histogram :</strong> Mesure la distribution de valeurs dans des "buckets" (tranches) predefinis. Exemple : temps de reponse HTTP. Un histogram cree automatiquement 3 series : _bucket (repartition par tranche), _sum (somme totale), _count (nombre d'observations). Permet de calculer des percentiles (p99, p95) avec histogram_quantile().</p>
+        <p><strong>Types de metriques — Summary :</strong> Similaire a l'histogram mais calcule les quantiles COTE CLIENT (dans l'application). Avantage : pas besoin de definir des buckets a l'avance. Inconvenient : les quantiles ne sont PAS agregeables entre instances. Preferer l'histogram dans la majorite des cas.</p>
+        <p><strong>Exporters :</strong> Des programmes qui exposent les metriques d'un systeme au format Prometheus. node_exporter = metriques systeme Linux (CPU, RAM, disque, reseau). blackbox_exporter = sonde HTTP/TCP/ICMP externe (verifier si un site repond). mysqld_exporter, redis_exporter, etc. On peut aussi creer des exporters custom avec les librairies client Prometheus (Go, Python, Java).</p>
+        <p><strong>AlertManager :</strong> Composant separe qui gere les alertes emises par Prometheus. Il s'occupe du routing (quelle alerte va a quelle equipe), du grouping (regrouper les alertes similaires), de l'inhibition (supprimer les alertes redondantes) et du silencing (mettre en sourdine temporairement). Les receivers definissent les canaux : email, Slack, PagerDuty, webhooks.</p>
+        <p><strong>PromQL (Prometheus Query Language) :</strong> Le langage de requete pour interroger les metriques. Exemples : rate(http_requests_total[5m]) = taux de requetes par seconde sur 5 min. sum by(status) (rate(http_requests_total[5m])) = meme chose groupee par code HTTP. C'est un langage puissant qui permet filtrage, agregation, operations mathematiques et fonctions temporelles.</p>
+        <p><strong>Recording Rules :</strong> Des requetes PromQL pre-calculees et sauvegardees comme nouvelles metriques. Utiles pour les requetes complexes utilisees souvent dans les dashboards. Elles reduisent la charge de calcul au moment de l'affichage. Definies dans des fichiers YAML referencies dans prometheus.yml.</p>
+        <p><strong>Grafana — Sources de donnees et Dashboards :</strong> Grafana se connecte a Prometheus (et autres) via des "data sources". Les dashboards sont composes de "panels" (graphiques, jauges, tableaux). Les variables permettent de rendre les dashboards dynamiques (choisir un namespace, une instance). Les annotations marquent des evenements sur les graphiques (deploiements, incidents). Les notifications Grafana permettent aussi de definir des alertes directement dans Grafana.</p>
+    </div></div>
+    <div class="tab-content" id="p3-keys"><div class="key-points"><ul>
+        <li><strong>Counter = toujours croissant. Gauge = monte et descend.</strong></li>
+        <li><strong>Histogram = distribution en buckets + percentiles.</strong></li>
+        <li><strong>node_exporter = metriques Linux. blackbox_exporter = sondes.</strong></li>
+        <li><strong>AlertManager = routing + grouping + silencing.</strong></li>
+        <li><strong>PromQL = langage de requete (rate, sum, histogram_quantile).</strong></li>
+        <li><strong>Recording Rules = requetes pre-calculees pour performance.</strong></li>
+    </ul></div></div>
+    <div class="tab-content" id="p3-qcm"><div class="qcm-header"><span class="qcm-score-display" id="qcm-score-p3">Score: 0/6</span><button class="btn-reset" onclick="resetQcm('p3')">Recommencer</button></div><div class="qcm-grid" id="qcm-p3">
+        <div class="qcm-question" data-page="p3"><p class="q-text">1) Quel type de metrique Prometheus convient pour compter le nombre total de requetes HTTP recues ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q3-1" value="a" id="q3-1a"><label for="q3-1a">Gauge</label></div><div class="qcm-option"><input type="radio" name="q3-1" value="b" id="q3-1b"><label for="q3-1b">Counter</label></div><div class="qcm-option"><input type="radio" name="q3-1" value="c" id="q3-1c"><label for="q3-1c">Histogram</label></div><div class="qcm-option"><input type="radio" name="q3-1" value="d" id="q3-1d"><label for="q3-1d">Summary</label></div></div><button class="btn-validate" onclick="checkAnswer('q3-1','b',this,'p3')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p3"><p class="q-text">2) Quel exporter permet de collecter les metriques systeme (CPU, RAM, disque) sur un serveur Linux ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q3-2" value="a" id="q3-2a"><label for="q3-2a">blackbox_exporter</label></div><div class="qcm-option"><input type="radio" name="q3-2" value="b" id="q3-2b"><label for="q3-2b">mysqld_exporter</label></div><div class="qcm-option"><input type="radio" name="q3-2" value="c" id="q3-2c"><label for="q3-2c">node_exporter</label></div><div class="qcm-option"><input type="radio" name="q3-2" value="d" id="q3-2d"><label for="q3-2d">cadvisor</label></div></div><button class="btn-validate" onclick="checkAnswer('q3-2','c',this,'p3')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p3"><p class="q-text">3) A quoi sert la fonction rate() en PromQL ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q3-3" value="a" id="q3-3a"><label for="q3-3a">Calculer la valeur maximale sur une periode</label></div><div class="qcm-option"><input type="radio" name="q3-3" value="b" id="q3-3b"><label for="q3-3b">Calculer le taux de variation par seconde d'un counter</label></div><div class="qcm-option"><input type="radio" name="q3-3" value="c" id="q3-3c"><label for="q3-3c">Filtrer les metriques par label</label></div><div class="qcm-option"><input type="radio" name="q3-3" value="d" id="q3-3d"><label for="q3-3d">Convertir un gauge en counter</label></div></div><button class="btn-validate" onclick="checkAnswer('q3-3','b',this,'p3')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p3"><p class="q-text">4) Quel composant de Prometheus est responsable du routing et du grouping des alertes ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q3-4" value="a" id="q3-4a"><label for="q3-4a">Le Prometheus server lui-meme</label></div><div class="qcm-option"><input type="radio" name="q3-4" value="b" id="q3-4b"><label for="q3-4b">Grafana</label></div><div class="qcm-option"><input type="radio" name="q3-4" value="c" id="q3-4c"><label for="q3-4c">AlertManager</label></div><div class="qcm-option"><input type="radio" name="q3-4" value="d" id="q3-4d"><label for="q3-4d">Le Pushgateway</label></div></div><button class="btn-validate" onclick="checkAnswer('q3-4','c',this,'p3')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p3"><p class="q-text">5) Quelle est la difference principale entre un Histogram et un Summary dans Prometheus ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q3-5" value="a" id="q3-5a"><label for="q3-5a">L'histogram calcule les quantiles cote serveur, le summary cote client</label></div><div class="qcm-option"><input type="radio" name="q3-5" value="b" id="q3-5b"><label for="q3-5b">Le summary est toujours plus precis</label></div><div class="qcm-option"><input type="radio" name="q3-5" value="c" id="q3-5c"><label for="q3-5c">L'histogram ne supporte pas les labels</label></div><div class="qcm-option"><input type="radio" name="q3-5" value="d" id="q3-5d"><label for="q3-5d">Il n'y a aucune difference</label></div></div><button class="btn-validate" onclick="checkAnswer('q3-5','a',this,'p3')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p3"><p class="q-text">6) A quoi servent les Recording Rules dans Prometheus ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q3-6" value="a" id="q3-6a"><label for="q3-6a">Enregistrer les logs des applications</label></div><div class="qcm-option"><input type="radio" name="q3-6" value="b" id="q3-6b"><label for="q3-6b">Pre-calculer des requetes PromQL complexes pour ameliorer les performances</label></div><div class="qcm-option"><input type="radio" name="q3-6" value="c" id="q3-6c"><label for="q3-6c">Definir des regles de retention des donnees</label></div><div class="qcm-option"><input type="radio" name="q3-6" value="d" id="q3-6d"><label for="q3-6d">Configurer les endpoints de scraping</label></div></div><button class="btn-validate" onclick="checkAnswer('q3-6','b',this,'p3')">Valider</button><div class="feedback"></div></div>
+    </div>
+        <div class="next-lesson-container"><button class="btn-next-lesson" onclick="goToNextPage('p4')">Lecon suivante &#10132; 4. Architecture</button></div></div>
+</div>
+
+<!-- PAGE 4 -->
+<div class="page" id="p4">
+    <div class="lesson-header"><h2>4 - Architecture</h2><span class="lesson-score" id="score-p4">0/5</span></div>
+    <div class="tabs-container"><button class="tab-btn active" onclick="switchTab(this,'p4-concepts')">Concepts</button><button class="tab-btn" onclick="switchTab(this,'p4-keys')">Points Cles</button><button class="tab-btn" onclick="switchTab(this,'p4-qcm')">QCM</button></div>
+    <div class="tab-content active" id="p4-concepts"><div class="concepts">
+        <p><strong>Prometheus Server — les 3 composants internes :</strong> 1) Le Retrieval (scraper) interroge les targets a intervalles reguliers et recupere les metriques. 2) La TSDB (Time Series Database) stocke les donnees sur disque de maniere optimisee (compression, indexation par labels). 3) Le HTTP Server expose l'API pour les requetes PromQL, la federation et la configuration. Ces trois composants forment un seul binaire auto-suffisant.</p>
+        <p><strong>Service Discovery :</strong> Prometheus peut decouvrir automatiquement les targets sans configuration manuelle. Modes supportes : kubernetes_sd_configs (decouvre les pods/services K8s), consul_sd_configs (services Consul), ec2_sd_configs (instances AWS), file_sd_configs (fichier JSON/YAML mis a jour dynamiquement), dns_sd_configs. En Kubernetes, c'est transparent : les pods avec les bonnes annotations sont automatiquement scrapes.</p>
+        <p><strong>Exporters dans l'architecture :</strong> Les exporters sont des processus intermediaires qui traduisent les metriques d'un systeme tiers au format Prometheus. node_exporter ecoute sur le port 9100, blackbox_exporter sur 9115, mysqld_exporter sur 9104. Chaque exporter expose un endpoint /metrics que Prometheus vient scraper. Pour les applications modernes, on instrumente directement le code avec les librairies client (pas besoin d'exporter).</p>
+        <p><strong>AlertManager dans l'architecture :</strong> Prometheus evalue les alerting rules regulierement. Quand une condition est remplie (ex: CPU > 90% pendant 5 min), Prometheus envoie l'alerte a AlertManager. Celui-ci deduplication, regroupe (grouping), route vers le bon receiver (Slack, PagerDuty, email) et gere les silences et inhibitions. AlertManager peut etre deploye en mode HA (haute disponibilite) avec clustering.</p>
+        <p><strong>Pushgateway :</strong> Exception au modele pull : le Pushgateway permet aux jobs ephemeres (batch jobs, cron tasks) de POUSSER leurs metriques. Le job pousse vers le Pushgateway, et Prometheus scrape le Pushgateway comme une target classique. A utiliser UNIQUEMENT pour les jobs courts — jamais pour les services permanents (sinon on perd la detection de pannes).</p>
+        <p><strong>Architecture Grafana :</strong> Grafana se connecte a Prometheus comme "data source" via l'API HTTP de Prometheus. Les dashboards sont composes de panels qui executent des requetes PromQL. Grafana peut aussi se connecter a Loki (logs), Tempo (traces), InfluxDB, Elasticsearch, etc. L'alerting Grafana permet de definir des alertes visuelles directement dans les panels, avec notification multi-canal.</p>
+    </div></div>
+    <div class="tab-content" id="p4-keys"><div class="key-points"><ul>
+        <li><strong>Prometheus = Retrieval + TSDB + HTTP Server (un seul binaire).</strong></li>
+        <li><strong>Service Discovery = detection auto des targets (K8s, Consul, AWS).</strong></li>
+        <li><strong>Pushgateway = uniquement pour jobs ephemeres.</strong></li>
+        <li><strong>AlertManager = deduplication + routing + grouping + silencing.</strong></li>
+        <li><strong>Grafana = multi-data-sources, panels, variables, alerting.</strong></li>
+    </ul></div></div>
+    <div class="tab-content" id="p4-qcm"><div class="qcm-header"><span class="qcm-score-display" id="qcm-score-p4">Score: 0/5</span><button class="btn-reset" onclick="resetQcm('p4')">Recommencer</button></div><div class="qcm-grid" id="qcm-p4">
+        <div class="qcm-question" data-page="p4"><p class="q-text">1) Quels sont les trois composants internes du serveur Prometheus ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q4-1" value="a" id="q4-1a"><label for="q4-1a">API, Dashboard, Alerting</label></div><div class="qcm-option"><input type="radio" name="q4-1" value="b" id="q4-1b"><label for="q4-1b">Retrieval, TSDB, HTTP Server</label></div><div class="qcm-option"><input type="radio" name="q4-1" value="c" id="q4-1c"><label for="q4-1c">Scraper, Parser, Writer</label></div><div class="qcm-option"><input type="radio" name="q4-1" value="d" id="q4-1d"><label for="q4-1d">Collector, Aggregator, Exporter</label></div></div><button class="btn-validate" onclick="checkAnswer('q4-1','b',this,'p4')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p4"><p class="q-text">2) Dans quel cas precis doit-on utiliser le Pushgateway ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q4-2" value="a" id="q4-2a"><label for="q4-2a">Pour tous les services en production</label></div><div class="qcm-option"><input type="radio" name="q4-2" value="b" id="q4-2b"><label for="q4-2b">Pour les jobs ephemeres qui ne vivent pas assez longtemps pour etre scrapes</label></div><div class="qcm-option"><input type="radio" name="q4-2" value="c" id="q4-2c"><label for="q4-2c">Pour remplacer les exporters</label></div><div class="qcm-option"><input type="radio" name="q4-2" value="d" id="q4-2d"><label for="q4-2d">Pour les services qui ne supportent pas HTTP</label></div></div><button class="btn-validate" onclick="checkAnswer('q4-2','b',this,'p4')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p4"><p class="q-text">3) Comment Prometheus decouvre-t-il automatiquement les pods a monitorer dans Kubernetes ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q4-3" value="a" id="q4-3a"><label for="q4-3a">Par configuration manuelle de chaque pod</label></div><div class="qcm-option"><input type="radio" name="q4-3" value="b" id="q4-3b"><label for="q4-3b">Grace au service discovery kubernetes_sd_configs et aux annotations</label></div><div class="qcm-option"><input type="radio" name="q4-3" value="c" id="q4-3c"><label for="q4-3c">Via un agent installe sur chaque noeud</label></div><div class="qcm-option"><input type="radio" name="q4-3" value="d" id="q4-3d"><label for="q4-3d">Par scan reseau automatique</label></div></div><button class="btn-validate" onclick="checkAnswer('q4-3','b',this,'p4')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p4"><p class="q-text">4) Quel est le role du composant TSDB dans Prometheus ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q4-4" value="a" id="q4-4a"><label for="q4-4a">Interroger les targets et recuperer les metriques</label></div><div class="qcm-option"><input type="radio" name="q4-4" value="b" id="q4-4b"><label for="q4-4b">Stocker les series temporelles de maniere optimisee sur disque</label></div><div class="qcm-option"><input type="radio" name="q4-4" value="c" id="q4-4c"><label for="q4-4c">Exposer l'API HTTP pour les requetes</label></div><div class="qcm-option"><input type="radio" name="q4-4" value="d" id="q4-4d"><label for="q4-4d">Router les alertes vers les receivers</label></div></div><button class="btn-validate" onclick="checkAnswer('q4-4','b',this,'p4')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p4"><p class="q-text">5) Comment Grafana se connecte-t-il a Prometheus pour afficher les donnees ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q4-5" value="a" id="q4-5a"><label for="q4-5a">Via un agent installe sur le serveur Prometheus</label></div><div class="qcm-option"><input type="radio" name="q4-5" value="b" id="q4-5b"><label for="q4-5b">Par connexion directe a la TSDB sur disque</label></div><div class="qcm-option"><input type="radio" name="q4-5" value="c" id="q4-5c"><label for="q4-5c">En configurant Prometheus comme data source via son API HTTP</label></div><div class="qcm-option"><input type="radio" name="q4-5" value="d" id="q4-5d"><label for="q4-5d">Grafana contient une copie embeddee de Prometheus</label></div></div><button class="btn-validate" onclick="checkAnswer('q4-5','c',this,'p4')">Valider</button><div class="feedback"></div></div>
+    </div>
+        <div class="next-lesson-container"><button class="btn-next-lesson" onclick="goToNextPage('p5')">Lecon suivante &#10132; 5. Installation</button></div></div>
+</div>
+
+<!-- PAGE 5 -->
+<div class="page" id="p5">
+    <div class="lesson-header"><h2>5 - Installation</h2><span class="lesson-score" id="score-p5">0/5</span></div>
+    <div class="tabs-container"><button class="tab-btn active" onclick="switchTab(this,'p5-concepts')">Concepts</button><button class="tab-btn" onclick="switchTab(this,'p5-keys')">Points Cles</button><button class="tab-btn" onclick="switchTab(this,'p5-qcm')">QCM</button></div>
+    <div class="tab-content active" id="p5-concepts"><div class="concepts">
+        <p><strong>Installation Docker (la plus simple) :</strong> Prometheus : docker run -d -p 9090:9090 -v prometheus.yml:/etc/prometheus/prometheus.yml prom/prometheus. Grafana : docker run -d -p 3000:3000 grafana/grafana-oss. Prometheus ecoute sur le port 9090, Grafana sur le port 3000 (login par defaut : admin/admin). En Docker, on monte le fichier de configuration prometheus.yml en volume.</p>
+        <p><strong>Installation avec Docker Compose :</strong> Docker Compose permet de lancer toute la stack en une commande (docker-compose up -d). On definit les services prometheus, grafana, node_exporter, alertmanager dans un fichier docker-compose.yml. Les volumes persistent les donnees. Les reseaux Docker permettent aux containers de communiquer par nom de service (ex: http://prometheus:9090).</p>
+        <p><strong>Helm Chart sur Kubernetes :</strong> Pour un deploiement Kubernetes, on utilise Helm (gestionnaire de packages K8s). La commande : helm install prometheus prometheus-community/prometheus. Cela deploie Prometheus, AlertManager, node-exporter et kube-state-metrics automatiquement. Les valeurs par defaut sont adaptees a la plupart des clusters.</p>
+        <p><strong>kube-prometheus-stack (recommande pour K8s) :</strong> Le chart Helm "kube-prometheus-stack" installe TOUT : Prometheus Operator, Grafana (avec dashboards pre-configures), AlertManager, node-exporter, kube-state-metrics, et des regles d'alerte par defaut. C'est la methode recommandee en production Kubernetes. Installation : helm install monitoring prometheus-community/kube-prometheus-stack.</p>
+        <p><strong>Configuration prometheus.yml :</strong> Le fichier principal de configuration. Sections cles : global (scrape_interval, evaluation_interval), alerting (lien vers AlertManager), rule_files (fichiers de regles d'alerte et recording rules), scrape_configs (liste des jobs/targets a scraper). Chaque job definit un nom, les targets, et optionnellement des relabel_configs pour transformer les labels.</p>
+        <p><strong>Configuration data source Grafana :</strong> Dans Grafana, on ajoute Prometheus comme source de donnees via Configuration > Data Sources > Add > Prometheus. L'URL est http://prometheus:9090 (en Docker/K8s) ou http://localhost:9090. On peut ensuite importer des dashboards pre-faits depuis grafana.com/grafana/dashboards (ex: dashboard ID 1860 pour node_exporter).</p>
+    </div></div>
+    <div class="tab-content" id="p5-keys"><div class="key-points"><ul>
+        <li><strong>Prometheus = port 9090. Grafana = port 3000.</strong></li>
+        <li><strong>docker-compose = stack complete en une commande.</strong></li>
+        <li><strong>kube-prometheus-stack = methode recommandee K8s.</strong></li>
+        <li><strong>prometheus.yml = scrape_configs + rule_files + alerting.</strong></li>
+        <li><strong>Grafana login par defaut : admin/admin.</strong></li>
+    </ul></div></div>
+    <div class="tab-content" id="p5-qcm"><div class="qcm-header"><span class="qcm-score-display" id="qcm-score-p5">Score: 0/5</span><button class="btn-reset" onclick="resetQcm('p5')">Recommencer</button></div><div class="qcm-grid" id="qcm-p5">
+        <div class="qcm-question" data-page="p5"><p class="q-text">1) Quel est le port par defaut de l'interface web de Prometheus ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q5-1" value="a" id="q5-1a"><label for="q5-1a">8080</label></div><div class="qcm-option"><input type="radio" name="q5-1" value="b" id="q5-1b"><label for="q5-1b">3000</label></div><div class="qcm-option"><input type="radio" name="q5-1" value="c" id="q5-1c"><label for="q5-1c">9090</label></div><div class="qcm-option"><input type="radio" name="q5-1" value="d" id="q5-1d"><label for="q5-1d">9100</label></div></div><button class="btn-validate" onclick="checkAnswer('q5-1','c',this,'p5')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p5"><p class="q-text">2) Quel chart Helm est recommande pour deployer la stack complete de monitoring sur Kubernetes ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q5-2" value="a" id="q5-2a"><label for="q5-2a">prometheus-standalone</label></div><div class="qcm-option"><input type="radio" name="q5-2" value="b" id="q5-2b"><label for="q5-2b">kube-prometheus-stack</label></div><div class="qcm-option"><input type="radio" name="q5-2" value="c" id="q5-2c"><label for="q5-2c">monitoring-suite</label></div><div class="qcm-option"><input type="radio" name="q5-2" value="d" id="q5-2d"><label for="q5-2d">grafana-prometheus</label></div></div><button class="btn-validate" onclick="checkAnswer('q5-2','b',this,'p5')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p5"><p class="q-text">3) Quelle section du fichier prometheus.yml definit les targets a scraper ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q5-3" value="a" id="q5-3a"><label for="q5-3a">global</label></div><div class="qcm-option"><input type="radio" name="q5-3" value="b" id="q5-3b"><label for="q5-3b">alerting</label></div><div class="qcm-option"><input type="radio" name="q5-3" value="c" id="q5-3c"><label for="q5-3c">scrape_configs</label></div><div class="qcm-option"><input type="radio" name="q5-3" value="d" id="q5-3d"><label for="q5-3d">rule_files</label></div></div><button class="btn-validate" onclick="checkAnswer('q5-3','c',this,'p5')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p5"><p class="q-text">4) Quels sont les identifiants par defaut pour se connecter a Grafana ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q5-4" value="a" id="q5-4a"><label for="q5-4a">root / root</label></div><div class="qcm-option"><input type="radio" name="q5-4" value="b" id="q5-4b"><label for="q5-4b">admin / admin</label></div><div class="qcm-option"><input type="radio" name="q5-4" value="c" id="q5-4c"><label for="q5-4c">grafana / grafana</label></div><div class="qcm-option"><input type="radio" name="q5-4" value="d" id="q5-4d"><label for="q5-4d">user / password</label></div></div><button class="btn-validate" onclick="checkAnswer('q5-4','b',this,'p5')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p5"><p class="q-text">5) Comment les containers communiquent-ils entre eux dans un environnement Docker Compose ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q5-5" value="a" id="q5-5a"><label for="q5-5a">Par adresses IP fixes uniquement</label></div><div class="qcm-option"><input type="radio" name="q5-5" value="b" id="q5-5b"><label for="q5-5b">Par nom de service grace au reseau Docker interne</label></div><div class="qcm-option"><input type="radio" name="q5-5" value="c" id="q5-5c"><label for="q5-5c">Via un proxy externe obligatoire</label></div><div class="qcm-option"><input type="radio" name="q5-5" value="d" id="q5-5d"><label for="q5-5d">Ils ne peuvent pas communiquer directement</label></div></div><button class="btn-validate" onclick="checkAnswer('q5-5','b',this,'p5')">Valider</button><div class="feedback"></div></div>
+    </div>
+        <div class="next-lesson-container"><button class="btn-next-lesson" onclick="goToNextPage('p6')">Lecon suivante &#10132; 6. Demo / Projet</button></div></div>
+</div>
+
+<!-- PAGE 6 -->
+<div class="page" id="p6">
+    <div class="lesson-header"><h2>6 - Demo / Projet fil rouge</h2><span class="lesson-score" id="score-p6">0/5</span></div>
+    <div class="tabs-container"><button class="tab-btn active" onclick="switchTab(this,'p6-concepts')">Concepts</button><button class="tab-btn" onclick="switchTab(this,'p6-keys')">Points Cles</button><button class="tab-btn" onclick="switchTab(this,'p6-qcm')">QCM</button></div>
+    <div class="tab-content active" id="p6-concepts"><div class="concepts">
+        <p><strong>Monitorer une application :</strong> Pour monitorer une application, on l'instrumente avec une librairie client Prometheus (prometheus_client en Python, prom-client en Node.js, micrometer en Java Spring). L'application expose alors un endpoint /metrics avec des metriques custom : nombre de requetes, latence, erreurs, metriques metier (commandes traitees, utilisateurs connectes). Prometheus scrape cet endpoint et les donnees deviennent queryables en PromQL.</p>
+        <p><strong>Creer des dashboards Grafana :</strong> Un bon dashboard suit le principe RED (Rate, Errors, Duration) pour les services et USE (Utilization, Saturation, Errors) pour les ressources. On cree des panels avec des requetes PromQL : rate(http_requests_total[5m]) pour le trafic, rate(http_requests_total{status=~"5.."}[5m]) pour les erreurs, histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m])) pour la latence p99. Les variables ($namespace, $instance) rendent le dashboard reutilisable.</p>
+        <p><strong>Configurer les alertes :</strong> Les alerting rules se definissent dans un fichier YAML. Exemple : alert: HighErrorRate, expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.05, for: 5m (attend 5 min avant de tirer), labels: severity: critical, annotations: description. AlertManager route l'alerte vers Slack/PagerDuty selon la severite. Toujours definir un "for" pour eviter les faux positifs.</p>
+        <p><strong>Integration avec Jenkins :</strong> Jenkins expose des metriques via le plugin Prometheus Metrics. On peut alors monitorer : nombre de builds, duree des builds, taille de la queue, statut des jobs. Un dashboard Grafana dedie permet de visualiser la sante du CI/CD. Alerte possible si la queue depasse un seuil ou si le taux d'echec augmente.</p>
+        <p><strong>Integration avec Kubernetes :</strong> En K8s, kube-state-metrics expose l'etat des objets (pods, deployments, nodes). node_exporter expose les metriques hardware de chaque noeud. cadvisor (integre a kubelet) expose les metriques des conteneurs (CPU, memoire par pod). Les dashboards standards couvrent : vue cluster, vue namespace, vue pod, vue node. Les alertes typiques : pod en CrashLoopBackOff, noeud NotReady, PVC presque plein.</p>
+    </div></div>
+    <div class="tab-content" id="p6-keys"><div class="key-points"><ul>
+        <li><strong>Instrumentation = librairie client dans l'app (/metrics).</strong></li>
+        <li><strong>RED = Rate, Errors, Duration (services).</strong></li>
+        <li><strong>USE = Utilization, Saturation, Errors (ressources).</strong></li>
+        <li><strong>"for: 5m" dans les alertes = eviter faux positifs.</strong></li>
+        <li><strong>kube-state-metrics + node_exporter + cadvisor = monitoring K8s complet.</strong></li>
+    </ul></div></div>
+    <div class="tab-content" id="p6-qcm"><div class="qcm-header"><span class="qcm-score-display" id="qcm-score-p6">Score: 0/5</span><button class="btn-reset" onclick="resetQcm('p6')">Recommencer</button></div><div class="qcm-grid" id="qcm-p6">
+        <div class="qcm-question" data-page="p6"><p class="q-text">1) Quelle methode utilise-t-on pour exposer des metriques custom dans une application ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q6-1" value="a" id="q6-1a"><label for="q6-1a">Installer node_exporter dans l'application</label></div><div class="qcm-option"><input type="radio" name="q6-1" value="b" id="q6-1b"><label for="q6-1b">Instrumenter le code avec une librairie client Prometheus</label></div><div class="qcm-option"><input type="radio" name="q6-1" value="c" id="q6-1c"><label for="q6-1c">Ecrire les metriques dans un fichier log</label></div><div class="qcm-option"><input type="radio" name="q6-1" value="d" id="q6-1d"><label for="q6-1d">Configurer Grafana pour scraper l'application</label></div></div><button class="btn-validate" onclick="checkAnswer('q6-1','b',this,'p6')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p6"><p class="q-text">2) Que signifie le principe RED utilise pour concevoir des dashboards de services ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q6-2" value="a" id="q6-2a"><label for="q6-2a">Resource, Event, Data</label></div><div class="qcm-option"><input type="radio" name="q6-2" value="b" id="q6-2b"><label for="q6-2b">Rate, Errors, Duration</label></div><div class="qcm-option"><input type="radio" name="q6-2" value="c" id="q6-2c"><label for="q6-2c">Request, Exception, Delay</label></div><div class="qcm-option"><input type="radio" name="q6-2" value="d" id="q6-2d"><label for="q6-2d">Run, Execute, Deploy</label></div></div><button class="btn-validate" onclick="checkAnswer('q6-2','b',this,'p6')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p6"><p class="q-text">3) Pourquoi utilise-t-on la clause "for: 5m" dans une regle d'alerte Prometheus ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q6-3" value="a" id="q6-3a"><label for="q6-3a">Pour definir la duree de retention de l'alerte</label></div><div class="qcm-option"><input type="radio" name="q6-3" value="b" id="q6-3b"><label for="q6-3b">Pour attendre que la condition persiste et eviter les faux positifs</label></div><div class="qcm-option"><input type="radio" name="q6-3" value="c" id="q6-3c"><label for="q6-3c">Pour limiter le nombre d'alertes envoyees par heure</label></div><div class="qcm-option"><input type="radio" name="q6-3" value="d" id="q6-3d"><label for="q6-3d">Pour specifier l'intervalle de scraping</label></div></div><button class="btn-validate" onclick="checkAnswer('q6-3','b',this,'p6')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p6"><p class="q-text">4) Quel composant Kubernetes expose les metriques d'etat des objets comme les pods et deployments ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q6-4" value="a" id="q6-4a"><label for="q6-4a">node_exporter</label></div><div class="qcm-option"><input type="radio" name="q6-4" value="b" id="q6-4b"><label for="q6-4b">cadvisor</label></div><div class="qcm-option"><input type="radio" name="q6-4" value="c" id="q6-4c"><label for="q6-4c">kube-state-metrics</label></div><div class="qcm-option"><input type="radio" name="q6-4" value="d" id="q6-4d"><label for="q6-4d">metrics-server</label></div></div><button class="btn-validate" onclick="checkAnswer('q6-4','c',this,'p6')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p6"><p class="q-text">5) Comment Jenkins peut-il etre integre a la stack Prometheus/Grafana pour le monitoring CI/CD ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q6-5" value="a" id="q6-5a"><label for="q6-5a">En installant Grafana directement dans Jenkins</label></div><div class="qcm-option"><input type="radio" name="q6-5" value="b" id="q6-5b"><label for="q6-5b">Via le plugin Prometheus Metrics qui expose les metriques Jenkins</label></div><div class="qcm-option"><input type="radio" name="q6-5" value="c" id="q6-5c"><label for="q6-5c">En remplacant Jenkins par Prometheus</label></div><div class="qcm-option"><input type="radio" name="q6-5" value="d" id="q6-5d"><label for="q6-5d">Impossible, Jenkins n'est pas compatible</label></div></div><button class="btn-validate" onclick="checkAnswer('q6-5','b',this,'p6')">Valider</button><div class="feedback"></div></div>
+    </div>
+        <div class="next-lesson-container"><button class="btn-next-lesson" onclick="goToNextPage('p7')">Lecon suivante &#10132; 7. References</button></div></div>
+</div>
+
+<!-- PAGE 7 -->
+<div class="page" id="p7">
+    <div class="lesson-header"><h2>7 - References et bonnes pratiques</h2><span class="lesson-score" id="score-p7">0/5</span></div>
+    <div class="tabs-container"><button class="tab-btn active" onclick="switchTab(this,'p7-concepts')">Concepts</button><button class="tab-btn" onclick="switchTab(this,'p7-keys')">Points Cles</button><button class="tab-btn" onclick="switchTab(this,'p7-qcm')">QCM</button></div>
+    <div class="tab-content active" id="p7-concepts"><div class="concepts">
+        <p><strong>Documentation officielle :</strong> La documentation Prometheus (prometheus.io/docs) est la reference absolue. Elle couvre la configuration, PromQL, les bonnes pratiques de nommage des metriques, et les guides d'integration. La documentation Grafana (grafana.com/docs) explique la creation de dashboards, les plugins, et l'administration. Ces deux ressources sont maintenues a jour par les mainteneurs officiels.</p>
+        <p><strong>Conventions de nommage des metriques :</strong> Les metriques doivent suivre un format strict : snake_case, prefixe par le nom du domaine (http_, node_, process_), suffixe par l'unite (_seconds, _bytes, _total pour les counters). Exemple correct : http_request_duration_seconds. Exemple incorrect : HttpRequestDuration. Les labels doivent etre de faible cardinalite (pas d'ID utilisateur dans un label, sinon explosion des series).</p>
+        <p><strong>Bonnes pratiques d'alerting :</strong> 1) Alerter sur les SYMPTOMES, pas les causes (alerter "latence haute" plutot que "CPU haute" car la CPU haute n'impacte pas toujours les utilisateurs). 2) Chaque alerte doit avoir un runbook (documentation de resolution). 3) Eviter l'alert fatigue : trop d'alertes = on les ignore toutes. 4) Utiliser des severites : critical (appel immediat), warning (a traiter dans la journee), info (informatif).</p>
+        <p><strong>Retention et stockage :</strong> Par defaut, Prometheus conserve les donnees 15 jours (--storage.tsdb.retention.time=15d). Pour une retention longue, utiliser Thanos ou Cortex qui ajoutent un stockage objet (S3, GCS) en backend. Victoria Metrics est une alternative performante compatible PromQL avec meilleure compression. Toujours dimensionner le disque : environ 1-2 octets par echantillon.</p>
+        <p><strong>Scalabilite et haute disponibilite :</strong> Prometheus n'est PAS nativement clusterise. Pour la HA : lancer 2 instances identiques (meme config) — AlertManager deduplique les alertes. Pour la scalabilite : federation (un Prometheus global scrape des Prometheus locaux) ou Thanos/Cortex pour une vue unifiee multi-cluster. Grafana supporte nativement la HA avec une base de donnees partagee (PostgreSQL/MySQL).</p>
+    </div></div>
+    <div class="tab-content" id="p7-keys"><div class="key-points"><ul>
+        <li><strong>Metriques en snake_case avec unite en suffixe (_seconds, _bytes, _total).</strong></li>
+        <li><strong>Alerter sur les symptomes, pas les causes.</strong></li>
+        <li><strong>Retention par defaut = 15 jours. Thanos/Cortex pour plus.</strong></li>
+        <li><strong>HA Prometheus = 2 instances identiques + AlertManager deduplication.</strong></li>
+        <li><strong>Labels = faible cardinalite obligatoire.</strong></li>
+    </ul></div></div>
+    <div class="tab-content" id="p7-qcm"><div class="qcm-header"><span class="qcm-score-display" id="qcm-score-p7">Score: 0/5</span><button class="btn-reset" onclick="resetQcm('p7')">Recommencer</button></div><div class="qcm-grid" id="qcm-p7">
+        <div class="qcm-question" data-page="p7"><p class="q-text">1) Quelle est la convention de nommage correcte pour une metrique Prometheus mesurant la duree des requetes HTTP ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q7-1" value="a" id="q7-1a"><label for="q7-1a">HttpRequestDuration</label></div><div class="qcm-option"><input type="radio" name="q7-1" value="b" id="q7-1b"><label for="q7-1b">http_request_duration_seconds</label></div><div class="qcm-option"><input type="radio" name="q7-1" value="c" id="q7-1c"><label for="q7-1c">request.duration.http</label></div><div class="qcm-option"><input type="radio" name="q7-1" value="d" id="q7-1d"><label for="q7-1d">HTTP_REQUEST_DURATION</label></div></div><button class="btn-validate" onclick="checkAnswer('q7-1','b',this,'p7')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p7"><p class="q-text">2) Pourquoi faut-il alerter sur les symptomes plutot que sur les causes ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q7-2" value="a" id="q7-2a"><label for="q7-2a">Les causes sont plus difficiles a mesurer techniquement</label></div><div class="qcm-option"><input type="radio" name="q7-2" value="b" id="q7-2b"><label for="q7-2b">Les symptomes refletent l'impact reel sur les utilisateurs</label></div><div class="qcm-option"><input type="radio" name="q7-2" value="c" id="q7-2c"><label for="q7-2c">Prometheus ne peut pas detecter les causes</label></div><div class="qcm-option"><input type="radio" name="q7-2" value="d" id="q7-2d"><label for="q7-2d">Les causes generent trop de donnees</label></div></div><button class="btn-validate" onclick="checkAnswer('q7-2','b',this,'p7')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p7"><p class="q-text">3) Quelle est la duree de retention par defaut des donnees dans Prometheus ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q7-3" value="a" id="q7-3a"><label for="q7-3a">7 jours</label></div><div class="qcm-option"><input type="radio" name="q7-3" value="b" id="q7-3b"><label for="q7-3b">15 jours</label></div><div class="qcm-option"><input type="radio" name="q7-3" value="c" id="q7-3c"><label for="q7-3c">30 jours</label></div><div class="qcm-option"><input type="radio" name="q7-3" value="d" id="q7-3d"><label for="q7-3d">90 jours</label></div></div><button class="btn-validate" onclick="checkAnswer('q7-3','b',this,'p7')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p7"><p class="q-text">4) Comment assure-t-on la haute disponibilite de Prometheus en production ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q7-4" value="a" id="q7-4a"><label for="q7-4a">En activant le mode cluster integre</label></div><div class="qcm-option"><input type="radio" name="q7-4" value="b" id="q7-4b"><label for="q7-4b">En lancant deux instances identiques avec AlertManager qui deduplique</label></div><div class="qcm-option"><input type="radio" name="q7-4" value="c" id="q7-4c"><label for="q7-4c">En utilisant un load balancer devant Prometheus</label></div><div class="qcm-option"><input type="radio" name="q7-4" value="d" id="q7-4d"><label for="q7-4d">Prometheus est nativement HA sans configuration</label></div></div><button class="btn-validate" onclick="checkAnswer('q7-4','b',this,'p7')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p7"><p class="q-text">5) Pourquoi faut-il eviter les labels a haute cardinalite dans Prometheus ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q7-5" value="a" id="q7-5a"><label for="q7-5a">Prometheus ne supporte pas plus de 10 labels</label></div><div class="qcm-option"><input type="radio" name="q7-5" value="b" id="q7-5b"><label for="q7-5b">Cela provoque une explosion du nombre de series temporelles et sature la memoire</label></div><div class="qcm-option"><input type="radio" name="q7-5" value="c" id="q7-5c"><label for="q7-5c">Les labels haute cardinalite ne sont pas indexes</label></div><div class="qcm-option"><input type="radio" name="q7-5" value="d" id="q7-5d"><label for="q7-5d">Grafana ne peut pas afficher plus de 100 series</label></div></div><button class="btn-validate" onclick="checkAnswer('q7-5','b',this,'p7')">Valider</button><div class="feedback"></div></div>
+    </div>
+        <div class="next-lesson-container"><button class="btn-next-lesson" onclick="goToNextPage('cheatsheet')">Lecon suivante &#10132; Cheat Sheet</button></div></div>
+</div>
+
+<!-- CHEAT SHEET -->
+<div class="page" id="cheatsheet">
+    <div class="lesson-header"><h2>Cheat Sheet - Commandes essentielles</h2></div>
+    <h3 style="color:#e6522c;margin:15px 0">Architecture Prometheus & Grafana - Flux visuel</h3>
+    <div class="pipeline-diagram">
+        <div class="pipeline-stage">Targets<small>/metrics</small></div><span class="pipeline-arrow">&#10132;</span>
+        <div class="pipeline-stage">Retrieval<small>scrape</small></div><span class="pipeline-arrow">&#10132;</span>
+        <div class="pipeline-stage">TSDB<small>stockage</small></div><span class="pipeline-arrow">&#10132;</span>
+        <div class="pipeline-stage">PromQL<small>requetes</small></div><span class="pipeline-arrow">&#10132;</span>
+        <div class="pipeline-stage">Grafana<small>dashboards</small></div><span class="pipeline-arrow">&#10132;</span>
+        <div class="pipeline-stage" style="background:linear-gradient(135deg,#ff6e40,#bf360c)">AlertManager<small>notifications</small></div>
+    </div>
+    <div class="cheat-grid">
+        <div class="cheat-card"><h4>Docker Compose minimal</h4><code>version: '3'
+services:
+  prometheus:
+    image: prom/prometheus
+    ports: ["9090:9090"]
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+  grafana:
+    image: grafana/grafana-oss
+    ports: ["3000:3000"]
+  node-exporter:
+    image: prom/node-exporter
+    ports: ["9100:9100"]</code></div>
+        <div class="cheat-card"><h4>prometheus.yml minimal</h4><code>global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+  - job_name: 'node'
+    static_configs:
+      - targets: ['node-exporter:9100']</code></div>
+        <div class="cheat-card"><h4>PromQL essentielles</h4><code># Taux requetes/sec (5 min)
+rate(http_requests_total[5m])
+
+# Erreurs 5xx par service
+sum by(service) (rate(http_requests_total{status=~"5.."}[5m]))
+
+# Latence p99
+histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m]))
+
+# Memoire utilisee %
+(1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100</code></div>
+        <div class="cheat-card"><h4>Alerte YAML</h4><code>groups:
+- name: alerts
+  rules:
+  - alert: HighErrorRate
+    expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.05
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Taux erreurs > 5%"</code></div>
+        <div class="cheat-card"><h4>Ports importants</h4><ul><li>9090 = Prometheus</li><li>3000 = Grafana</li><li>9100 = node_exporter</li><li>9115 = blackbox_exporter</li><li>9093 = AlertManager</li><li>9091 = Pushgateway</li></ul></div>
+        <div class="cheat-card"><h4>Types de metriques</h4><ul><li><span style="color:#e6522c"><strong>Counter</strong></span> = toujours croissant (_total)</li><li><span style="color:#ff6e40"><strong>Gauge</strong></span> = monte et descend</li><li><span style="color:#bf360c"><strong>Histogram</strong></span> = distribution (buckets)</li><li><span style="color:#d84315"><strong>Summary</strong></span> = quantiles cote client</li></ul></div>
+        <div class="cheat-card"><h4>Helm K8s</h4><code># Installation stack complete
+helm repo add prometheus-community \
+  https://prometheus-community.github.io/helm-charts
+helm repo update
+helm install monitoring \
+  prometheus-community/kube-prometheus-stack \
+  --namespace monitoring --create-namespace</code></div>
+        <div class="cheat-card"><h4>Exporters courants</h4><ul><li>node_exporter = systeme Linux</li><li>blackbox_exporter = sondes HTTP/TCP</li><li>mysqld_exporter = MySQL</li><li>redis_exporter = Redis</li><li>cadvisor = conteneurs Docker</li><li>kube-state-metrics = objets K8s</li></ul></div>
+    </div>
+
+    <div class="next-lesson-container"><button class="btn-next-lesson" onclick="goToNextPage('bonus')">Lecon suivante &#10132; Bonus</button></div>
+</div>
+
+<!-- BONUS -->
+<div class="page" id="bonus">
+    <div class="bonus-section">
+        <h2>Bonus - Approfondissement</h2>
+        <h3>1. Federation Prometheus</h3>
+        <div class="code-block"># prometheus-global.yml
+scrape_configs:
+  - job_name: 'federation'
+    honor_labels: true
+    metrics_path: '/federate'
+    params:
+      'match[]':
+        - '{job=~".+"}'
+    static_configs:
+      - targets:
+        - 'prometheus-dc1:9090'
+        - 'prometheus-dc2:9090'</div>
+        <h3>2. Thanos pour retention longue</h3>
+        <div class="code-block"># Thanos Sidecar (a cote de Prometheus)
+thanos sidecar \
+  --tsdb.path=/prometheus \
+  --objstore.config-file=bucket.yml \
+  --prometheus.url=http://localhost:9090
+
+# bucket.yml (S3)
+type: S3
+config:
+  bucket: "prometheus-longterm"
+  endpoint: "s3.amazonaws.com"</div>
+        <h3>3. Instrumentation Python</h3>
+        <div class="code-block">from prometheus_client import Counter, Histogram, start_http_server
+import time
+
+REQUEST_COUNT = Counter('http_requests_total', 'Total HTTP requests', ['method', 'status'])
+REQUEST_LATENCY = Histogram('http_request_duration_seconds', 'Request latency')
+
+@REQUEST_LATENCY.time()
+def process_request():
+    # votre logique ici
+    REQUEST_COUNT.labels(method='GET', status='200').inc()
+
+start_http_server(8000)  # Expose /metrics sur port 8000</div>
+        <h3>4. Grafana as Code (provisioning)</h3>
+        <div class="code-block"># datasources/prometheus.yml
+apiVersion: 1
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: false</div>
+        <h3>5. Optimisation et performance</h3>
+        <ul>
+            <li><strong>Recording Rules :</strong> pre-calculer les requetes lourdes utilisees dans les dashboards.</li>
+            <li><strong>Cardinalite :</strong> surveiller avec prometheus_tsdb_head_series. Au-dela de 1M series = probleme.</li>
+            <li><strong>Retention :</strong> ajuster --storage.tsdb.retention.time selon l'espace disque disponible.</li>
+            <li><strong>Remote Write :</strong> envoyer les metriques vers un stockage longue duree (Thanos, Mimir, Victoria Metrics).</li>
+        </ul>
+        <h3>6. Metriques Golden Signals (Google SRE)</h3>
+        <ul>
+            <li><strong>Latency :</strong> temps de reponse des requetes (histogram_quantile).</li>
+            <li><strong>Traffic :</strong> volume de requetes (rate sur counter).</li>
+            <li><strong>Errors :</strong> taux d'erreurs (ratio 5xx / total).</li>
+            <li><strong>Saturation :</strong> charge du systeme (CPU, memoire, queue).</li>
+        </ul>
+    </div>
+</div>
+</div>
+
+    <!-- EXAM OVERLAY -->
+    <div class="exam-overlay" id="examOverlay">
+        <div class="exam-container" id="examContainer">
+            <button class="btn-close-exam" onclick="closeExam()">&times;</button>
+            <div id="examContent"></div>
+        </div>
+    </div>
+
+    <script>
+    // Auto-prefix A. B. C. D. on all QCM options
+    document.querySelectorAll('.qcm-question, .exam-question').forEach(q => {
+        q.querySelectorAll('.qcm-option, .exam-option').forEach((opt, i) => {
+            const lbl = opt.querySelector('label');
+            if (lbl && !lbl.textContent.match(/^[A-D]\.\s/)) {
+                lbl.textContent = String.fromCharCode(65 + i) + '. ' + lbl.textContent;
+            }
+        });
+    });
+
+    // Justifications pour chaque question
+    const justifications = {
+        'q1-1': "Le monitoring permet de detecter les problemes avant qu'ils n'impactent les utilisateurs, transformant une approche reactive en approche proactive.",
+        'q1-2': "MTTR = Mean Time To Recovery. C'est le temps moyen pour se remettre d'une panne. Le monitoring le reduit en accelerant detection et diagnostic.",
+        'q1-3': "Le SLA est le contrat avec le client (engagement formel). Le SLO est l'objectif interne, volontairement plus strict pour garder une marge de securite.",
+        'q1-4': "Les trois piliers de l'observabilite sont les Metriques (donnees numeriques), les Logs (evenements textuels) et les Traces (suivi des requetes distribuees).",
+        'q1-5': "Le SLI (Service Level Indicator) est la metrique reelle mesuree (ex: latence p99 < 200ms). C'est ce qui permet de verifier si le SLO est respecte.",
+        'q2-1': "Prometheus est un projet 'graduated' de la CNCF (Cloud Native Computing Foundation), le deuxieme apres Kubernetes a obtenir ce statut.",
+        'q2-2': "Prometheus utilise le modele pull : il va CHERCHER (scrape) les metriques aupres des targets a intervalles reguliers via HTTP GET /metrics.",
+        'q2-3': "Grafana est une plateforme de visualisation. Elle ne collecte pas de donnees mais les affiche sous forme de dashboards depuis des sources comme Prometheus.",
+        'q2-4': "Prometheus est ecrit en Go (Golang), un langage compile de Google, performant et adapte aux systemes distribues.",
+        'q2-5': "Prometheus a ete cree par SoundCloud en 2012, inspire du systeme interne de Google (Borgmon). Il a ete donne a la CNCF en 2016.",
+        'q3-1': "Un Counter est le type adapte pour compter des evenements (requetes, erreurs). Il ne fait qu'augmenter et on utilise rate() pour le taux/seconde.",
+        'q3-2': "node_exporter expose les metriques systeme Linux : CPU, memoire, disque, reseau, processus. Il ecoute sur le port 9100.",
+        'q3-3': "rate() calcule le taux de variation par seconde d'un counter sur une periode donnee. Ex: rate(http_requests_total[5m]) = requetes/sec sur 5 min.",
+        'q3-4': "AlertManager est le composant separe qui recoit les alertes de Prometheus et s'occupe du routing, grouping, silencing et envoi vers les receivers.",
+        'q3-5': "L'Histogram calcule les quantiles cote serveur (Prometheus) dans des buckets predefinis. Le Summary les calcule cote client (dans l'app) mais ne sont pas agregeables.",
+        'q3-6': "Les Recording Rules pre-calculent des requetes PromQL complexes et les stockent comme nouvelles metriques, reduisant la charge au moment de l'affichage.",
+        'q4-1': "Le serveur Prometheus contient 3 composants : Retrieval (scrape les targets), TSDB (stocke les series temporelles), HTTP Server (expose l'API).",
+        'q4-2': "Le Pushgateway est UNIQUEMENT pour les jobs ephemeres (batch, cron) qui vivent trop peu de temps pour etre scrapes par Prometheus.",
+        'q4-3': "En Kubernetes, Prometheus utilise kubernetes_sd_configs pour decouvrir automatiquement les pods/services avec les bonnes annotations.",
+        'q4-4': "La TSDB (Time Series Database) est le composant de stockage optimise : compression, indexation par labels, ecriture sequentielle sur disque.",
+        'q4-5': "Grafana se connecte a Prometheus en le configurant comme data source via son API HTTP (http://prometheus:9090). Aucun agent necessaire.",
+        'q5-1': "Prometheus ecoute par defaut sur le port 9090 pour son interface web et son API. Grafana utilise 3000, node_exporter 9100.",
+        'q5-2': "kube-prometheus-stack est le chart Helm recommande : il installe Prometheus, Grafana, AlertManager, node-exporter et des dashboards pre-configures.",
+        'q5-3': "La section scrape_configs definit les jobs et leurs targets. Chaque job a un nom, des targets, et optionnellement des relabel_configs.",
+        'q5-4': "Les identifiants par defaut de Grafana sont admin/admin. Au premier login, il demande de changer le mot de passe.",
+        'q5-5': "En Docker Compose, les containers communiquent par nom de service grace au reseau interne Docker (ex: http://prometheus:9090).",
+        'q6-1': "Pour exposer des metriques custom, on instrumente le code avec une librairie client Prometheus (prometheus_client pour Python, etc.).",
+        'q6-2': "RED = Rate (taux de requetes), Errors (taux d'erreurs), Duration (latence). C'est le framework pour monitorer les services.",
+        'q6-3': "Le 'for: 5m' signifie que la condition doit persister 5 minutes avant de tirer l'alerte. Cela evite les alertes sur des pics ponctuels (faux positifs).",
+        'q6-4': "kube-state-metrics expose l'etat des objets Kubernetes (pods, deployments, nodes, PVC). Complementaire de node_exporter (hardware) et cadvisor (conteneurs).",
+        'q6-5': "Le plugin Prometheus Metrics pour Jenkins expose les metriques CI/CD (builds, duree, queue) que Prometheus peut scraper.",
+        'q7-1': "Les metriques Prometheus suivent la convention snake_case avec l'unite en suffixe : http_request_duration_seconds (pas camelCase ni MAJUSCULES).",
+        'q7-2': "Alerter sur les symptomes (latence haute, erreurs 5xx) reflete l'impact utilisateur reel. Une cause (CPU haute) n'impacte pas toujours les utilisateurs.",
+        'q7-3': "La retention par defaut de Prometheus est 15 jours (--storage.tsdb.retention.time=15d). Thanos/Cortex pour le long terme.",
+        'q7-4': "Prometheus n'est pas nativement clusterise. La HA se fait en lancant 2 instances identiques ; AlertManager en cluster deduplique les alertes.",
+        'q7-5': "Les labels haute cardinalite (ex: user_id) creent une serie par valeur unique, explosant le nombre de series et saturant la memoire de Prometheus."
+    };
+
+    // Score tracking
+    const pageScores = {};
+    const pageTotals = {p1:5,p2:5,p3:6,p4:5,p5:5,p6:5,p7:5};
+    const allPages = Object.keys(pageTotals);
+    allPages.forEach(p => pageScores[p] = 0);
+
+    // Load saved progress
+    function loadProgress() {
+        const saved = localStorage.getItem('prometheus_progress');
+        if (saved) {
+            const data = JSON.parse(saved);
+            Object.assign(pageScores, data.scores || {});
+            updateAllDisplays();
+            if (data.answered) {
+                Object.entries(data.answered).forEach(([name, ans]) => {
+                    const radio = document.querySelector(`input[name="${name}"][value="${ans}"]`);
+                    if (radio) { radio.checked = true; radio.disabled = true; }
+                    const btn = radio?.closest('.qcm-question')?.querySelector('.btn-validate');
+                    if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; }
+                });
+            }
+        }
+    }
+
+    const answeredQuestions = JSON.parse(localStorage.getItem('prometheus_answered') || '{}');
+
+    function saveProgress() {
+        localStorage.setItem('prometheus_progress', JSON.stringify({ scores: pageScores, answered: answeredQuestions }));
+    }
+
+    function updateAllDisplays() {
+        let totalCorrect = 0, totalQuestions = 0;
+        allPages.forEach(p => {
+            const s = pageScores[p] || 0;
+            const t = pageTotals[p];
+            totalCorrect += s;
+            totalQuestions += t;
+            const scoreEl = document.getElementById(`score-${p}`);
+            if (scoreEl) scoreEl.textContent = `${s}/${t}`;
+            const qcmScoreEl = document.getElementById(`qcm-score-${p}`);
+            if (qcmScoreEl) qcmScoreEl.textContent = `Score: ${s}/${t}`;
+            const badge = document.getElementById(`badge-${p}`);
+            if (badge) badge.textContent = s > 0 ? `${s}/${t}` : '-';
+        });
+        const pct = Math.round((totalCorrect / totalQuestions) * 100);
+        document.getElementById('globalProgressBar').style.width = pct + '%';
+        document.getElementById('globalProgressText').textContent = `${totalCorrect}/${totalQuestions} (${pct}%)`;
+    }
+
+    function checkAnswer(name, correct, btn, page) {
+        const sel = document.querySelector(`input[name="${name}"]:checked`);
+        const fb = btn.nextElementSibling;
+        if (!sel) { fb.style.display='block'; fb.className='feedback incorrect'; fb.innerHTML='<strong>Selectionnez une reponse.</strong>'; return; }
+        const ans = sel.value;
+        const q = btn.closest('.qcm-question');
+        const justif = justifications[name] || '';
+        fb.style.display = 'block';
+        if (ans === correct) {
+            fb.className = 'feedback correct';
+            fb.innerHTML = `<strong>Correct ! (${correct.toUpperCase()})</strong><br><em>${justif}</em>`;
+            q.classList.add('answered-correct');
+            pageScores[page] = (pageScores[page] || 0) + 1;
+        } else {
+            fb.className = 'feedback incorrect';
+            fb.innerHTML = `<strong>Incorrect.</strong> La bonne reponse est <strong>${correct.toUpperCase()}</strong>.<br><em>${justif}</em>`;
+            q.classList.add('answered-wrong');
+        }
+        document.querySelectorAll(`input[name="${name}"]`).forEach(r => r.disabled = true);
+        btn.disabled = true; btn.style.opacity = '0.5';
+        answeredQuestions[name] = ans;
+        updateAllDisplays();
+        saveProgress();
+    }
+
+    function resetQcm(page) {
+        const grid = document.getElementById(`qcm-${page}`);
+        if (!grid) return;
+        grid.querySelectorAll('input[type="radio"]').forEach(r => { r.checked = false; r.disabled = false; });
+        grid.querySelectorAll('.btn-validate').forEach(b => { b.disabled = false; b.style.opacity = '1'; });
+        grid.querySelectorAll('.feedback').forEach(f => { f.style.display = 'none'; });
+        grid.querySelectorAll('.qcm-question').forEach(q => { q.classList.remove('answered-correct','answered-wrong'); });
+        grid.querySelectorAll('input[type="radio"]').forEach(r => { delete answeredQuestions[r.name]; });
+        pageScores[page] = 0;
+        updateAllDisplays();
+        saveProgress();
+    }
+
+    // Exam Mode
+    let examTimer;
+    function startExam() {
+        const allQ = document.querySelectorAll('.qcm-question[data-page]');
+        const arr = Array.from(allQ);
+        const shuffled = arr.sort(() => Math.random() - 0.5).slice(0, 20);
+        let html = '<div class="exam-header"><h2>Examen Prometheus & Grafana (20 questions)</h2><div class="exam-timer" id="examTimer">10:00</div></div>';
+        shuffled.forEach((q, i) => {
+            const text = q.querySelector('.q-text').textContent;
+            const opts = q.querySelectorAll('.qcm-option');
+            const name = `exam-${i}`;
+            const correct = q.querySelector('.btn-validate').getAttribute('onclick').match(/'([a-d])'/)?.[1] || 'b';
+            html += `<div class="exam-question" data-correct="${correct}"><p>${i+1}) ${text.replace(/^\d+\)\s*/, '')}</p><div class="exam-options">`;
+            opts.forEach(o => {
+                const val = o.querySelector('input').value;
+                const lbl = o.querySelector('label').textContent;
+                html += `<div class="exam-option"><input type="radio" name="${name}" value="${val}"><label>${lbl}</label></div>`;
+            });
+            html += '</div></div>';
+        });
+        html += '<button class="btn-submit-exam" onclick="submitExam()">Soumettre l\'examen</button>';
+        document.getElementById('examContent').innerHTML = html;
+        document.getElementById('examOverlay').classList.add('active');
+        let timeLeft = 600;
+        examTimer = setInterval(() => {
+            timeLeft--;
+            const m = Math.floor(timeLeft / 60);
+            const s = timeLeft % 60;
+            const el = document.getElementById('examTimer');
+            if (el) el.textContent = `${m}:${s.toString().padStart(2,'0')}`;
+            if (timeLeft <= 60 && el) el.classList.add('warning');
+            if (timeLeft <= 0) submitExam();
+        }, 1000);
+    }
+
+    function submitExam() {
+        clearInterval(examTimer);
+        const questions = document.querySelectorAll('#examContent .exam-question');
+        let score = 0;
+        questions.forEach(q => {
+            const correct = q.dataset.correct;
+            const name = q.querySelector('input').name;
+            const sel = document.querySelector(`#examContent input[name="${name}"]:checked`);
+            if (sel && sel.value === correct) score++;
+        });
+        const note = Math.round((score / 20) * 20);
+        let comment = note >= 16 ? 'Excellent !' : note >= 12 ? 'Bien !' : note >= 10 ? 'Passable' : 'A retravailler';
+        document.getElementById('examContent').innerHTML = `<div class="exam-result"><div class="score-big">${note}/20</div><div class="score-text">${score} bonnes reponses sur 20<br>${comment}</div><br><button class="btn-submit-exam" onclick="closeExam()">Fermer</button></div>`;
+    }
+
+    function closeExam() {
+        clearInterval(examTimer);
+        document.getElementById('examOverlay').classList.remove('active');
+    }
+
+    // Navigation
+    function switchTab(btn, tabId) {
+        const parent = btn.closest('.page');
+        parent.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        parent.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(tabId).classList.add('active');
+    }
+
+    function showPage(pageId, link) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+        window.scrollTo(0, 0);
+        closeMobile();
+        return false;
+    }
+
+    function goToNextPage(pageId) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+        document.querySelectorAll('.nav-link').forEach(l => {
+            l.classList.remove('active');
+            if (l.getAttribute('onclick') && l.getAttribute('onclick').includes("'" + pageId + "'")) {
+                l.classList.add('active');
+            }
+        });
+        window.scrollTo(0, 0);
+        closeMobile();
+    }
+
+    function filterNav() {
+        const q = document.getElementById('searchInput').value.toLowerCase();
+        document.querySelectorAll('#navList li').forEach(li => {
+            const text = li.textContent.toLowerCase();
+            li.classList.toggle('hidden', q && !text.includes(q));
+        });
+    }
+
+    function toggleMobile() {
+        document.getElementById('sidebar').classList.toggle('open');
+        document.getElementById('overlay').classList.toggle('visible');
+        document.getElementById('burgerBtn').classList.toggle('active');
+    }
+    function closeMobile() {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('overlay').classList.remove('visible');
+        document.getElementById('burgerBtn').classList.remove('active');
+    }
+
+    // Init
+    loadProgress();
+    updateAllDisplays();
+    </script>
+</body>
+</html>

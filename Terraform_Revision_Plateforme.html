@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terraform - Plateforme de Revision Complete</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f4ff;
+            color: #1a1a1a;
+            line-height: 1.7;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            position: fixed; top: 0; left: 0;
+            width: 270px; height: 100vh;
+            background: linear-gradient(180deg, #7b42bc 0%, #6a3aaa 40%, #5c4ee5 100%);
+            overflow-y: auto; padding: 20px 0; z-index: 100;
+            box-shadow: 4px 0 20px rgba(123,66,188,0.3);
+        }
+        .sidebar-header { padding: 12px 18px 15px; border-bottom: 2px solid rgba(255,255,255,0.15); margin-bottom: 8px; }
+        .sidebar-header h1 { font-size: 1.05em; color: #fff; margin-bottom: 2px; }
+        .sidebar-header p { font-size: 0.72em; color: rgba(255,255,255,0.7); }
+
+        .search-box { padding: 8px 14px; margin-bottom: 8px; }
+        .search-box input {
+            width: 100%; padding: 8px 12px; border-radius: 20px; border: none;
+            background: rgba(255,255,255,0.15); color: #fff; font-size: 0.82em;
+            outline: none; transition: background 0.3s;
+        }
+        .search-box input::placeholder { color: rgba(255,255,255,0.5); }
+        .search-box input:focus { background: rgba(255,255,255,0.25); }
+
+        .sidebar ul { list-style: none; padding: 0; }
+        .sidebar ul li a {
+            display: block; color: rgba(255,255,255,0.85); text-decoration: none;
+            font-size: 0.82em; padding: 9px 18px; border-left: 3px solid transparent;
+            transition: all 0.25s ease;
+        }
+        .sidebar ul li a:hover { background: rgba(255,255,255,0.1); color: #fff; border-left-color: #64ffda; }
+        .sidebar ul li a.active { background: linear-gradient(90deg, rgba(100,255,218,0.2), rgba(100,255,218,0.05)); color: #64ffda; border-left-color: #64ffda; font-weight: 600; }
+        .sidebar ul li a .score-badge {
+            float: right; background: rgba(255,255,255,0.2); color: #64ffda;
+            font-size: 0.75em; padding: 1px 7px; border-radius: 10px;
+        }
+        .sidebar ul li.hidden { display: none; }
+        .sidebar::-webkit-scrollbar { width: 6px; }
+        .sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
+
+        .global-progress { padding: 10px 18px; margin-bottom: 5px; }
+        .progress-bar-bg { background: rgba(255,255,255,0.15); border-radius: 10px; height: 8px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #64ffda, #00e676); border-radius: 10px; transition: width 0.5s ease; width: 0%; }
+        .progress-text { color: rgba(255,255,255,0.8); font-size: 0.7em; margin-top: 4px; text-align: center; }
+
+        .main-content { margin-left: 270px; flex: 1; padding: 25px 35px; max-width: 1100px; }
+        .page { display: none; }
+        .page.active { display: block; }
+
+        .lesson-header {
+            background: linear-gradient(135deg, #7b42bc 0%, #5c4ee5 100%);
+            padding: 18px 24px; margin-bottom: 18px; border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(123,66,188,0.3);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .lesson-header h2 { color: #fff; font-size: 1.3em; }
+        .lesson-score { color: #fff; font-size: 0.9em; background: rgba(255,255,255,0.2); padding: 5px 14px; border-radius: 20px; }
+
+        .tabs-container { display: flex; gap: 0; border-bottom: 3px solid #e8eaf6; }
+        .tab-btn {
+            padding: 11px 24px; border: none; background: #f5f5f5; color: #666;
+            font-size: 0.92em; font-weight: 600; cursor: pointer;
+            border-radius: 10px 10px 0 0; transition: all 0.3s;
+            border: 1px solid #e0e0e0; border-bottom: none; margin-right: 4px;
+        }
+        .tab-btn:hover { background: #ede7f6; color: #7b42bc; }
+        .tab-btn.active { background: #fff; color: #7b42bc; border-color: #d1c4e9; position: relative; }
+        .tab-btn.active::after { content: ''; position: absolute; bottom: -3px; left: 0; right: 0; height: 3px; background: #fff; }
+
+        .tab-content {
+            display: none; background: #fff; border: 1px solid #e0e0e0; border-top: none;
+            border-radius: 0 0 12px 12px; padding: 22px; min-height: 350px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+        }
+        .tab-content.active { display: block; }
+
+        .concepts p { margin-bottom: 12px; padding: 11px 15px; border-left: 3px solid #7b42bc; background: #fafafa; border-radius: 0 8px 8px 0; font-size: 0.93em; }
+        .key-points ul { list-style: none; padding: 0; }
+        .key-points ul li {
+            padding: 11px 15px; margin-bottom: 8px; background: linear-gradient(135deg, #ede7f6, #f3e5f5);
+            border-radius: 8px; border-left: 4px solid #7b42bc; font-size: 0.93em;
+            transition: transform 0.2s;
+        }
+        .key-points ul li:hover { transform: translateX(4px); }
+        .key-points ul li strong { color: #4a148c; }
+
+        .qcm-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .qcm-score-display { font-size: 0.9em; color: #7b42bc; font-weight: 600; }
+        .btn-reset {
+            background: #ff5252; color: white; border: none; padding: 7px 16px;
+            border-radius: 18px; cursor: pointer; font-size: 0.82em; transition: all 0.2s;
+        }
+        .btn-reset:hover { background: #d32f2f; transform: scale(1.05); }
+
+        .qcm-question { margin-bottom: 18px; padding: 16px; background: #fafafa; border-radius: 10px; border: 1px solid #e8e8e8; }
+        .qcm-question.answered-correct { border-color: #66bb6a; background: #f1f8f1; }
+        .qcm-question.answered-wrong { border-color: #ef5350; background: #fff5f5; }
+        .qcm-question p.q-text { font-weight: 600; margin-bottom: 12px; color: #4a148c; font-size: 0.92em; }
+        .qcm-options { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; }
+        .qcm-option { display: flex; align-items: center; padding: 7px 10px; border-radius: 6px; cursor: pointer; transition: background 0.2s; font-size: 0.88em; }
+        .qcm-option:hover { background: #ede7f6; }
+        .qcm-option input[type="radio"] { margin-right: 8px; accent-color: #7b42bc; width: 15px; height: 15px; }
+        .qcm-option label { cursor: pointer; flex: 1; }
+
+        .btn-validate {
+            background: linear-gradient(135deg, #7b42bc, #5c4ee5); color: white; border: none;
+            padding: 8px 20px; border-radius: 18px; cursor: pointer; font-size: 0.85em;
+            margin-top: 8px; transition: transform 0.2s; box-shadow: 0 3px 10px rgba(123,66,188,0.3);
+        }
+        .btn-validate:hover { transform: translateY(-2px); }
+        .feedback { display: none; margin-top: 8px; padding: 10px; border-radius: 8px; font-size: 0.85em; line-height: 1.5; }
+        .feedback.correct { background: linear-gradient(135deg, #e8f5e9, #c8e6c9); border: 1px solid #66bb6a; color: #1B5E20; }
+        .feedback.incorrect { background: linear-gradient(135deg, #fce4ec, #ffcdd2); border: 1px solid #ef5350; color: #b71c1c; }
+
+        .exam-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); z-index: 500; justify-content: center; align-items: center;
+        }
+        .exam-overlay.active { display: flex; }
+        .exam-container {
+            background: #fff; width: 90%; max-width: 800px; max-height: 90vh;
+            border-radius: 16px; padding: 30px; overflow-y: auto; position: relative;
+        }
+        .exam-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #e8eaf6; }
+        .exam-header h2 { color: #4a148c; font-size: 1.3em; }
+        .exam-timer { font-size: 1.3em; font-weight: 700; color: #d32f2f; background: #fce4ec; padding: 8px 18px; border-radius: 25px; }
+        .exam-timer.warning { animation: pulse 1s infinite; }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .exam-question { margin-bottom: 20px; padding: 15px; background: #fafafa; border-radius: 10px; border: 1px solid #e0e0e0; }
+        .exam-question p { font-weight: 600; margin-bottom: 10px; color: #1a1a1a; font-size: 0.92em; }
+        .exam-options { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; }
+        .exam-option { display: flex; align-items: center; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 0.88em; }
+        .exam-option:hover { background: #ede7f6; }
+        .exam-option input { margin-right: 8px; accent-color: #7b42bc; }
+        .btn-submit-exam {
+            display: block; margin: 20px auto 0; background: linear-gradient(135deg, #7b42bc, #5c4ee5);
+            color: #fff; border: none; padding: 12px 40px; border-radius: 25px;
+            font-size: 1em; font-weight: 600; cursor: pointer; transition: transform 0.2s;
+        }
+        .btn-submit-exam:hover { transform: scale(1.05); }
+        .exam-result { text-align: center; padding: 30px; }
+        .exam-result .score-big { font-size: 3em; font-weight: 700; color: #7b42bc; }
+        .exam-result .score-text { font-size: 1.1em; color: #666; margin-top: 10px; }
+        .btn-close-exam { position: absolute; top: 15px; right: 20px; background: none; border: none; font-size: 1.5em; cursor: pointer; color: #999; }
+        .btn-start-exam {
+            display: block; margin: 15px auto; background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: #fff; border: none; padding: 12px 30px; border-radius: 25px;
+            font-size: 0.95em; font-weight: 600; cursor: pointer; transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(238,90,36,0.3);
+        }
+        .btn-start-exam:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(238,90,36,0.4); }
+
+        .cheat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .cheat-card { background: #fff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 15px; }
+        .cheat-card h4 { color: #7b42bc; margin-bottom: 8px; font-size: 0.95em; border-bottom: 2px solid #ede7f6; padding-bottom: 5px; }
+        .cheat-card code { display: block; background: #1a1a2e; color: #a5d6a7; padding: 8px 12px; border-radius: 6px; font-size: 0.8em; margin: 4px 0; white-space: pre-wrap; }
+        .cheat-card ul { padding-left: 16px; font-size: 0.85em; }
+        .cheat-card li { margin-bottom: 3px; }
+
+        .pipeline-diagram { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 0; padding: 20px 10px; margin: 15px 0; }
+        .pipeline-stage {
+            background: linear-gradient(135deg, #7b42bc, #5c4ee5); color: #fff;
+            padding: 12px 18px; border-radius: 8px; font-size: 0.82em; font-weight: 600;
+            text-align: center; min-width: 90px; position: relative;
+            box-shadow: 0 3px 10px rgba(123,66,188,0.3); transition: transform 0.2s;
+        }
+        .pipeline-stage:hover { transform: scale(1.08); }
+        .pipeline-stage small { display: block; font-weight: 400; opacity: 0.8; font-size: 0.85em; }
+        .pipeline-arrow { color: #7b42bc; font-size: 1.4em; margin: 0 6px; }
+
+        .bonus-section h2 { color:#fff; font-size:1.3em; background:linear-gradient(135deg,#7b42bc,#5c4ee5); padding:16px 22px; border-radius:12px; margin-bottom:18px; }
+        .bonus-section h3 { color:#7b42bc; margin:20px 0 8px; padding-left:10px; border-left:3px solid #5c4ee5; }
+        .bonus-section ul { padding-left:18px; margin-bottom:12px; }
+        .bonus-section li { margin-bottom:6px; font-size:0.92em; }
+        .code-block { background:linear-gradient(135deg,#1a1a2e,#16213e); color:#a5d6a7; padding:14px 18px; border-radius:8px; font-family:Consolas,monospace; font-size:0.82em; overflow-x:auto; margin:8px 0 15px; white-space:pre-wrap; border:1px solid #0f3460; }
+
+        .next-lesson-container { text-align: center; margin-top: 25px; padding-top: 20px; border-top: 2px dashed #e0e0e0; }
+        .btn-next-lesson {
+            background: linear-gradient(135deg, #00c853, #00796b); color: #fff; border: none;
+            padding: 14px 32px; border-radius: 30px; font-size: 0.95em; font-weight: 600;
+            cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(0,200,83,0.3);
+            display: inline-flex; align-items: center; gap: 8px;
+        }
+        .btn-next-lesson:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,200,83,0.4); }
+
+        .burger-btn { display:none; position:fixed; top:12px; left:12px; z-index:200; background:linear-gradient(135deg,#7b42bc,#5c4ee5); border:none; border-radius:10px; padding:10px 12px; cursor:pointer; flex-direction:column; gap:5px; }
+        .burger-btn span { display:block; width:22px; height:3px; background:white; border-radius:2px; transition:transform 0.3s,opacity 0.3s; }
+        .burger-btn.active span:nth-child(1) { transform:rotate(45deg) translate(5px,6px); }
+        .burger-btn.active span:nth-child(2) { opacity:0; }
+        .burger-btn.active span:nth-child(3) { transform:rotate(-45deg) translate(5px,-6px); }
+        .overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.3); z-index:90; }
+        @media (max-width:900px) {
+            .burger-btn { display:flex; }
+            .sidebar { left:-280px; transition:left 0.3s; z-index:150; }
+            .sidebar.open { left:0; }
+            .overlay.visible { display:block; }
+            .main-content { margin-left:0; padding:18px 12px; padding-top:55px; }
+            .qcm-options,.exam-options { grid-template-columns:1fr; }
+            .cheat-grid { grid-template-columns:1fr; }
+            .pipeline-diagram { flex-direction:column; }
+            .pipeline-arrow { transform:rotate(90deg); }
+        }
+    </style>
+</head>
+<body>
+    <button class="burger-btn" id="burgerBtn" onclick="toggleMobile()"><span></span><span></span><span></span></button>
+    <div class="overlay" id="overlay" onclick="closeMobile()"></div>
+
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h1>Terraform - Revision</h1>
+            <p>Infrastructure as Code Complete</p>
+        </div>
+        <div class="global-progress">
+            <div class="progress-bar-bg"><div class="progress-bar-fill" id="globalProgressBar"></div></div>
+            <div class="progress-text" id="globalProgressText">0% complete</div>
+        </div>
+        <div class="search-box"><input type="text" id="searchInput" placeholder="Rechercher..." oninput="filterNav()"></div>
+        <ul id="navList">
+            <li><a href="#" class="nav-link active" onclick="showPage('p1',this)">1. Pourquoi l'IaC <span class="score-badge" id="badge-p1">-</span></a></li>
+            <li><a href="#" class="nav-link" onclick="showPage('p2',this)">2. Presentation <span class="score-badge" id="badge-p2">-</span></a></li>
+            <li><a href="#" class="nav-link" onclick="showPage('p3',this)">3. HCL & Syntaxe <span class="score-badge" id="badge-p3">-</span></a></li>
+            <li><a href="#" class="nav-link" onclick="showPage('p4',this)">4. Providers <span class="score-badge" id="badge-p4">-</span></a></li>
+            <li><a href="#" class="nav-link" onclick="showPage('p5',this)">5. Resources & Data <span class="score-badge" id="badge-p5">-</span></a></li>
+            <li><a href="#" class="nav-link" onclick="showPage('p6',this)">6. Variables & Outputs <span class="score-badge" id="badge-p6">-</span></a></li>
+            <li><a href="#" class="nav-link" onclick="showPage('p7',this)">7. State Management <span class="score-badge" id="badge-p7">-</span></a></li>
+            <li><a href="#" class="nav-link" onclick="showPage('p8',this)">8. Modules <span class="score-badge" id="badge-p8">-</span></a></li>
+            <li><a href="#" class="nav-link" onclick="showPage('p9',this)">9. Production <span class="score-badge" id="badge-p9">-</span></a></li>
+            <li><a href="#" class="nav-link" onclick="showPage('cheatsheet',this)">Cheat Sheet</a></li>
+            <li><a href="#" class="nav-link" onclick="showPage('bonus',this)">Bonus</a></li>
+        </ul>
+        <button class="btn-start-exam" onclick="startExam()">Mode Examen (10 min)</button>
+    </nav>
+
+    <div class="main-content">
+
+<!-- PAGE 1 -->
+<div class="page active" id="p1">
+    <div class="lesson-header"><h2>1 - Pourquoi l'Infrastructure as Code ?</h2><span class="lesson-score" id="score-p1">0/5</span></div>
+    <div class="tabs-container">
+        <button class="tab-btn active" onclick="switchTab(this,'p1-concepts')">Concepts</button>
+        <button class="tab-btn" onclick="switchTab(this,'p1-keys')">Points Cles</button>
+        <button class="tab-btn" onclick="switchTab(this,'p1-qcm')">QCM</button>
+    </div>
+    <div class="tab-content active" id="p1-concepts"><div class="concepts">
+        <p><strong>Le probleme de l'infrastructure manuelle :</strong> Configurer des serveurs manuellement (cliquer dans la console AWS, taper des commandes SSH) est lent, sujet aux erreurs, et non reproductible. Si un serveur tombe, reconstruire l'environnement identique prend des heures. Deux environnements "identiques" finissent toujours par diverger (configuration drift).</p>
+        <p><strong>Configuration Drift :</strong> Le drift est la divergence progressive entre l'etat reel de l'infrastructure et l'etat desire. Un administrateur fait un correctif "temporaire" en production, un autre modifie une regle firewall — au bout de quelques mois, personne ne sait exactement ce qui tourne. L'IaC elimine ce probleme en definissant l'etat desire dans du code.</p>
+        <p><strong>Infrastructure as Code (IaC) :</strong> L'IaC consiste a decrire toute l'infrastructure dans des fichiers de configuration versionnes. Les serveurs, reseaux, bases de donnees, permissions — tout est du code. On peut versionner (git), reviewer (PR), tester, et reproduire l'infrastructure a l'identique en quelques minutes.</p>
+        <p><strong>Avantages de l'IaC :</strong> Reproductibilite (meme infra en dev/staging/prod), versionning (historique des changements), automatisation (CI/CD), documentation vivante (le code EST la documentation), collaboration (PR et code review), rapidite (deploiement en minutes au lieu d'heures).</p>
+        <p><strong>Le role de Terraform :</strong> Terraform est l'outil IaC le plus populaire. Il permet de provisionner et gerer l'infrastructure chez n'importe quel provider cloud (AWS, Azure, GCP, Kubernetes, etc.) avec un seul langage (HCL). C'est l'approche "multi-cloud" par excellence.</p>
+    </div></div>
+    <div class="tab-content" id="p1-keys"><div class="key-points"><ul>
+        <li><strong>Infrastructure manuelle = lente, fragile, non reproductible.</strong></li>
+        <li><strong>Configuration Drift = divergence entre etat reel et desire.</strong></li>
+        <li><strong>IaC = infrastructure decrite dans du code versionne.</strong></li>
+        <li><strong>Avantages : reproductibilite, versionning, automatisation, rapidite.</strong></li>
+        <li><strong>Terraform = outil IaC multi-cloud le plus populaire.</strong></li>
+        <li><strong>Le code EST la documentation de l'infrastructure.</strong></li>
+    </ul></div></div>
+    <div class="tab-content" id="p1-qcm">
+        <div class="qcm-header"><span class="qcm-score-display" id="qcm-score-p1">Score: 0/5</span><button class="btn-reset" onclick="resetQcm('p1')">Recommencer</button></div>
+        <div class="qcm-grid" id="qcm-p1">
+            <div class="qcm-question" data-page="p1"><p class="q-text">1) Qu'est-ce que le Configuration Drift ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q1-1" value="a" id="q1-1a"><label for="q1-1a">A. Une mise a jour planifiee</label></div><div class="qcm-option"><input type="radio" name="q1-1" value="b" id="q1-1b"><label for="q1-1b">B. La divergence entre l'etat reel et l'etat desire de l'infra</label></div><div class="qcm-option"><input type="radio" name="q1-1" value="c" id="q1-1c"><label for="q1-1c">C. Un type de deploiement</label></div><div class="qcm-option"><input type="radio" name="q1-1" value="d" id="q1-1d"><label for="q1-1d">D. Un outil de monitoring</label></div></div><button class="btn-validate" onclick="checkAnswer('q1-1','b',this,'p1')">Valider</button><div class="feedback"></div></div>
+            <div class="qcm-question" data-page="p1"><p class="q-text">2) Quel est l'avantage principal de l'IaC ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q1-2" value="a" id="q1-2a"><label for="q1-2a">A. Les serveurs sont plus puissants</label></div><div class="qcm-option"><input type="radio" name="q1-2" value="b" id="q1-2b"><label for="q1-2b">B. L'infrastructure est reproductible et versionnee</label></div><div class="qcm-option"><input type="radio" name="q1-2" value="c" id="q1-2c"><label for="q1-2c">C. Les couts sont toujours reduits</label></div><div class="qcm-option"><input type="radio" name="q1-2" value="d" id="q1-2d"><label for="q1-2d">D. On n'a plus besoin de cloud</label></div></div><button class="btn-validate" onclick="checkAnswer('q1-2','b',this,'p1')">Valider</button><div class="feedback"></div></div>
+            <div class="qcm-question" data-page="p1"><p class="q-text">3) Pourquoi l'infrastructure manuelle est-elle problematique ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q1-3" value="a" id="q1-3a"><label for="q1-3a">A. Elle est trop rapide</label></div><div class="qcm-option"><input type="radio" name="q1-3" value="b" id="q1-3b"><label for="q1-3b">B. Elle est lente, sujette aux erreurs et non reproductible</label></div><div class="qcm-option"><input type="radio" name="q1-3" value="c" id="q1-3c"><label for="q1-3c">C. Elle coute moins cher</label></div><div class="qcm-option"><input type="radio" name="q1-3" value="d" id="q1-3d"><label for="q1-3d">D. Elle est plus securisee</label></div></div><button class="btn-validate" onclick="checkAnswer('q1-3','b',this,'p1')">Valider</button><div class="feedback"></div></div>
+            <div class="qcm-question" data-page="p1"><p class="q-text">4) Qu'est-ce que l'Infrastructure as Code ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q1-4" value="a" id="q1-4a"><label for="q1-4a">A. Ecrire du code applicatif</label></div><div class="qcm-option"><input type="radio" name="q1-4" value="b" id="q1-4b"><label for="q1-4b">B. Decrire l'infrastructure dans des fichiers de config versionnes</label></div><div class="qcm-option"><input type="radio" name="q1-4" value="c" id="q1-4c"><label for="q1-4c">C. Utiliser uniquement la ligne de commande</label></div><div class="qcm-option"><input type="radio" name="q1-4" value="d" id="q1-4d"><label for="q1-4d">D. Coder directement sur les serveurs</label></div></div><button class="btn-validate" onclick="checkAnswer('q1-4','b',this,'p1')">Valider</button><div class="feedback"></div></div>
+            <div class="qcm-question" data-page="p1"><p class="q-text">5) Quelle approche Terraform offre-t-il ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q1-5" value="a" id="q1-5a"><label for="q1-5a">A. Mono-cloud uniquement</label></div><div class="qcm-option"><input type="radio" name="q1-5" value="b" id="q1-5b"><label for="q1-5b">B. Multi-cloud avec un seul langage (HCL)</label></div><div class="qcm-option"><input type="radio" name="q1-5" value="c" id="q1-5c"><label for="q1-5c">C. Seulement AWS</label></div><div class="qcm-option"><input type="radio" name="q1-5" value="d" id="q1-5d"><label for="q1-5d">D. Seulement le on-premise</label></div></div><button class="btn-validate" onclick="checkAnswer('q1-5','b',this,'p1')">Valider</button><div class="feedback"></div></div>
+        </div>
+        <div class="next-lesson-container"><button class="btn-next-lesson" onclick="goToNextPage('p2')">Lecon suivante &#10132; 2. Presentation</button></div>
+    </div>
+</div>
+
+<!-- PAGE 2 -->
+<div class="page" id="p2">
+    <div class="lesson-header"><h2>2 - Presentation de Terraform</h2><span class="lesson-score" id="score-p2">0/5</span></div>
+    <div class="tabs-container"><button class="tab-btn active" onclick="switchTab(this,'p2-concepts')">Concepts</button><button class="tab-btn" onclick="switchTab(this,'p2-keys')">Points Cles</button><button class="tab-btn" onclick="switchTab(this,'p2-qcm')">QCM</button></div>
+    <div class="tab-content active" id="p2-concepts"><div class="concepts">
+        <p><strong>HashiCorp :</strong> Terraform est developpe par HashiCorp, une entreprise americaine fondee en 2012. HashiCorp cree des outils d'infrastructure : Terraform (IaC), Vault (secrets), Consul (service mesh), Nomad (orchestration), Packer (images), Vagrant (dev envs). Terraform est leur produit phare.</p>
+        <p><strong>Open Source et licences :</strong> Terraform etait sous licence MPL 2.0 (open source) jusqu'en 2023, puis est passe sous BSL (Business Source License). En reaction, la communaute a cree OpenTofu (fork open source sous Linux Foundation). Terraform Cloud/Enterprise sont les versions commerciales.</p>
+        <p><strong>Declaratif vs Imperatif :</strong> Terraform utilise l'approche declarative : on decrit l'ETAT FINAL desire ("je veux 3 serveurs"), pas les etapes pour y arriver ("cree serveur 1, cree serveur 2..."). Terraform calcule automatiquement les actions necessaires pour atteindre cet etat. Ansible est plutot imperatif (on decrit les etapes).</p>
+        <p><strong>Terraform vs alternatives :</strong> CloudFormation = AWS uniquement. Ansible = imperatif, pas d'etat. Pulumi = IaC en langages generaux (Python, Go, TS). Terraform = declaratif, multi-cloud, ecosysteme le plus riche (4000+ providers). Chaque outil a ses forces.</p>
+        <p><strong>Architecture :</strong> Terraform se compose du CLI (binaire unique), du langage HCL, des providers (plugins pour chaque service), et du state (fichier JSON qui stocke l'etat reel). Le workflow est simple : Write (code) → Plan (preview) → Apply (execution).</p>
+    </div></div>
+    <div class="tab-content" id="p2-keys"><div class="key-points"><ul>
+        <li><strong>HashiCorp (USA, 2012) = createur de Terraform.</strong></li>
+        <li><strong>Declaratif = on decrit l'etat final, pas les etapes.</strong></li>
+        <li><strong>Multi-cloud : AWS, Azure, GCP, K8s, 4000+ providers.</strong></li>
+        <li><strong>OpenTofu = fork open source (Linux Foundation).</strong></li>
+        <li><strong>Workflow : Write → Plan → Apply.</strong></li>
+        <li><strong>Alternatives : CloudFormation (AWS), Ansible (imperatif), Pulumi (langages generaux).</strong></li>
+    </ul></div></div>
+    <div class="tab-content" id="p2-qcm"><div class="qcm-header"><span class="qcm-score-display" id="qcm-score-p2">Score: 0/5</span><button class="btn-reset" onclick="resetQcm('p2')">Recommencer</button></div><div class="qcm-grid" id="qcm-p2">
+        <div class="qcm-question" data-page="p2"><p class="q-text">1) Qui developpe Terraform ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q2-1" value="a" id="q2-1a"><label for="q2-1a">A. Google</label></div><div class="qcm-option"><input type="radio" name="q2-1" value="b" id="q2-1b"><label for="q2-1b">B. HashiCorp</label></div><div class="qcm-option"><input type="radio" name="q2-1" value="c" id="q2-1c"><label for="q2-1c">C. Microsoft</label></div><div class="qcm-option"><input type="radio" name="q2-1" value="d" id="q2-1d"><label for="q2-1d">D. RedHat</label></div></div><button class="btn-validate" onclick="checkAnswer('q2-1','b',this,'p2')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p2"><p class="q-text">2) Quelle est l'approche de Terraform ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q2-2" value="a" id="q2-2a"><label for="q2-2a">A. Imperative (etapes sequentielles)</label></div><div class="qcm-option"><input type="radio" name="q2-2" value="b" id="q2-2b"><label for="q2-2b">B. Declarative (etat final desire)</label></div><div class="qcm-option"><input type="radio" name="q2-2" value="c" id="q2-2c"><label for="q2-2c">C. Procedurale</label></div><div class="qcm-option"><input type="radio" name="q2-2" value="d" id="q2-2d"><label for="q2-2d">D. Orientee objet</label></div></div><button class="btn-validate" onclick="checkAnswer('q2-2','b',this,'p2')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p2"><p class="q-text">3) Quelle limitation a CloudFormation par rapport a Terraform ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q2-3" value="a" id="q2-3a"><label for="q2-3a">A. CloudFormation est uniquement pour AWS</label></div><div class="qcm-option"><input type="radio" name="q2-3" value="b" id="q2-3b"><label for="q2-3b">B. CloudFormation est plus rapide</label></div><div class="qcm-option"><input type="radio" name="q2-3" value="c" id="q2-3c"><label for="q2-3c">C. CloudFormation supporte plus de clouds</label></div><div class="qcm-option"><input type="radio" name="q2-3" value="d" id="q2-3d"><label for="q2-3d">D. Aucune difference</label></div></div><button class="btn-validate" onclick="checkAnswer('q2-3','a',this,'p2')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p2"><p class="q-text">4) Qu'est-ce qu'OpenTofu ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q2-4" value="a" id="q2-4a"><label for="q2-4a">A. Un provider cloud</label></div><div class="qcm-option"><input type="radio" name="q2-4" value="b" id="q2-4b"><label for="q2-4b">B. Un fork open source de Terraform</label></div><div class="qcm-option"><input type="radio" name="q2-4" value="c" id="q2-4c"><label for="q2-4c">C. Un outil de monitoring</label></div><div class="qcm-option"><input type="radio" name="q2-4" value="d" id="q2-4d"><label for="q2-4d">D. Une base de donnees</label></div></div><button class="btn-validate" onclick="checkAnswer('q2-4','b',this,'p2')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p2"><p class="q-text">5) Quel est le workflow Terraform ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q2-5" value="a" id="q2-5a"><label for="q2-5a">A. Build → Test → Deploy</label></div><div class="qcm-option"><input type="radio" name="q2-5" value="b" id="q2-5b"><label for="q2-5b">B. Write → Plan → Apply</label></div><div class="qcm-option"><input type="radio" name="q2-5" value="c" id="q2-5c"><label for="q2-5c">C. Code → Commit → Push</label></div><div class="qcm-option"><input type="radio" name="q2-5" value="d" id="q2-5d"><label for="q2-5d">D. Init → Run → Stop</label></div></div><button class="btn-validate" onclick="checkAnswer('q2-5','b',this,'p2')">Valider</button><div class="feedback"></div></div>
+    </div>
+        <div class="next-lesson-container"><button class="btn-next-lesson" onclick="goToNextPage('p3')">Lecon suivante &#10132; 3. HCL & Syntaxe</button></div></div>
+</div>
+
+<!-- PAGE 3 -->
+<div class="page" id="p3">
+    <div class="lesson-header"><h2>3 - HCL & Syntaxe de base</h2><span class="lesson-score" id="score-p3">0/6</span></div>
+    <div class="tabs-container"><button class="tab-btn active" onclick="switchTab(this,'p3-concepts')">Concepts</button><button class="tab-btn" onclick="switchTab(this,'p3-keys')">Points Cles</button><button class="tab-btn" onclick="switchTab(this,'p3-qcm')">QCM</button></div>
+    <div class="tab-content active" id="p3-concepts"><div class="concepts">
+        <p><strong>HCL (HashiCorp Configuration Language) :</strong> HCL est le langage de configuration propre a Terraform. Il est concu pour etre lisible par les humains tout en etant parseable par les machines. L'extension des fichiers est <code>.tf</code>. HCL est un langage declaratif structure en blocs.</p>
+        <p><strong>Structure d'un bloc :</strong> Un bloc HCL a la forme : <code>type "label1" "label2" { arguments }</code>. Exemple : <code>resource "aws_instance" "web" { ami = "ami-123" }</code>. Les types de blocs principaux sont : resource, data, variable, output, provider, terraform, locals, module.</p>
+        <p><strong>Types de donnees :</strong> HCL supporte : string ("hello"), number (42, 3.14), bool (true/false), list (["a","b","c"]), map ({key="value"}), object, tuple, set. On peut aussi utiliser des expressions : interpolation ("${var.name}"), conditions (condition ? true : false), boucles (for).</p>
+        <p><strong>terraform init :</strong> Commande obligatoire au debut. Elle initialise le repertoire de travail : telecharge les providers necessaires, configure le backend pour le state, installe les modules. A executer apres chaque ajout de provider ou module.</p>
+        <p><strong>terraform plan :</strong> Genere un plan d'execution SANS rien modifier. Affiche ce qui sera cree (+), modifie (~), ou detruit (-). C'est une preview des changements. Indispensable pour verifier avant d'appliquer. Equivalent d'un "dry-run".</p>
+        <p><strong>terraform apply / destroy :</strong> <code>apply</code> execute le plan et provisionne l'infrastructure reellement. Demande confirmation (ou <code>-auto-approve</code> en CI). <code>destroy</code> supprime TOUTES les ressources gerees par Terraform. Attention : irreversible !</p>
+    </div></div>
+    <div class="tab-content" id="p3-keys"><div class="key-points"><ul>
+        <li><strong>HCL = langage declaratif de Terraform, fichiers .tf</strong></li>
+        <li><strong>Blocs : resource, data, variable, output, provider, module.</strong></li>
+        <li><strong>Types : string, number, bool, list, map, object.</strong></li>
+        <li><strong>terraform init = initialiser (providers, backend, modules).</strong></li>
+        <li><strong>terraform plan = preview sans modification (dry-run).</strong></li>
+        <li><strong>terraform apply = executer, destroy = tout supprimer.</strong></li>
+    </ul></div></div>
+    <div class="tab-content" id="p3-qcm"><div class="qcm-header"><span class="qcm-score-display" id="qcm-score-p3">Score: 0/6</span><button class="btn-reset" onclick="resetQcm('p3')">Recommencer</button></div><div class="qcm-grid" id="qcm-p3">
+        <div class="qcm-question" data-page="p3"><p class="q-text">1) Quelle est l'extension des fichiers Terraform ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q3-1" value="a" id="q3-1a"><label for="q3-1a">A. .yaml</label></div><div class="qcm-option"><input type="radio" name="q3-1" value="b" id="q3-1b"><label for="q3-1b">B. .tf</label></div><div class="qcm-option"><input type="radio" name="q3-1" value="c" id="q3-1c"><label for="q3-1c">C. .hcl</label></div><div class="qcm-option"><input type="radio" name="q3-1" value="d" id="q3-1d"><label for="q3-1d">D. .json</label></div></div><button class="btn-validate" onclick="checkAnswer('q3-1','b',this,'p3')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p3"><p class="q-text">2) Que fait terraform init ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q3-2" value="a" id="q3-2a"><label for="q3-2a">A. Cree les ressources</label></div><div class="qcm-option"><input type="radio" name="q3-2" value="b" id="q3-2b"><label for="q3-2b">B. Detruit l'infrastructure</label></div><div class="qcm-option"><input type="radio" name="q3-2" value="c" id="q3-2c"><label for="q3-2c">C. Initialise le repertoire (providers, backend, modules)</label></div><div class="qcm-option"><input type="radio" name="q3-2" value="d" id="q3-2d"><label for="q3-2d">D. Affiche les logs</label></div></div><button class="btn-validate" onclick="checkAnswer('q3-2','c',this,'p3')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p3"><p class="q-text">3) Que fait terraform plan ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q3-3" value="a" id="q3-3a"><label for="q3-3a">A. Applique les changements</label></div><div class="qcm-option"><input type="radio" name="q3-3" value="b" id="q3-3b"><label for="q3-3b">B. Affiche une preview sans rien modifier</label></div><div class="qcm-option"><input type="radio" name="q3-3" value="c" id="q3-3c"><label for="q3-3c">C. Supprime les ressources</label></div><div class="qcm-option"><input type="radio" name="q3-3" value="d" id="q3-3d"><label for="q3-3d">D. Initialise les providers</label></div></div><button class="btn-validate" onclick="checkAnswer('q3-3','b',this,'p3')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p3"><p class="q-text">4) Quel symbole indique une ressource qui sera CREEE dans le plan ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q3-4" value="a" id="q3-4a"><label for="q3-4a">A. - (moins)</label></div><div class="qcm-option"><input type="radio" name="q3-4" value="b" id="q3-4b"><label for="q3-4b">B. ~ (tilde)</label></div><div class="qcm-option"><input type="radio" name="q3-4" value="c" id="q3-4c"><label for="q3-4c">C. + (plus)</label></div><div class="qcm-option"><input type="radio" name="q3-4" value="d" id="q3-4d"><label for="q3-4d">D. * (etoile)</label></div></div><button class="btn-validate" onclick="checkAnswer('q3-4','c',this,'p3')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p3"><p class="q-text">5) Quelle commande detruit TOUTES les ressources Terraform ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q3-5" value="a" id="q3-5a"><label for="q3-5a">A. terraform delete</label></div><div class="qcm-option"><input type="radio" name="q3-5" value="b" id="q3-5b"><label for="q3-5b">B. terraform remove</label></div><div class="qcm-option"><input type="radio" name="q3-5" value="c" id="q3-5c"><label for="q3-5c">C. terraform destroy</label></div><div class="qcm-option"><input type="radio" name="q3-5" value="d" id="q3-5d"><label for="q3-5d">D. terraform clean</label></div></div><button class="btn-validate" onclick="checkAnswer('q3-5','c',this,'p3')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p3"><p class="q-text">6) Quel type HCL represente une collection cle-valeur ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q3-6" value="a" id="q3-6a"><label for="q3-6a">A. list</label></div><div class="qcm-option"><input type="radio" name="q3-6" value="b" id="q3-6b"><label for="q3-6b">B. string</label></div><div class="qcm-option"><input type="radio" name="q3-6" value="c" id="q3-6c"><label for="q3-6c">C. map</label></div><div class="qcm-option"><input type="radio" name="q3-6" value="d" id="q3-6d"><label for="q3-6d">D. bool</label></div></div><button class="btn-validate" onclick="checkAnswer('q3-6','c',this,'p3')">Valider</button><div class="feedback"></div></div>
+    </div>
+        <div class="next-lesson-container"><button class="btn-next-lesson" onclick="goToNextPage('p4')">Lecon suivante &#10132; 4. Providers</button></div></div>
+</div>
+
+<!-- PAGE 4 -->
+<div class="page" id="p4">
+    <div class="lesson-header"><h2>4 - Providers</h2><span class="lesson-score" id="score-p4">0/5</span></div>
+    <div class="tabs-container"><button class="tab-btn active" onclick="switchTab(this,'p4-concepts')">Concepts</button><button class="tab-btn" onclick="switchTab(this,'p4-keys')">Points Cles</button><button class="tab-btn" onclick="switchTab(this,'p4-qcm')">QCM</button></div>
+    <div class="tab-content active" id="p4-concepts"><div class="concepts">
+        <p><strong>Qu'est-ce qu'un Provider ?</strong> Un provider est un plugin qui permet a Terraform d'interagir avec une API externe. Chaque service (AWS, Azure, GCP, Docker, Kubernetes, GitHub, Cloudflare...) a son propre provider. Le provider traduit les blocs HCL en appels API vers le service cible.</p>
+        <p><strong>Terraform Registry :</strong> Le Registry (registry.terraform.io) est le depot officiel des providers et modules. On y trouve 4000+ providers (officiels par HashiCorp, verifies par les vendeurs, communautaires). Chaque provider a sa documentation avec les resources et data sources disponibles.</p>
+        <p><strong>Configuration d'un provider :</strong> On declare un provider dans un bloc <code>provider</code> : credentials, region, version. Exemple AWS : <code>provider "aws" { region = "eu-west-1" }</code>. Les credentials sont generalement configurees via variables d'environnement (AWS_ACCESS_KEY_ID) et non en dur dans le code.</p>
+        <p><strong>Versioning des providers :</strong> On controle la version du provider dans le bloc <code>required_providers</code> avec des contraintes : <code>version = "~> 5.0"</code> (compatible 5.x), <code>>= 4.0, < 6.0"</code>. Cela evite les breaking changes inattendus lors d'un terraform init.</p>
+        <p><strong>Providers multiples (alias) :</strong> On peut configurer plusieurs instances du meme provider avec des alias. Exemple : deployer dans 2 regions AWS differentes. <code>provider "aws" { alias = "us" region = "us-east-1" }</code> puis <code>provider = aws.us</code> dans la resource.</p>
+    </div></div>
+    <div class="tab-content" id="p4-keys"><div class="key-points"><ul>
+        <li><strong>Provider = plugin pour interagir avec une API (AWS, Azure, K8s...).</strong></li>
+        <li><strong>Registry = depot officiel (4000+ providers).</strong></li>
+        <li><strong>Credentials via env vars, JAMAIS en dur dans le code.</strong></li>
+        <li><strong>Versioning : ~> 5.0 = compatible 5.x.</strong></li>
+        <li><strong>Alias = plusieurs configs du meme provider (multi-region).</strong></li>
+        <li><strong>terraform init telecharge les providers declares.</strong></li>
+    </ul></div></div>
+    <div class="tab-content" id="p4-qcm"><div class="qcm-header"><span class="qcm-score-display" id="qcm-score-p4">Score: 0/5</span><button class="btn-reset" onclick="resetQcm('p4')">Recommencer</button></div><div class="qcm-grid" id="qcm-p4">
+        <div class="qcm-question" data-page="p4"><p class="q-text">1) Qu'est-ce qu'un provider Terraform ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q4-1" value="a" id="q4-1a"><label for="q4-1a">A. Un serveur cloud</label></div><div class="qcm-option"><input type="radio" name="q4-1" value="b" id="q4-1b"><label for="q4-1b">B. Un plugin pour interagir avec une API externe</label></div><div class="qcm-option"><input type="radio" name="q4-1" value="c" id="q4-1c"><label for="q4-1c">C. Un fichier de configuration</label></div><div class="qcm-option"><input type="radio" name="q4-1" value="d" id="q4-1d"><label for="q4-1d">D. Un type de variable</label></div></div><button class="btn-validate" onclick="checkAnswer('q4-1','b',this,'p4')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p4"><p class="q-text">2) Ou trouve-t-on les providers officiels ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q4-2" value="a" id="q4-2a"><label for="q4-2a">A. npm registry</label></div><div class="qcm-option"><input type="radio" name="q4-2" value="b" id="q4-2b"><label for="q4-2b">B. Terraform Registry (registry.terraform.io)</label></div><div class="qcm-option"><input type="radio" name="q4-2" value="c" id="q4-2c"><label for="q4-2c">C. Docker Hub</label></div><div class="qcm-option"><input type="radio" name="q4-2" value="d" id="q4-2d"><label for="q4-2d">D. GitHub Marketplace</label></div></div><button class="btn-validate" onclick="checkAnswer('q4-2','b',this,'p4')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p4"><p class="q-text">3) Comment securiser les credentials d'un provider ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q4-3" value="a" id="q4-3a"><label for="q4-3a">A. Les ecrire en dur dans le fichier .tf</label></div><div class="qcm-option"><input type="radio" name="q4-3" value="b" id="q4-3b"><label for="q4-3b">B. Utiliser des variables d'environnement</label></div><div class="qcm-option"><input type="radio" name="q4-3" value="c" id="q4-3c"><label for="q4-3c">C. Les mettre dans un commentaire</label></div><div class="qcm-option"><input type="radio" name="q4-3" value="d" id="q4-3d"><label for="q4-3d">D. Les partager par email</label></div></div><button class="btn-validate" onclick="checkAnswer('q4-3','b',this,'p4')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p4"><p class="q-text">4) Que signifie version = "~> 5.0" ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q4-4" value="a" id="q4-4a"><label for="q4-4a">A. Exactement version 5.0</label></div><div class="qcm-option"><input type="radio" name="q4-4" value="b" id="q4-4b"><label for="q4-4b">B. Compatible 5.x (>= 5.0 et < 6.0)</label></div><div class="qcm-option"><input type="radio" name="q4-4" value="c" id="q4-4c"><label for="q4-4c">C. N'importe quelle version</label></div><div class="qcm-option"><input type="radio" name="q4-4" value="d" id="q4-4d"><label for="q4-4d">D. Version 5 ou plus recent</label></div></div><button class="btn-validate" onclick="checkAnswer('q4-4','b',this,'p4')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p4"><p class="q-text">5) A quoi sert un alias de provider ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q4-5" value="a" id="q4-5a"><label for="q4-5a">A. Renommer le provider</label></div><div class="qcm-option"><input type="radio" name="q4-5" value="b" id="q4-5b"><label for="q4-5b">B. Configurer plusieurs instances du meme provider (ex: multi-region)</label></div><div class="qcm-option"><input type="radio" name="q4-5" value="c" id="q4-5c"><label for="q4-5c">C. Creer un raccourci de commande</label></div><div class="qcm-option"><input type="radio" name="q4-5" value="d" id="q4-5d"><label for="q4-5d">D. Desactiver un provider</label></div></div><button class="btn-validate" onclick="checkAnswer('q4-5','b',this,'p4')">Valider</button><div class="feedback"></div></div>
+    </div>
+        <div class="next-lesson-container"><button class="btn-next-lesson" onclick="goToNextPage('p5')">Lecon suivante &#10132; 5. Resources & Data</button></div></div>
+</div>
+
+<!-- PAGE 5 -->
+<div class="page" id="p5">
+    <div class="lesson-header"><h2>5 - Resources & Data Sources</h2><span class="lesson-score" id="score-p5">0/5</span></div>
+    <div class="tabs-container"><button class="tab-btn active" onclick="switchTab(this,'p5-concepts')">Concepts</button><button class="tab-btn" onclick="switchTab(this,'p5-keys')">Points Cles</button><button class="tab-btn" onclick="switchTab(this,'p5-qcm')">QCM</button></div>
+    <div class="tab-content active" id="p5-concepts"><div class="concepts">
+        <p><strong>Resource :</strong> Un bloc <code>resource</code> declare un element d'infrastructure a creer et gerer. Syntaxe : <code>resource "type" "nom" { ... }</code>. Exemple : <code>resource "aws_instance" "web" { ami = "ami-123" instance_type = "t3.micro" }</code>. Terraform cree, met a jour et supprime cette ressource.</p>
+        <p><strong>Lifecycle :</strong> Chaque ressource a un cycle de vie : Create, Read, Update, Delete (CRUD). On peut personnaliser avec le bloc <code>lifecycle</code> : <code>prevent_destroy = true</code> (empecher la suppression), <code>create_before_destroy = true</code> (creer la nouvelle avant de supprimer l'ancienne), <code>ignore_changes</code> (ignorer certains attributs).</p>
+        <p><strong>depends_on :</strong> Terraform detecte automatiquement les dependances via les references (ex: <code>vpc_id = aws_vpc.main.id</code>). Mais parfois les dependances sont implicites — on utilise alors <code>depends_on = [aws_iam_role.example]</code> pour forcer l'ordre de creation.</p>
+        <p><strong>Data Source :</strong> Un bloc <code>data</code> lit des informations EXISTANTES sans les creer. Exemple : recuperer l'AMI la plus recente, lire un secret depuis Vault, obtenir l'ID d'un VPC existant. Syntaxe : <code>data "aws_ami" "latest" { filter { ... } }</code>. Lecture seule.</p>
+        <p><strong>Resource Addressing :</strong> Chaque ressource a une adresse unique : <code>type.nom</code> (ex: <code>aws_instance.web</code>). On reference les attributs avec la notation point : <code>aws_instance.web.id</code>, <code>aws_instance.web.public_ip</code>. Ces references creent des dependances implicites.</p>
+    </div></div>
+    <div class="tab-content" id="p5-keys"><div class="key-points"><ul>
+        <li><strong>resource = creer et gerer un element d'infrastructure.</strong></li>
+        <li><strong>Lifecycle : prevent_destroy, create_before_destroy, ignore_changes.</strong></li>
+        <li><strong>depends_on = forcer une dependance explicite.</strong></li>
+        <li><strong>data = lire des infos existantes (lecture seule).</strong></li>
+        <li><strong>Adressage : type.nom.attribut (ex: aws_instance.web.id).</strong></li>
+        <li><strong>References entre ressources = dependances implicites.</strong></li>
+    </ul></div></div>
+    <div class="tab-content" id="p5-qcm"><div class="qcm-header"><span class="qcm-score-display" id="qcm-score-p5">Score: 0/5</span><button class="btn-reset" onclick="resetQcm('p5')">Recommencer</button></div><div class="qcm-grid" id="qcm-p5">
+        <div class="qcm-question" data-page="p5"><p class="q-text">1) Quelle est la difference entre resource et data ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q5-1" value="a" id="q5-1a"><label for="q5-1a">A. Aucune difference</label></div><div class="qcm-option"><input type="radio" name="q5-1" value="b" id="q5-1b"><label for="q5-1b">B. resource cree/gere, data lit des infos existantes</label></div><div class="qcm-option"><input type="radio" name="q5-1" value="c" id="q5-1c"><label for="q5-1c">C. data est plus rapide</label></div><div class="qcm-option"><input type="radio" name="q5-1" value="d" id="q5-1d"><label for="q5-1d">D. resource est en lecture seule</label></div></div><button class="btn-validate" onclick="checkAnswer('q5-1','b',this,'p5')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p5"><p class="q-text">2) Que fait prevent_destroy = true ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q5-2" value="a" id="q5-2a"><label for="q5-2a">A. Empeche la creation</label></div><div class="qcm-option"><input type="radio" name="q5-2" value="b" id="q5-2b"><label for="q5-2b">B. Empeche la suppression accidentelle de la ressource</label></div><div class="qcm-option"><input type="radio" name="q5-2" value="c" id="q5-2c"><label for="q5-2c">C. Accelere le deploiement</label></div><div class="qcm-option"><input type="radio" name="q5-2" value="d" id="q5-2d"><label for="q5-2d">D. Desactive le monitoring</label></div></div><button class="btn-validate" onclick="checkAnswer('q5-2','b',this,'p5')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p5"><p class="q-text">3) A quoi sert depends_on ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q5-3" value="a" id="q5-3a"><label for="q5-3a">A. Supprimer une dependance</label></div><div class="qcm-option"><input type="radio" name="q5-3" value="b" id="q5-3b"><label for="q5-3b">B. Forcer un ordre de creation explicite</label></div><div class="qcm-option"><input type="radio" name="q5-3" value="c" id="q5-3c"><label for="q5-3c">C. Installer un provider</label></div><div class="qcm-option"><input type="radio" name="q5-3" value="d" id="q5-3d"><label for="q5-3d">D. Definir une variable</label></div></div><button class="btn-validate" onclick="checkAnswer('q5-3','b',this,'p5')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p5"><p class="q-text">4) Comment reference-t-on l'ID d'une instance AWS nommee "web" ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q5-4" value="a" id="q5-4a"><label for="q5-4a">A. ${web.id}</label></div><div class="qcm-option"><input type="radio" name="q5-4" value="b" id="q5-4b"><label for="q5-4b">B. aws_instance.web.id</label></div><div class="qcm-option"><input type="radio" name="q5-4" value="c" id="q5-4c"><label for="q5-4c">C. instance["web"].id</label></div><div class="qcm-option"><input type="radio" name="q5-4" value="d" id="q5-4d"><label for="q5-4d">D. var.web_id</label></div></div><button class="btn-validate" onclick="checkAnswer('q5-4','b',this,'p5')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p5"><p class="q-text">5) Que fait create_before_destroy ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q5-5" value="a" id="q5-5a"><label for="q5-5a">A. Supprime avant de creer</label></div><div class="qcm-option"><input type="radio" name="q5-5" value="b" id="q5-5b"><label for="q5-5b">B. Cree la nouvelle ressource avant de supprimer l'ancienne</label></div><div class="qcm-option"><input type="radio" name="q5-5" value="c" id="q5-5c"><label for="q5-5c">C. Ne fait rien</label></div><div class="qcm-option"><input type="radio" name="q5-5" value="d" id="q5-5d"><label for="q5-5d">D. Cree un backup</label></div></div><button class="btn-validate" onclick="checkAnswer('q5-5','b',this,'p5')">Valider</button><div class="feedback"></div></div>
+    </div>
+        <div class="next-lesson-container"><button class="btn-next-lesson" onclick="goToNextPage('p6')">Lecon suivante &#10132; 6. Variables & Outputs</button></div></div>
+</div>
+
+<!-- PAGE 6 -->
+<div class="page" id="p6">
+    <div class="lesson-header"><h2>6 - Variables & Outputs</h2><span class="lesson-score" id="score-p6">0/5</span></div>
+    <div class="tabs-container"><button class="tab-btn active" onclick="switchTab(this,'p6-concepts')">Concepts</button><button class="tab-btn" onclick="switchTab(this,'p6-keys')">Points Cles</button><button class="tab-btn" onclick="switchTab(this,'p6-qcm')">QCM</button></div>
+    <div class="tab-content active" id="p6-concepts"><div class="concepts">
+        <p><strong>Input Variables :</strong> Permettent de parametrer la configuration. Declaration : <code>variable "name" { type = string default = "value" description = "..." }</code>. Utilisation : <code>var.name</code>. On peut les passer via CLI (-var), fichiers .tfvars, ou variables d'environnement (TF_VAR_name).</p>
+        <p><strong>Types de variables :</strong> Primitifs : string, number, bool. Complexes : list(type), map(type), set(type), object({key=type}), tuple([types]). On peut ajouter des validations custom : <code>validation { condition = ... error_message = "..." }</code>.</p>
+        <p><strong>Fichiers .tfvars :</strong> Les fichiers <code>terraform.tfvars</code> et <code>*.auto.tfvars</code> sont charges automatiquement. On peut aussi specifier un fichier : <code>terraform apply -var-file="prod.tfvars"</code>. Pratique pour separer les valeurs par environnement (dev.tfvars, staging.tfvars, prod.tfvars).</p>
+        <p><strong>Output Values :</strong> Les outputs exposent des valeurs apres apply : <code>output "ip" { value = aws_instance.web.public_ip }</code>. Utiles pour afficher des infos, passer des valeurs entre modules, ou servir d'input a d'autres outils. Commande : <code>terraform output</code>.</p>
+        <p><strong>Locals :</strong> Les <code>locals</code> sont des variables internes calculees, non exposees en input. Utiles pour eviter la repetition : <code>locals { common_tags = { env = var.env, project = "myapp" } }</code>. Reference : <code>local.common_tags</code>.</p>
+    </div></div>
+    <div class="tab-content" id="p6-keys"><div class="key-points"><ul>
+        <li><strong>variable = input parametrable (var.name).</strong></li>
+        <li><strong>Types : string, number, bool, list, map, object.</strong></li>
+        <li><strong>.tfvars = fichier de valeurs par environnement.</strong></li>
+        <li><strong>output = exposer des valeurs apres apply.</strong></li>
+        <li><strong>locals = variables internes calculees (local.xxx).</strong></li>
+        <li><strong>TF_VAR_name = passer une variable via env var.</strong></li>
+    </ul></div></div>
+    <div class="tab-content" id="p6-qcm"><div class="qcm-header"><span class="qcm-score-display" id="qcm-score-p6">Score: 0/5</span><button class="btn-reset" onclick="resetQcm('p6')">Recommencer</button></div><div class="qcm-grid" id="qcm-p6">
+        <div class="qcm-question" data-page="p6"><p class="q-text">1) Comment reference-t-on une variable "region" dans le code ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q6-1" value="a" id="q6-1a"><label for="q6-1a">A. ${region}</label></div><div class="qcm-option"><input type="radio" name="q6-1" value="b" id="q6-1b"><label for="q6-1b">B. var.region</label></div><div class="qcm-option"><input type="radio" name="q6-1" value="c" id="q6-1c"><label for="q6-1c">C. variable.region</label></div><div class="qcm-option"><input type="radio" name="q6-1" value="d" id="q6-1d"><label for="q6-1d">D. input.region</label></div></div><button class="btn-validate" onclick="checkAnswer('q6-1','b',this,'p6')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p6"><p class="q-text">2) Quel fichier est charge automatiquement pour les valeurs ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q6-2" value="a" id="q6-2a"><label for="q6-2a">A. variables.json</label></div><div class="qcm-option"><input type="radio" name="q6-2" value="b" id="q6-2b"><label for="q6-2b">B. terraform.tfvars</label></div><div class="qcm-option"><input type="radio" name="q6-2" value="c" id="q6-2c"><label for="q6-2c">C. config.yaml</label></div><div class="qcm-option"><input type="radio" name="q6-2" value="d" id="q6-2d"><label for="q6-2d">D. env.tf</label></div></div><button class="btn-validate" onclick="checkAnswer('q6-2','b',this,'p6')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p6"><p class="q-text">3) A quoi servent les outputs ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q6-3" value="a" id="q6-3a"><label for="q6-3a">A. Definir des variables d'entree</label></div><div class="qcm-option"><input type="radio" name="q6-3" value="b" id="q6-3b"><label for="q6-3b">B. Exposer des valeurs apres apply (IP, ID, URL...)</label></div><div class="qcm-option"><input type="radio" name="q6-3" value="c" id="q6-3c"><label for="q6-3c">C. Configurer les providers</label></div><div class="qcm-option"><input type="radio" name="q6-3" value="d" id="q6-3d"><label for="q6-3d">D. Supprimer des ressources</label></div></div><button class="btn-validate" onclick="checkAnswer('q6-3','b',this,'p6')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p6"><p class="q-text">4) Qu'est-ce qu'un local en Terraform ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q6-4" value="a" id="q6-4a"><label for="q6-4a">A. Une variable exposee en input</label></div><div class="qcm-option"><input type="radio" name="q6-4" value="b" id="q6-4b"><label for="q6-4b">B. Une variable interne calculee, non exposee</label></div><div class="qcm-option"><input type="radio" name="q6-4" value="c" id="q6-4c"><label for="q6-4c">C. Un fichier local sur le disque</label></div><div class="qcm-option"><input type="radio" name="q6-4" value="d" id="q6-4d"><label for="q6-4d">D. Un provider local</label></div></div><button class="btn-validate" onclick="checkAnswer('q6-4','b',this,'p6')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p6"><p class="q-text">5) Comment passer une variable via env var ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q6-5" value="a" id="q6-5a"><label for="q6-5a">A. TERRAFORM_name=value</label></div><div class="qcm-option"><input type="radio" name="q6-5" value="b" id="q6-5b"><label for="q6-5b">B. TF_VAR_name=value</label></div><div class="qcm-option"><input type="radio" name="q6-5" value="c" id="q6-5c"><label for="q6-5c">C. VAR_name=value</label></div><div class="qcm-option"><input type="radio" name="q6-5" value="d" id="q6-5d"><label for="q6-5d">D. HCL_VAR_name=value</label></div></div><button class="btn-validate" onclick="checkAnswer('q6-5','b',this,'p6')">Valider</button><div class="feedback"></div></div>
+    </div>
+        <div class="next-lesson-container"><button class="btn-next-lesson" onclick="goToNextPage('p7')">Lecon suivante &#10132; 7. State Management</button></div></div>
+</div>
+
+<!-- PAGE 7 -->
+<div class="page" id="p7">
+    <div class="lesson-header"><h2>7 - State Management</h2><span class="lesson-score" id="score-p7">0/5</span></div>
+    <div class="tabs-container"><button class="tab-btn active" onclick="switchTab(this,'p7-concepts')">Concepts</button><button class="tab-btn" onclick="switchTab(this,'p7-keys')">Points Cles</button><button class="tab-btn" onclick="switchTab(this,'p7-qcm')">QCM</button></div>
+    <div class="tab-content active" id="p7-concepts"><div class="concepts">
+        <p><strong>terraform.tfstate :</strong> Le state est un fichier JSON qui enregistre l'etat reel de l'infrastructure geree par Terraform. Il mappe chaque ressource du code a son equivalent reel (IDs, IPs, etc.). Sans le state, Terraform ne sait pas ce qu'il a deja cree et recrerait tout a chaque apply.</p>
+        <p><strong>Remote Backends :</strong> Par defaut, le state est local (terraform.tfstate). En equipe, on utilise un remote backend : S3+DynamoDB (AWS), Azure Blob Storage, GCS, Consul, Terraform Cloud. Avantages : partage entre collegues, versioning, chiffrement, state locking.</p>
+        <p><strong>State Locking :</strong> Le locking empeche deux personnes d'executer terraform apply en meme temps (ce qui corromprait le state). Avec S3, on utilise une table DynamoDB pour le lock. Terraform Cloud/Enterprise gere le locking automatiquement.</p>
+        <p><strong>Commandes terraform state :</strong> <code>terraform state list</code> = lister les ressources. <code>terraform state show &lt;addr&gt;</code> = voir les details. <code>terraform state mv</code> = renommer/deplacer. <code>terraform state rm</code> = retirer du state (sans supprimer la ressource reelle).</p>
+        <p><strong>terraform import :</strong> Permet d'importer une ressource existante (creee manuellement ou par un autre outil) dans le state Terraform. Syntaxe : <code>terraform import aws_instance.web i-1234567890</code>. Apres l'import, il faut ecrire le code HCL correspondant.</p>
+    </div></div>
+    <div class="tab-content" id="p7-keys"><div class="key-points"><ul>
+        <li><strong>State = source de verite sur l'infra reelle (JSON).</strong></li>
+        <li><strong>Remote backend = partager le state en equipe (S3, GCS, TF Cloud).</strong></li>
+        <li><strong>Locking = empecher les apply concurrents (DynamoDB).</strong></li>
+        <li><strong>terraform state list/show/mv/rm = gerer le state.</strong></li>
+        <li><strong>terraform import = importer une ressource existante.</strong></li>
+        <li><strong>JAMAIS committer le state dans git (contient des secrets).</strong></li>
+    </ul></div></div>
+    <div class="tab-content" id="p7-qcm"><div class="qcm-header"><span class="qcm-score-display" id="qcm-score-p7">Score: 0/5</span><button class="btn-reset" onclick="resetQcm('p7')">Recommencer</button></div><div class="qcm-grid" id="qcm-p7">
+        <div class="qcm-question" data-page="p7"><p class="q-text">1) A quoi sert le fichier terraform.tfstate ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q7-1" value="a" id="q7-1a"><label for="q7-1a">A. Stocker le code source</label></div><div class="qcm-option"><input type="radio" name="q7-1" value="b" id="q7-1b"><label for="q7-1b">B. Enregistrer l'etat reel de l'infrastructure geree</label></div><div class="qcm-option"><input type="radio" name="q7-1" value="c" id="q7-1c"><label for="q7-1c">C. Configurer les providers</label></div><div class="qcm-option"><input type="radio" name="q7-1" value="d" id="q7-1d"><label for="q7-1d">D. Stocker les logs</label></div></div><button class="btn-validate" onclick="checkAnswer('q7-1','b',this,'p7')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p7"><p class="q-text">2) Pourquoi utiliser un remote backend ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q7-2" value="a" id="q7-2a"><label for="q7-2a">A. Pour accelerer le plan</label></div><div class="qcm-option"><input type="radio" name="q7-2" value="b" id="q7-2b"><label for="q7-2b">B. Pour partager le state en equipe avec locking et chiffrement</label></div><div class="qcm-option"><input type="radio" name="q7-2" value="c" id="q7-2c"><label for="q7-2c">C. Pour eviter d'utiliser git</label></div><div class="qcm-option"><input type="radio" name="q7-2" value="d" id="q7-2d"><label for="q7-2d">D. Pour supprimer les ressources plus vite</label></div></div><button class="btn-validate" onclick="checkAnswer('q7-2','b',this,'p7')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p7"><p class="q-text">3) Que fait terraform state rm ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q7-3" value="a" id="q7-3a"><label for="q7-3a">A. Supprime la ressource reelle ET du state</label></div><div class="qcm-option"><input type="radio" name="q7-3" value="b" id="q7-3b"><label for="q7-3b">B. Retire la ressource du state sans la supprimer reellement</label></div><div class="qcm-option"><input type="radio" name="q7-3" value="c" id="q7-3c"><label for="q7-3c">C. Supprime le fichier state</label></div><div class="qcm-option"><input type="radio" name="q7-3" value="d" id="q7-3d"><label for="q7-3d">D. Reinitialise le state</label></div></div><button class="btn-validate" onclick="checkAnswer('q7-3','b',this,'p7')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p7"><p class="q-text">4) A quoi sert terraform import ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q7-4" value="a" id="q7-4a"><label for="q7-4a">A. Exporter l'infrastructure</label></div><div class="qcm-option"><input type="radio" name="q7-4" value="b" id="q7-4b"><label for="q7-4b">B. Importer une ressource existante dans le state</label></div><div class="qcm-option"><input type="radio" name="q7-4" value="c" id="q7-4c"><label for="q7-4c">C. Importer un module</label></div><div class="qcm-option"><input type="radio" name="q7-4" value="d" id="q7-4d"><label for="q7-4d">D. Copier un provider</label></div></div><button class="btn-validate" onclick="checkAnswer('q7-4','b',this,'p7')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p7"><p class="q-text">5) Pourquoi NE PAS committer le state dans git ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q7-5" value="a" id="q7-5a"><label for="q7-5a">A. Le fichier est trop gros</label></div><div class="qcm-option"><input type="radio" name="q7-5" value="b" id="q7-5b"><label for="q7-5b">B. Il contient des secrets et des donnees sensibles</label></div><div class="qcm-option"><input type="radio" name="q7-5" value="c" id="q7-5c"><label for="q7-5c">C. Git ne supporte pas JSON</label></div><div class="qcm-option"><input type="radio" name="q7-5" value="d" id="q7-5d"><label for="q7-5d">D. Ce n'est pas un fichier texte</label></div></div><button class="btn-validate" onclick="checkAnswer('q7-5','b',this,'p7')">Valider</button><div class="feedback"></div></div>
+    </div>
+        <div class="next-lesson-container"><button class="btn-next-lesson" onclick="goToNextPage('p8')">Lecon suivante &#10132; 8. Modules</button></div></div>
+</div>
+
+<!-- PAGE 8 -->
+<div class="page" id="p8">
+    <div class="lesson-header"><h2>8 - Modules</h2><span class="lesson-score" id="score-p8">0/5</span></div>
+    <div class="tabs-container"><button class="tab-btn active" onclick="switchTab(this,'p8-concepts')">Concepts</button><button class="tab-btn" onclick="switchTab(this,'p8-keys')">Points Cles</button><button class="tab-btn" onclick="switchTab(this,'p8-qcm')">QCM</button></div>
+    <div class="tab-content active" id="p8-concepts"><div class="concepts">
+        <p><strong>Qu'est-ce qu'un module ?</strong> Un module est un conteneur reutilisable de ressources Terraform. C'est un repertoire contenant des fichiers .tf. Tout repertoire Terraform est un module (le "root module"). On peut appeler d'autres modules pour eviter la duplication et standardiser l'infrastructure.</p>
+        <p><strong>Structure d'un module :</strong> Un module bien structure contient : <code>main.tf</code> (ressources), <code>variables.tf</code> (inputs), <code>outputs.tf</code> (outputs). On l'appelle avec : <code>module "name" { source = "./modules/vpc" vpc_cidr = "10.0.0.0/16" }</code>.</p>
+        <p><strong>Sources de modules :</strong> Un module peut venir de : un chemin local (./modules/xxx), le Terraform Registry (hashicorp/consul/aws), GitHub (github.com/org/repo), S3, GCS, ou HTTP. Les modules du Registry sont versionnes et documentes.</p>
+        <p><strong>Input/Output entre modules :</strong> On passe des valeurs a un module via ses variables (inputs). Le module expose des resultats via ses outputs. Le module parent accede aux outputs avec : <code>module.vpc.vpc_id</code>. C'est le mecanisme de communication inter-modules.</p>
+        <p><strong>Bonnes pratiques modules :</strong> Un module doit faire UNE chose (principe de responsabilite unique). Versionner les modules (tags git). Documenter les inputs/outputs. Ne pas imbriquer plus de 2-3 niveaux. Utiliser les modules du Registry quand possible (bien testes, maintenus).</p>
+    </div></div>
+    <div class="tab-content" id="p8-keys"><div class="key-points"><ul>
+        <li><strong>Module = repertoire de fichiers .tf reutilisable.</strong></li>
+        <li><strong>Structure : main.tf + variables.tf + outputs.tf.</strong></li>
+        <li><strong>Sources : local, Registry, GitHub, S3, HTTP.</strong></li>
+        <li><strong>Communication : variables (in) et outputs (out).</strong></li>
+        <li><strong>module.name.output = acceder aux outputs d'un module.</strong></li>
+        <li><strong>Un module = une responsabilite. Versionner avec des tags.</strong></li>
+    </ul></div></div>
+    <div class="tab-content" id="p8-qcm"><div class="qcm-header"><span class="qcm-score-display" id="qcm-score-p8">Score: 0/5</span><button class="btn-reset" onclick="resetQcm('p8')">Recommencer</button></div><div class="qcm-grid" id="qcm-p8">
+        <div class="qcm-question" data-page="p8"><p class="q-text">1) Qu'est-ce qu'un module Terraform ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q8-1" value="a" id="q8-1a"><label for="q8-1a">A. Un plugin provider</label></div><div class="qcm-option"><input type="radio" name="q8-1" value="b" id="q8-1b"><label for="q8-1b">B. Un repertoire de fichiers .tf reutilisable</label></div><div class="qcm-option"><input type="radio" name="q8-1" value="c" id="q8-1c"><label for="q8-1c">C. Un fichier de state</label></div><div class="qcm-option"><input type="radio" name="q8-1" value="d" id="q8-1d"><label for="q8-1d">D. Une commande CLI</label></div></div><button class="btn-validate" onclick="checkAnswer('q8-1','b',this,'p8')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p8"><p class="q-text">2) Quels fichiers composent un module standard ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q8-2" value="a" id="q8-2a"><label for="q8-2a">A. index.html, style.css, app.js</label></div><div class="qcm-option"><input type="radio" name="q8-2" value="b" id="q8-2b"><label for="q8-2b">B. main.tf, variables.tf, outputs.tf</label></div><div class="qcm-option"><input type="radio" name="q8-2" value="c" id="q8-2c"><label for="q8-2c">C. Dockerfile, docker-compose.yml</label></div><div class="qcm-option"><input type="radio" name="q8-2" value="d" id="q8-2d"><label for="q8-2d">D. package.json, tsconfig.json</label></div></div><button class="btn-validate" onclick="checkAnswer('q8-2','b',this,'p8')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p8"><p class="q-text">3) Comment accede-t-on a l'output "vpc_id" d'un module nomme "network" ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q8-3" value="a" id="q8-3a"><label for="q8-3a">A. var.network.vpc_id</label></div><div class="qcm-option"><input type="radio" name="q8-3" value="b" id="q8-3b"><label for="q8-3b">B. module.network.vpc_id</label></div><div class="qcm-option"><input type="radio" name="q8-3" value="c" id="q8-3c"><label for="q8-3c">C. output.network.vpc_id</label></div><div class="qcm-option"><input type="radio" name="q8-3" value="d" id="q8-3d"><label for="q8-3d">D. data.network.vpc_id</label></div></div><button class="btn-validate" onclick="checkAnswer('q8-3','b',this,'p8')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p8"><p class="q-text">4) D'ou peut venir la source d'un module ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q8-4" value="a" id="q8-4a"><label for="q8-4a">A. Uniquement un chemin local</label></div><div class="qcm-option"><input type="radio" name="q8-4" value="b" id="q8-4b"><label for="q8-4b">B. Local, Registry, GitHub, S3, HTTP</label></div><div class="qcm-option"><input type="radio" name="q8-4" value="c" id="q8-4c"><label for="q8-4c">C. Seulement le Registry</label></div><div class="qcm-option"><input type="radio" name="q8-4" value="d" id="q8-4d"><label for="q8-4d">D. Seulement GitHub</label></div></div><button class="btn-validate" onclick="checkAnswer('q8-4','b',this,'p8')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p8"><p class="q-text">5) Quelle bonne pratique pour les modules ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q8-5" value="a" id="q8-5a"><label for="q8-5a">A. Mettre tout dans un seul module geant</label></div><div class="qcm-option"><input type="radio" name="q8-5" value="b" id="q8-5b"><label for="q8-5b">B. Un module = une responsabilite, versionner avec des tags</label></div><div class="qcm-option"><input type="radio" name="q8-5" value="c" id="q8-5c"><label for="q8-5c">C. Ne jamais utiliser de modules</label></div><div class="qcm-option"><input type="radio" name="q8-5" value="d" id="q8-5d"><label for="q8-5d">D. Imbriquer 10+ niveaux de modules</label></div></div><button class="btn-validate" onclick="checkAnswer('q8-5','b',this,'p8')">Valider</button><div class="feedback"></div></div>
+    </div>
+        <div class="next-lesson-container"><button class="btn-next-lesson" onclick="goToNextPage('p9')">Lecon suivante &#10132; 9. Production</button></div></div>
+</div>
+
+<!-- PAGE 9 -->
+<div class="page" id="p9">
+    <div class="lesson-header"><h2>9 - Bonnes Pratiques & Production</h2><span class="lesson-score" id="score-p9">0/5</span></div>
+    <div class="tabs-container"><button class="tab-btn active" onclick="switchTab(this,'p9-concepts')">Concepts</button><button class="tab-btn" onclick="switchTab(this,'p9-keys')">Points Cles</button><button class="tab-btn" onclick="switchTab(this,'p9-qcm')">QCM</button></div>
+    <div class="tab-content active" id="p9-concepts"><div class="concepts">
+        <p><strong>Workspaces :</strong> Les workspaces permettent de gerer plusieurs environnements (dev, staging, prod) avec le meme code. Chaque workspace a son propre state. Commandes : <code>terraform workspace new dev</code>, <code>terraform workspace select prod</code>. Alternative : repertoires separes par env.</p>
+        <p><strong>Integration CI/CD :</strong> En production, on n'execute JAMAIS terraform apply manuellement. Le workflow type : PR → terraform plan (affiche dans la PR) → review → merge → terraform apply automatique. Outils : GitHub Actions, GitLab CI, Jenkins, Atlantis (specialise Terraform).</p>
+        <p><strong>Gestion des secrets :</strong> Ne JAMAIS stocker de secrets dans les fichiers .tf ou .tfvars commites. Solutions : variables d'env (TF_VAR_xxx), HashiCorp Vault, AWS Secrets Manager, les secrets du CI/CD. Le state aussi contient des secrets (d'ou remote backend chiffre).</p>
+        <p><strong>Terraform Cloud / Enterprise :</strong> Terraform Cloud est la plateforme SaaS de HashiCorp : remote execution, state management, policy enforcement (Sentinel), collaboration equipe, private registry. Enterprise = version on-premise. Alternative open source : Atlantis + remote state.</p>
+        <p><strong>Sentinel Policies :</strong> Sentinel est le framework de "policy as code" de HashiCorp. Il permet d'imposer des regles : "tous les buckets S3 doivent etre chiffres", "pas d'instances plus grandes que t3.large en dev", "tags obligatoires". Les policies bloquent le apply si violees.</p>
+    </div></div>
+    <div class="tab-content" id="p9-keys"><div class="key-points"><ul>
+        <li><strong>Workspaces = multi-env avec le meme code (dev/staging/prod).</strong></li>
+        <li><strong>CI/CD : plan dans la PR, apply apres merge. Jamais de apply manuel en prod.</strong></li>
+        <li><strong>Secrets : env vars, Vault, Secrets Manager. JAMAIS en dur.</strong></li>
+        <li><strong>Terraform Cloud = SaaS (remote exec, Sentinel, collaboration).</strong></li>
+        <li><strong>Sentinel = policy as code (regles imposees avant apply).</strong></li>
+        <li><strong>Atlantis = alternative open source pour CI/CD Terraform.</strong></li>
+    </ul></div></div>
+    <div class="tab-content" id="p9-qcm"><div class="qcm-header"><span class="qcm-score-display" id="qcm-score-p9">Score: 0/5</span><button class="btn-reset" onclick="resetQcm('p9')">Recommencer</button></div><div class="qcm-grid" id="qcm-p9">
+        <div class="qcm-question" data-page="p9"><p class="q-text">1) A quoi servent les workspaces ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q9-1" value="a" id="q9-1a"><label for="q9-1a">A. Installer des providers</label></div><div class="qcm-option"><input type="radio" name="q9-1" value="b" id="q9-1b"><label for="q9-1b">B. Gerer plusieurs environnements avec le meme code</label></div><div class="qcm-option"><input type="radio" name="q9-1" value="c" id="q9-1c"><label for="q9-1c">C. Creer des modules</label></div><div class="qcm-option"><input type="radio" name="q9-1" value="d" id="q9-1d"><label for="q9-1d">D. Supprimer des ressources</label></div></div><button class="btn-validate" onclick="checkAnswer('q9-1','b',this,'p9')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p9"><p class="q-text">2) Quel est le workflow CI/CD recommande pour Terraform ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q9-2" value="a" id="q9-2a"><label for="q9-2a">A. Apply directement depuis le poste du dev</label></div><div class="qcm-option"><input type="radio" name="q9-2" value="b" id="q9-2b"><label for="q9-2b">B. Plan dans la PR, review, apply apres merge</label></div><div class="qcm-option"><input type="radio" name="q9-2" value="c" id="q9-2c"><label for="q9-2c">C. Destroy puis recreer a chaque deploy</label></div><div class="qcm-option"><input type="radio" name="q9-2" value="d" id="q9-2d"><label for="q9-2d">D. Ne jamais utiliser de CI/CD</label></div></div><button class="btn-validate" onclick="checkAnswer('q9-2','b',this,'p9')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p9"><p class="q-text">3) Ou stocker les secrets pour Terraform ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q9-3" value="a" id="q9-3a"><label for="q9-3a">A. En dur dans les fichiers .tf</label></div><div class="qcm-option"><input type="radio" name="q9-3" value="b" id="q9-3b"><label for="q9-3b">B. Dans les variables d'environnement ou un gestionnaire de secrets</label></div><div class="qcm-option"><input type="radio" name="q9-3" value="c" id="q9-3c"><label for="q9-3c">C. Dans un fichier README</label></div><div class="qcm-option"><input type="radio" name="q9-3" value="d" id="q9-3d"><label for="q9-3d">D. Dans le state commite sur git</label></div></div><button class="btn-validate" onclick="checkAnswer('q9-3','b',this,'p9')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p9"><p class="q-text">4) Qu'est-ce que Sentinel ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q9-4" value="a" id="q9-4a"><label for="q9-4a">A. Un outil de monitoring</label></div><div class="qcm-option"><input type="radio" name="q9-4" value="b" id="q9-4b"><label for="q9-4b">B. Un framework de policy as code qui impose des regles avant apply</label></div><div class="qcm-option"><input type="radio" name="q9-4" value="c" id="q9-4c"><label for="q9-4c">C. Un provider cloud</label></div><div class="qcm-option"><input type="radio" name="q9-4" value="d" id="q9-4d"><label for="q9-4d">D. Un format de fichier</label></div></div><button class="btn-validate" onclick="checkAnswer('q9-4','b',this,'p9')">Valider</button><div class="feedback"></div></div>
+        <div class="qcm-question" data-page="p9"><p class="q-text">5) Quelle alternative open source a Terraform Cloud pour le CI/CD ?</p><div class="qcm-options"><div class="qcm-option"><input type="radio" name="q9-5" value="a" id="q9-5a"><label for="q9-5a">A. Kubernetes</label></div><div class="qcm-option"><input type="radio" name="q9-5" value="b" id="q9-5b"><label for="q9-5b">B. Atlantis</label></div><div class="qcm-option"><input type="radio" name="q9-5" value="c" id="q9-5c"><label for="q9-5c">C. Docker Compose</label></div><div class="qcm-option"><input type="radio" name="q9-5" value="d" id="q9-5d"><label for="q9-5d">D. Ansible Tower</label></div></div><button class="btn-validate" onclick="checkAnswer('q9-5','b',this,'p9')">Valider</button><div class="feedback"></div></div>
+    </div>
+        <div class="next-lesson-container"><button class="btn-next-lesson" onclick="goToNextPage('cheatsheet')">Voir le Cheat Sheet &#10132;</button></div></div>
+</div>
+
+<!-- CHEAT SHEET -->
+<div class="page" id="cheatsheet">
+    <div class="lesson-header"><h2>Cheat Sheet Terraform</h2><span class="lesson-score">Reference rapide</span></div>
+    <div class="cheat-grid">
+        <div class="cheat-card">
+            <h4>Commandes essentielles</h4>
+            <code>terraform init          # Initialiser
+terraform plan          # Preview
+terraform apply         # Appliquer
+terraform destroy       # Tout supprimer
+terraform fmt           # Formater le code
+terraform validate      # Valider la syntaxe</code>
+        </div>
+        <div class="cheat-card">
+            <h4>Variables</h4>
+            <code>variable "name" {
+  type        = string
+  default     = "value"
+  description = "Description"
+  validation {
+    condition     = length(var.name) > 0
+    error_message = "Ne peut etre vide"
+  }
+}</code>
+        </div>
+        <div class="cheat-card">
+            <h4>Resources</h4>
+            <code>resource "aws_instance" "web" {
+  ami           = "ami-12345"
+  instance_type = "t3.micro"
+  tags = { Name = "web-server" }
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}</code>
+        </div>
+        <div class="cheat-card">
+            <h4>Data Sources</h4>
+            <code>data "aws_ami" "latest" {
+  most_recent = true
+  owners      = ["amazon"]
+  filter {
+    name   = "name"
+    values = ["amzn2-ami-*"]
+  }
+}
+# Usage: data.aws_ami.latest.id</code>
+        </div>
+        <div class="cheat-card">
+            <h4>Modules</h4>
+            <code>module "vpc" {
+  source  = "./modules/vpc"
+  version = "~> 3.0"
+  cidr    = "10.0.0.0/16"
+  azs     = ["eu-west-1a", "eu-west-1b"]
+}
+# Output: module.vpc.vpc_id</code>
+        </div>
+        <div class="cheat-card">
+            <h4>State & Backend</h4>
+            <code>terraform {
+  backend "s3" {
+    bucket         = "my-tf-state"
+    key            = "prod/terraform.tfstate"
+    region         = "eu-west-1"
+    dynamodb_table = "tf-locks"
+    encrypt        = true
+  }
+}</code>
+        </div>
+        <div class="cheat-card">
+            <h4>Outputs</h4>
+            <code>output "instance_ip" {
+  value       = aws_instance.web.public_ip
+  description = "IP publique du serveur"
+  sensitive   = false
+}
+# terraform output instance_ip</code>
+        </div>
+        <div class="cheat-card">
+            <h4>Providers</h4>
+            <code>terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+}
+provider "aws" { region = "eu-west-1" }</code>
+        </div>
+    </div>
+</div>
+
+<!-- BONUS -->
+<div class="page" id="bonus">
+    <div class="bonus-section">
+        <h2>Bonus - Workflow & Avance</h2>
+
+        <h3>Workflow Terraform</h3>
+        <div class="pipeline-diagram">
+            <div class="pipeline-stage">Write<small>Code HCL</small></div>
+            <span class="pipeline-arrow">&#10132;</span>
+            <div class="pipeline-stage">Init<small>Providers</small></div>
+            <span class="pipeline-arrow">&#10132;</span>
+            <div class="pipeline-stage">Plan<small>Preview</small></div>
+            <span class="pipeline-arrow">&#10132;</span>
+            <div class="pipeline-stage">Apply<small>Execution</small></div>
+            <span class="pipeline-arrow">&#10132;</span>
+            <div class="pipeline-stage">State<small>Saved</small></div>
+        </div>
+
+        <h3>Exemple complet : VPC + EC2</h3>
+        <div class="code-block">terraform {
+  required_providers {
+    aws = { source = "hashicorp/aws", version = "~> 5.0" }
+  }
+  backend "s3" {
+    bucket = "my-terraform-state"
+    key    = "prod/infra.tfstate"
+    region = "eu-west-1"
+  }
+}
+
+provider "aws" { region = var.region }
+
+variable "region" { default = "eu-west-1" }
+
+resource "aws_vpc" "main" {
+  cidr_block = "10.0.0.0/16"
+  tags       = { Name = "prod-vpc" }
+}
+
+resource "aws_instance" "web" {
+  ami           = data.aws_ami.latest.id
+  instance_type = "t3.micro"
+  subnet_id     = aws_subnet.public.id
+  tags          = { Name = "web-server" }
+}
+
+output "web_ip" { value = aws_instance.web.public_ip }</div>
+
+        <h3>CI/CD avec GitHub Actions</h3>
+        <div class="code-block">name: Terraform
+on:
+  pull_request:
+    paths: ['infra/**']
+  push:
+    branches: [main]
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - run: terraform init
+      - run: terraform plan -no-color
+        id: plan
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              body: '```\n' + '${{ steps.plan.outputs.stdout }}' + '\n```'
+            })
+
+  apply:
+    if: github.ref == 'refs/heads/main'
+    needs: plan
+    runs-on: ubuntu-latest
+    steps:
+      - run: terraform apply -auto-approve</div>
+
+        <h3>Bonnes pratiques en production</h3>
+        <ul>
+            <li><strong>Remote state chiffre</strong> — S3 + DynamoDB ou Terraform Cloud</li>
+            <li><strong>Jamais de apply depuis un poste dev</strong> — toujours via CI/CD</li>
+            <li><strong>Plan dans la PR</strong> — reviewer les changements d'infra comme du code</li>
+            <li><strong>Modules versionnes</strong> — tags git semver (v1.0.0, v1.1.0)</li>
+            <li><strong>Separer les states</strong> — un state par composant/service</li>
+            <li><strong>terraform fmt + validate en pre-commit</strong></li>
+            <li><strong>Tester avec Terratest ou tftest</strong></li>
+            <li><strong>Secrets dans Vault/SSM, jamais dans le code</strong></li>
+        </ul>
+    </div>
+</div>
+
+    </div>
+
+    <!-- EXAM OVERLAY -->
+    <div class="exam-overlay" id="examOverlay">
+        <div class="exam-container">
+            <button class="btn-close-exam" onclick="closeExam()">&times;</button>
+            <div id="examContent"></div>
+        </div>
+    </div>
+
+    <script>
+    const STORAGE_KEY = 'terraform_progress';
+    const PAGE_TOTALS = { p1:5, p2:5, p3:6, p4:5, p5:5, p6:5, p7:5, p8:5, p9:5 };
+    let pageScores = {};
+    let answeredQuestions = {};
+
+    function saveProgress() {
+        const data = { scores: pageScores, answered: answeredQuestions };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    function loadProgress() {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+            try {
+                const data = JSON.parse(saved);
+                pageScores = data.scores || {};
+                answeredQuestions = data.answered || {};
+                Object.keys(answeredQuestions).forEach(name => {
+                    const radio = document.querySelector(`input[name="${name}"][value="${answeredQuestions[name]}"]`);
+                    if (radio) {
+                        radio.checked = true;
+                        const q = radio.closest('.qcm-question');
+                        const btn = q.querySelector('.btn-validate');
+                        const correct = btn.getAttribute('onclick').match(/'([a-d])'/)?.[1];
+                        const fb = q.querySelector('.feedback');
+                        if (answeredQuestions[name] === correct) {
+                            fb.className = 'feedback correct';
+                            fb.innerHTML = '<strong>Correct !</strong>';
+                            q.classList.add('answered-correct');
+                        } else {
+                            fb.className = 'feedback incorrect';
+                            fb.innerHTML = `<strong>Incorrect.</strong> La bonne reponse est <strong>${correct.toUpperCase()}</strong>.`;
+                            q.classList.add('answered-wrong');
+                        }
+                        fb.style.display = 'block';
+                        q.querySelectorAll('input[type="radio"]').forEach(r => r.disabled = true);
+                        btn.disabled = true; btn.style.opacity = '0.5';
+                    }
+                });
+            } catch(e) {}
+        }
+    }
+
+    function updateAllDisplays() {
+        let totalCorrect = 0, totalQuestions = 0;
+        Object.keys(PAGE_TOTALS).forEach(page => {
+            const score = pageScores[page] || 0;
+            const total = PAGE_TOTALS[page];
+            totalCorrect += score;
+            totalQuestions += total;
+            const scoreEl = document.getElementById(`score-${page}`);
+            if (scoreEl) scoreEl.textContent = `${score}/${total}`;
+            const qcmScore = document.getElementById(`qcm-score-${page}`);
+            if (qcmScore) qcmScore.textContent = `Score: ${score}/${total}`;
+            const badge = document.getElementById(`badge-${page}`);
+            if (badge) badge.textContent = score > 0 ? `${score}/${total}` : '-';
+        });
+        const pct = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
+        const bar = document.getElementById('globalProgressBar');
+        const text = document.getElementById('globalProgressText');
+        if (bar) bar.style.width = pct + '%';
+        if (text) text.textContent = `${pct}% complete (${totalCorrect}/${totalQuestions})`;
+    }
+
+    function checkAnswer(name, correct, btn, page) {
+        const sel = document.querySelector(`input[name="${name}"]:checked`);
+        if (!sel) { alert('Selectionnez une reponse !'); return; }
+        const ans = sel.value;
+        const q = btn.closest('.qcm-question');
+        const fb = q.querySelector('.feedback');
+        fb.style.display = 'block';
+        if (ans === correct) {
+            fb.className = 'feedback correct';
+            fb.innerHTML = '<strong>Correct !</strong> Bien joue.';
+            q.classList.add('answered-correct');
+            pageScores[page] = (pageScores[page] || 0) + 1;
+        } else {
+            fb.className = 'feedback incorrect';
+            fb.innerHTML = `<strong>Incorrect.</strong> La bonne reponse est <strong>${correct.toUpperCase()}</strong>.`;
+            q.classList.add('answered-wrong');
+        }
+        q.querySelectorAll('input[type="radio"]').forEach(r => r.disabled = true);
+        btn.disabled = true; btn.style.opacity = '0.5';
+        answeredQuestions[name] = ans;
+        updateAllDisplays();
+        saveProgress();
+    }
+
+    function resetQcm(page) {
+        const grid = document.getElementById(`qcm-${page}`);
+        if (!grid) return;
+        grid.querySelectorAll('input[type="radio"]').forEach(r => { r.checked = false; r.disabled = false; });
+        grid.querySelectorAll('.btn-validate').forEach(b => { b.disabled = false; b.style.opacity = '1'; });
+        grid.querySelectorAll('.feedback').forEach(f => { f.style.display = 'none'; });
+        grid.querySelectorAll('.qcm-question').forEach(q => { q.classList.remove('answered-correct','answered-wrong'); });
+        grid.querySelectorAll('input[type="radio"]').forEach(r => { delete answeredQuestions[r.name]; });
+        pageScores[page] = 0;
+        updateAllDisplays();
+        saveProgress();
+    }
+
+    let examTimer;
+    function startExam() {
+        const allQ = document.querySelectorAll('.qcm-question[data-page]');
+        const arr = Array.from(allQ);
+        const shuffled = arr.sort(() => Math.random() - 0.5).slice(0, 20);
+        let html = '<div class="exam-header"><h2>Examen Terraform (20 questions)</h2><div class="exam-timer" id="examTimer">10:00</div></div>';
+        shuffled.forEach((q, i) => {
+            const text = q.querySelector('.q-text').textContent;
+            const opts = q.querySelectorAll('.qcm-option');
+            const name = `exam-${i}`;
+            const correct = q.querySelector('.btn-validate').getAttribute('onclick').match(/'([a-d])'/)?.[1] || 'b';
+            html += `<div class="exam-question" data-correct="${correct}"><p>${i+1}) ${text.replace(/^\d+\)\s*/, '')}</p><div class="exam-options">`;
+            opts.forEach(o => {
+                const val = o.querySelector('input').value;
+                const lbl = o.querySelector('label').textContent;
+                html += `<div class="exam-option"><input type="radio" name="${name}" value="${val}"><label>${lbl}</label></div>`;
+            });
+            html += '</div></div>';
+        });
+        html += '<button class="btn-submit-exam" onclick="submitExam()">Soumettre l\'examen</button>';
+        document.getElementById('examContent').innerHTML = html;
+        document.getElementById('examOverlay').classList.add('active');
+        let timeLeft = 600;
+        examTimer = setInterval(() => {
+            timeLeft--;
+            const m = Math.floor(timeLeft / 60);
+            const s = timeLeft % 60;
+            const el = document.getElementById('examTimer');
+            if (el) el.textContent = `${m}:${s.toString().padStart(2,'0')}`;
+            if (timeLeft <= 60 && el) el.classList.add('warning');
+            if (timeLeft <= 0) submitExam();
+        }, 1000);
+    }
+
+    function submitExam() {
+        clearInterval(examTimer);
+        const questions = document.querySelectorAll('#examContent .exam-question');
+        let score = 0;
+        questions.forEach(q => {
+            const correct = q.dataset.correct;
+            const name = q.querySelector('input').name;
+            const sel = document.querySelector(`#examContent input[name="${name}"]:checked`);
+            if (sel && sel.value === correct) score++;
+        });
+        const total = questions.length;
+        const note = Math.round((score / total) * 20);
+        let comment = note >= 16 ? 'Excellent !' : note >= 12 ? 'Bien !' : note >= 10 ? 'Passable' : 'A retravailler';
+        document.getElementById('examContent').innerHTML = `<div class="exam-result"><div class="score-big">${note}/20</div><div class="score-text">${score} bonnes reponses sur ${total}<br>${comment}</div><br><button class="btn-submit-exam" onclick="closeExam()">Fermer</button></div>`;
+    }
+
+    function closeExam() {
+        clearInterval(examTimer);
+        document.getElementById('examOverlay').classList.remove('active');
+    }
+
+    function switchTab(btn, tabId) {
+        const parent = btn.closest('.page');
+        parent.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        parent.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(tabId).classList.add('active');
+    }
+
+    function showPage(pageId, link) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+        window.scrollTo(0, 0);
+        closeMobile();
+        return false;
+    }
+
+    function goToNextPage(pageId) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+        document.querySelectorAll('.nav-link').forEach(l => {
+            l.classList.remove('active');
+            if (l.getAttribute('onclick') && l.getAttribute('onclick').includes("'" + pageId + "'")) {
+                l.classList.add('active');
+            }
+        });
+        window.scrollTo(0, 0);
+        closeMobile();
+    }
+
+    function filterNav() {
+        const q = document.getElementById('searchInput').value.toLowerCase();
+        document.querySelectorAll('#navList li').forEach(li => {
+            const text = li.textContent.toLowerCase();
+            li.classList.toggle('hidden', q && !text.includes(q));
+        });
+    }
+
+    function toggleMobile() {
+        document.getElementById('sidebar').classList.toggle('open');
+        document.getElementById('overlay').classList.toggle('visible');
+        document.getElementById('burgerBtn').classList.toggle('active');
+    }
+    function closeMobile() {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('overlay').classList.remove('visible');
+        document.getElementById('burgerBtn').classList.remove('active');
+    }
+
+    loadProgress();
+    updateAllDisplays();
+    </script>
+</body>
+</html>
