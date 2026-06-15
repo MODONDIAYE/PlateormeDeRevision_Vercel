@@ -1,0 +1,1847 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plateforme de Revision AWS - Partie 3</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(145deg, #f0f4ff 0%, #e8eeff 50%, #f5f8ff 100%);
+            color: #1e293b;
+            line-height: 1.7;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* ===== TOP HEADER ===== */
+        .top-header {
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #1a4a7a 100%);
+            color: white;
+            padding: 18px 30px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            height: 80px;
+            box-shadow: 0 4px 20px rgba(15, 23, 42, 0.3);
+            backdrop-filter: blur(10px);
+        }
+        .top-header .logo {
+            width: 46px;
+            height: 46px;
+            background: linear-gradient(135deg, #3b82f6, #60a5fa);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4em;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+        .top-header .header-info { flex: 1; }
+        .top-header h1 { font-size: 1.25em; margin-bottom: 1px; font-weight: 700; letter-spacing: -0.3px; }
+        .top-header .subtitle { font-size: 0.8em; opacity: 0.75; font-weight: 300; }
+        .top-header .author { color: #60a5fa; font-size: 0.8em; font-weight: 600; margin-top: 1px; }
+        .search-bar {
+            width: 280px;
+            padding: 10px 16px;
+            border-radius: 10px;
+            border: 1px solid rgba(96, 165, 250, 0.2);
+            background: rgba(255,255,255,0.08);
+            color: white;
+            font-size: 0.85em;
+            outline: none;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+        .search-bar::placeholder { color: rgba(255,255,255,0.4); }
+        .search-bar:focus {
+            background: rgba(255,255,255,0.12);
+            border-color: rgba(96, 165, 250, 0.5);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+            width: 340px;
+        }
+
+        /* ===== LAYOUT ===== */
+        .layout {
+            display: flex;
+            margin-top: 80px;
+            min-height: calc(100vh - 80px);
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            width: 270px;
+            background: #ffffff;
+            border-right: 1px solid #e2e8f0;
+            position: fixed;
+            top: 80px;
+            left: 0;
+            bottom: 0;
+            overflow-y: auto;
+            padding: 24px 0;
+            z-index: 500;
+            box-shadow: 2px 0 12px rgba(15, 23, 42, 0.04);
+        }
+        .sidebar-section-title {
+            font-size: 0.7em;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #3b82f6;
+            padding: 12px 22px 6px;
+            letter-spacing: 1px;
+        }
+        .sidebar a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 11px 22px;
+            text-decoration: none;
+            color: #475569;
+            font-size: 0.87em;
+            font-weight: 450;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+        }
+        .sidebar a:hover {
+            background: #f0f7ff;
+            color: #1e40af;
+            border-left-color: #93c5fd;
+        }
+        .sidebar a.active {
+            background: linear-gradient(90deg, #eff6ff, #f8faff);
+            border-left-color: #2563eb;
+            color: #1d4ed8;
+            font-weight: 600;
+        }
+        .sidebar a .icon {
+            width: 26px;
+            height: 26px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75em;
+            flex-shrink: 0;
+        }
+        .icon-vpc { background: #dbeafe; color: #1d4ed8; }
+        .icon-storage { background: #dcfce7; color: #16a34a; }
+        .icon-monitoring { background: #e0e7ff; color: #4338ca; }
+        .icon-bonus { background: #dbeafe; color: #1e40af; }
+
+        /* ===== MAIN CONTENT ===== */
+        .main-content {
+            margin-left: 270px;
+            flex: 1;
+            padding: 35px 45px;
+            max-width: 920px;
+        }
+
+        /* ===== LESSON HEADER ===== */
+        .lesson-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .lesson-header .lesson-icon {
+            width: 54px;
+            height: 54px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4em;
+            box-shadow: 0 3px 10px rgba(59, 130, 246, 0.15);
+        }
+        .lesson-header h2 {
+            font-size: 1.6em;
+            color: #0f172a;
+            font-weight: 700;
+            letter-spacing: -0.4px;
+        }
+
+        /* ===== TABS ===== */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 28px;
+        }
+        .tab-btn {
+            padding: 9px 20px;
+            border-radius: 24px;
+            border: 1.5px solid #e2e8f0;
+            background: #ffffff;
+            cursor: pointer;
+            font-size: 0.84em;
+            font-weight: 500;
+            color: #64748b;
+            transition: all 0.25s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .tab-btn:hover {
+            border-color: #93c5fd;
+            color: #2563eb;
+            background: #f0f7ff;
+            transform: translateY(-1px);
+        }
+        .tab-btn.active {
+            background: linear-gradient(135deg, #2563eb, #3b82f6);
+            color: white;
+            border-color: #2563eb;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+        .tab-btn .tab-icon { font-size: 0.9em; }
+
+        /* ===== TAB CONTENT ===== */
+        .tab-content { display: none; animation: fadeIn 0.3s ease; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ===== CONCEPT CARDS ===== */
+        .concept-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 22px 26px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+            transition: all 0.2s ease;
+        }
+        .concept-card:hover {
+            box-shadow: 0 4px 16px rgba(37, 99, 235, 0.08);
+            border-color: #bfdbfe;
+        }
+        .concept-card h4 {
+            color: #0f172a;
+            font-size: 1.02em;
+            margin-bottom: 12px;
+            font-weight: 650;
+        }
+        .concept-card p, .concept-card ul {
+            color: #475569;
+            font-size: 0.9em;
+        }
+        .concept-card ul { padding-left: 18px; }
+        .concept-card li { margin-bottom: 6px; }
+        .concept-card table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+            font-size: 0.87em;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .concept-card th, .concept-card td {
+            padding: 10px 14px;
+            border: 1px solid #e2e8f0;
+            text-align: left;
+        }
+        .concept-card th { background: linear-gradient(135deg, #1e3a5f, #1e40af); color: white; font-weight: 500; }
+        .concept-card tr:nth-child(even) { background: #f8fafc; }
+        .concept-card tr:hover { background: #eff6ff; }
+
+        /* ===== KEY POINTS ===== */
+        .key-point-card {
+            background: #ffffff;
+            border: 1px solid #dbeafe;
+            border-radius: 14px;
+            padding: 18px 22px;
+            margin-bottom: 12px;
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+            transition: all 0.2s ease;
+        }
+        .key-point-card:hover {
+            border-color: #93c5fd;
+            box-shadow: 0 3px 12px rgba(37, 99, 235, 0.08);
+            transform: translateX(3px);
+        }
+        .key-point-card .star {
+            font-size: 1.2em;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+        .key-point-card .kp-content { flex: 1; }
+        .key-point-card .kp-title {
+            font-weight: 650;
+            color: #0f172a;
+            font-size: 0.92em;
+            margin-bottom: 4px;
+        }
+        .key-point-card .kp-desc {
+            color: #64748b;
+            font-size: 0.83em;
+            line-height: 1.5;
+        }
+
+        /* ===== QCM ===== */
+        .qcm-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .qcm-header h3 { color: #0f172a; font-size: 1.1em; font-weight: 650; }
+        .qcm-counter {
+            background: linear-gradient(135deg, #eff6ff, #dbeafe);
+            padding: 5px 14px;
+            border-radius: 14px;
+            font-size: 0.78em;
+            color: #1d4ed8;
+            font-weight: 600;
+        }
+        .question {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-bottom: 14px;
+            transition: all 0.2s ease;
+        }
+        .question:hover {
+            border-color: #bfdbfe;
+            box-shadow: 0 2px 10px rgba(37, 99, 235, 0.06);
+        }
+        .question p {
+            font-weight: 600;
+            margin-bottom: 14px;
+            color: #0f172a;
+            font-size: 0.92em;
+        }
+        .question label {
+            display: block;
+            padding: 10px 16px;
+            margin: 5px 0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.88em;
+            border: 1px solid transparent;
+        }
+        .question label:hover {
+            background: #eff6ff;
+            border-color: #bfdbfe;
+        }
+        .question input[type="radio"] { margin-right: 10px; accent-color: #2563eb; }
+
+        .feedback {
+            display: none;
+            padding: 14px 16px;
+            margin-top: 12px;
+            border-radius: 10px;
+            font-size: 0.85em;
+        }
+        .feedback.correct {
+            display: block;
+            background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+            border: 1px solid #a7f3d0;
+            color: #065f46;
+        }
+        .feedback.incorrect {
+            display: block;
+            background: linear-gradient(135deg, #fef2f2, #fee2e2);
+            border: 1px solid #fecaca;
+            color: #991b1b;
+        }
+        .explanation {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(0,0,0,0.06);
+            font-style: italic;
+            font-size: 0.95em;
+        }
+
+        .btn {
+            padding: 11px 24px;
+            border-radius: 10px;
+            border: none;
+            font-size: 0.88em;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.25s ease;
+            margin: 4px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #2563eb, #3b82f6);
+            color: white;
+            box-shadow: 0 3px 10px rgba(37, 99, 235, 0.3);
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #1d4ed8, #2563eb);
+            box-shadow: 0 5px 16px rgba(37, 99, 235, 0.4);
+            transform: translateY(-1px);
+        }
+        .btn-secondary {
+            background: linear-gradient(135deg, #0f172a, #1e3a5f);
+            color: white;
+            box-shadow: 0 3px 10px rgba(15, 23, 42, 0.2);
+        }
+        .btn-secondary:hover {
+            background: linear-gradient(135deg, #1e3a5f, #1e40af);
+            transform: translateY(-1px);
+        }
+
+        .score-display {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #0f172a, #1e3a5f);
+            color: white;
+            border-radius: 14px;
+            margin-top: 16px;
+            display: none;
+            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.3);
+        }
+        .score-display span { font-size: 1.5em; color: #60a5fa; font-weight: 800; }
+        .progress-bar-container {
+            background: #e2e8f0;
+            border-radius: 10px;
+            height: 7px;
+            margin-bottom: 22px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            border-radius: 10px;
+            background: linear-gradient(90deg, #2563eb, #60a5fa);
+            transition: width 0.4s ease;
+            width: 0%;
+        }
+
+        /* ===== BONUS ===== */
+        .bonus-card {
+            background: linear-gradient(135deg, #eff6ff, #f0f7ff);
+            border: 1px solid #bfdbfe;
+            border-radius: 14px;
+            padding: 22px 26px;
+            margin-bottom: 16px;
+            transition: all 0.2s ease;
+        }
+        .bonus-card:hover {
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.1);
+        }
+        .bonus-card h4 { color: #1e40af; margin-bottom: 10px; font-weight: 650; }
+
+        /* ===== SECTION DIVIDER ===== */
+        .section-title {
+            font-size: 0.75em;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #94a3b8;
+            letter-spacing: 1px;
+            margin: 24px 0 12px;
+        }
+
+        /* ===== LESSON CONTAINER ===== */
+        .lesson { display: none; }
+        .lesson.active { display: block; animation: fadeIn 0.3s ease; }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 900px) {
+            .sidebar { width: 230px; }
+            .main-content { margin-left: 230px; padding: 20px; }
+        }
+        @media (max-width: 700px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            .sidebar.open { transform: translateX(0); }
+            .main-content { margin-left: 0; padding: 15px; }
+            .top-header { padding: 12px 15px; height: auto; flex-wrap: wrap; gap: 10px; }
+            .search-bar { width: 100%; order: 3; }
+            .search-bar:focus { width: 100%; }
+            .layout { margin-top: 120px; }
+            .sidebar { top: 120px; }
+            .menu-toggle { display: block; }
+        }
+
+        /* ===== SCROLLBAR ===== */
+        .sidebar::-webkit-scrollbar { width: 5px; }
+        .sidebar::-webkit-scrollbar-track { background: transparent; }
+        .sidebar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .sidebar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* ===== SELECTION ===== */
+        ::selection { background: #bfdbfe; color: #1e3a5f; }
+    </style>
+</head>
+<body>
+
+    <!-- TOP HEADER -->
+    <div class="top-header">
+        <div class="logo">&#9729;</div>
+        <div class="header-info">
+            <h1>Plateforme de Revision AWS - Partie 3</h1>
+            <div class="subtitle">11 lecons &middot; Concepts &middot; Points Cles Enrichis &middot; 10+ QCM/lecon avec Justifications</div>
+            <div class="author">Modou NDIAYE</div>
+        </div>
+        <input type="text" class="search-bar" placeholder="&#128269; Rechercher une lecon..." id="searchInput" onkeyup="searchLesson()">
+    </div>
+
+    <div class="layout">
+        <!-- SIDEBAR -->
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-section-title">Reseau</div>
+            <a href="#" onclick="showLesson('vpc')" id="nav-vpc" class="active">
+                <span class="icon icon-vpc">&#127760;</span> Amazon VPC
+            </a>
+            <a href="#" onclick="showLesson('vpc-connect')" id="nav-vpc-connect">
+                <span class="icon icon-vpc">&#128279;</span> Connectivite VPC
+            </a>
+            <a href="#" onclick="showLesson('vpc-security')" id="nav-vpc-security">
+                <span class="icon icon-vpc">&#128274;</span> Securite VPC
+            </a>
+            <a href="#" onclick="showLesson('vpc-troubleshoot')" id="nav-vpc-troubleshoot">
+                <span class="icon icon-vpc">&#128295;</span> Depannage VPC
+            </a>
+
+            <div class="sidebar-section-title">Stockage</div>
+            <a href="#" onclick="showLesson('ebs')" id="nav-ebs">
+                <span class="icon icon-storage">&#128190;</span> Amazon EBS
+            </a>
+            <a href="#" onclick="showLesson('instance-store')" id="nav-instance-store">
+                <span class="icon icon-storage">&#9889;</span> Instance Store
+            </a>
+            <a href="#" onclick="showLesson('efs')" id="nav-efs">
+                <span class="icon icon-storage">&#128193;</span> Amazon EFS
+            </a>
+            <a href="#" onclick="showLesson('s3')" id="nav-s3">
+                <span class="icon icon-storage">&#128230;</span> Amazon S3
+            </a>
+            <a href="#" onclick="showLesson('glacier')" id="nav-glacier">
+                <span class="icon icon-storage">&#10052;</span> Amazon Glacier
+            </a>
+            <a href="#" onclick="showLesson('storage-gw')" id="nav-storage-gw">
+                <span class="icon icon-storage">&#128259;</span> Storage Gateway
+            </a>
+
+            <div class="sidebar-section-title">Surveillance</div>
+            <a href="#" onclick="showLesson('cloudwatch')" id="nav-cloudwatch">
+                <span class="icon icon-monitoring">&#128200;</span> Amazon CloudWatch
+            </a>
+            <a href="#" onclick="showLesson('cloudtrail')" id="nav-cloudtrail">
+                <span class="icon icon-monitoring">&#128065;</span> AWS CloudTrail
+            </a>
+            <a href="#" onclick="showLesson('athena')" id="nav-athena">
+                <span class="icon icon-monitoring">&#128270;</span> Athena Integration
+            </a>
+
+            <div class="sidebar-section-title">Bonus</div>
+            <a href="#" onclick="showLesson('bonus')" id="nav-bonus">
+                <span class="icon icon-bonus">&#127942;</span> Approfondissement
+            </a>
+        </nav>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+
+            <!-- ==================== VPC ==================== -->
+            <div class="lesson active" id="lesson-vpc">
+                <div class="lesson-header">
+                    <div class="lesson-icon icon-vpc" style="font-size:1.4em;">&#127760;</div>
+                    <h2>Amazon VPC</h2>
+                </div>
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchTab('vpc','concepts')"><span class="tab-icon">&#128218;</span> Concepts</button>
+                    <button class="tab-btn" onclick="switchTab('vpc','keypoints')"><span class="tab-icon">&#11088;</span> Points Cles</button>
+                    <button class="tab-btn" onclick="switchTab('vpc','qcm')"><span class="tab-icon">&#9998;</span> QCM (12)</button>
+                </div>
+
+                <div class="tab-content active" id="vpc-concepts">
+                    <div class="concept-card">
+                        <h4>Qu'est-ce qu'un VPC ?</h4>
+                        <p>Amazon VPC (Virtual Private Cloud) est un reseau virtuel logiquement isole dans le cloud AWS. Vous definissez et controlez entierement la plage d'adresses IP, les sous-reseaux, les tables de routage et les passerelles.</p>
+                    </div>
+                    <div class="concept-card">
+                        <h4>Composants fondamentaux</h4>
+                        <table>
+                            <tr><th>Composant</th><th>Role</th></tr>
+                            <tr><td><strong>Sous-reseau</strong></td><td>Segment du VPC dans une AZ. Public ou prive.</td></tr>
+                            <tr><td><strong>Table de routage</strong></td><td>Regles determinant ou diriger le trafic.</td></tr>
+                            <tr><td><strong>Internet Gateway</strong></td><td>Communication VPC <-> Internet.</td></tr>
+                            <tr><td><strong>NAT Gateway</strong></td><td>Acces Internet sortant pour sous-reseaux prives.</td></tr>
+                            <tr><td><strong>Security Group</strong></td><td>Pare-feu instance (stateful).</td></tr>
+                            <tr><td><strong>NACL</strong></td><td>Pare-feu sous-reseau (stateless).</td></tr>
+                            <tr><td><strong>Elastic IP</strong></td><td>Adresse IPv4 statique publique.</td></tr>
+                        </table>
+                    </div>
+                    <div class="concept-card">
+                        <h4>Sous-reseaux : Public vs Prive</h4>
+                        <p><strong>Public :</strong> Route vers l'IGW (0.0.0.0/0 -> IGW). Instances avec IP publique.</p>
+                        <p><strong>Prive :</strong> Pas de route directe vers Internet. Utilise un NAT Gateway pour le trafic sortant.</p>
+                    </div>
+                    <div class="concept-card">
+                        <h4>CIDR et Adressage</h4>
+                        <p>CIDR definit la plage d'adresses. VPC : entre /16 (65 536 IP) et /28 (16 IP).</p>
+                        <p>AWS reserve <strong>5 adresses</strong> par sous-reseau (4 premieres + derniere).</p>
+                        <p>Exemple : 10.0.0.0/16 = adresses 10.0.0.0 a 10.0.255.255</p>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="vpc-keypoints">
+                    <div class="section-title">Points Cles Enrichis</div>
+                    <div class="key-point-card">
+                        <span class="star">&#11088;</span>
+                        <div class="kp-content">
+                            <div class="kp-title">Un VPC = une Region, plusieurs AZ</div>
+                            <div class="kp-desc">Un VPC est limite a une seule Region mais peut contenir des sous-reseaux dans chaque AZ de cette Region.</div>
+                        </div>
+                    </div>
+                    <div class="key-point-card">
+                        <span class="star">&#11088;</span>
+                        <div class="kp-content">
+                            <div class="kp-title">Un sous-reseau = une seule AZ</div>
+                            <div class="kp-desc">Un sous-reseau ne peut jamais s'etendre sur plusieurs AZ. Pour la HA, creez des sous-reseaux dans plusieurs AZ.</div>
+                        </div>
+                    </div>
+                    <div class="key-point-card">
+                        <span class="star">&#11088;</span>
+                        <div class="kp-content">
+                            <div class="kp-title">Security Group = Stateful</div>
+                            <div class="kp-desc">Si le trafic entrant est autorise, le retour sortant est automatique. Pas besoin de regle sortante explicite pour les reponses.</div>
+                        </div>
+                    </div>
+                    <div class="key-point-card">
+                        <span class="star">&#11088;</span>
+                        <div class="kp-content">
+                            <div class="kp-title">NACL = Stateless</div>
+                            <div class="kp-desc">Regles entrant ET sortant doivent etre definies. Ports ephemeres (1024-65535) necessaires pour les reponses.</div>
+                        </div>
+                    </div>
+                    <div class="key-point-card">
+                        <span class="star">&#11088;</span>
+                        <div class="kp-content">
+                            <div class="kp-title">VPC par defaut dans chaque Region</div>
+                            <div class="kp-desc">Chaque compte AWS a un VPC par defaut avec un sous-reseau public dans chaque AZ et un IGW attache.</div>
+                        </div>
+                    </div>
+                    <div class="key-point-card">
+                        <span class="star">&#11088;</span>
+                        <div class="kp-content">
+                            <div class="kp-title">5 adresses reservees par sous-reseau</div>
+                            <div class="kp-desc">.0 (reseau), .1 (routeur), .2 (DNS), .3 (reserve), derniere (broadcast). Un /24 = 251 IP disponibles.</div>
+                        </div>
+                    </div>
+                    <div class="key-point-card">
+                        <span class="star">&#11088;</span>
+                        <div class="kp-content">
+                            <div class="kp-title">IGW = hautement disponible par defaut</div>
+                            <div class="kp-desc">L'Internet Gateway est redondant et scalable, pas besoin de le configurer en HA.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="vpc-qcm">
+                    <div class="qcm-header">
+                        <h3>QCM - Amazon VPC</h3>
+                        <span class="qcm-counter">12 questions</span>
+                    </div>
+                    <div class="progress-bar-container"><div class="progress-bar" id="progress-vpc"></div></div>
+
+                    <div class="question">
+                        <p>1) Quel composant permet aux instances d'un sous-reseau prive d'acceder a Internet ?</p>
+                        <label><input type="radio" name="vpc1" value="a"> Internet Gateway</label>
+                        <label><input type="radio" name="vpc1" value="b"> NAT Gateway</label>
+                        <label><input type="radio" name="vpc1" value="c"> Virtual Private Gateway</label>
+                        <label><input type="radio" name="vpc1" value="d"> VPC Endpoint</label>
+                        <div class="feedback" id="fb-vpc1"></div>
+                    </div>
+                    <div class="question">
+                        <p>2) Quelle est la difference principale entre un Security Group et une NACL ?</p>
+                        <label><input type="radio" name="vpc2" value="a"> SG est stateless, NACL est stateful</label>
+                        <label><input type="radio" name="vpc2" value="b"> SG est stateful, NACL est stateless</label>
+                        <label><input type="radio" name="vpc2" value="c"> Les deux sont stateful</label>
+                        <label><input type="radio" name="vpc2" value="d"> Les deux sont stateless</label>
+                        <div class="feedback" id="fb-vpc2"></div>
+                    </div>
+                    <div class="question">
+                        <p>3) Combien d'adresses IP AWS reserve-t-elle dans chaque sous-reseau ?</p>
+                        <label><input type="radio" name="vpc3" value="a"> 3</label>
+                        <label><input type="radio" name="vpc3" value="b"> 4</label>
+                        <label><input type="radio" name="vpc3" value="c"> 5</label>
+                        <label><input type="radio" name="vpc3" value="d"> 2</label>
+                        <div class="feedback" id="fb-vpc3"></div>
+                    </div>
+                    <div class="question">
+                        <p>4) Un sous-reseau peut-il s'etendre sur plusieurs zones de disponibilite ?</p>
+                        <label><input type="radio" name="vpc4" value="a"> Oui, toujours</label>
+                        <label><input type="radio" name="vpc4" value="b"> Non, un sous-reseau est limite a une seule AZ</label>
+                        <label><input type="radio" name="vpc4" value="c"> Oui, avec configuration specifique</label>
+                        <label><input type="radio" name="vpc4" value="d"> Seulement dans le VPC par defaut</label>
+                        <div class="feedback" id="fb-vpc4"></div>
+                    </div>
+                    <div class="question">
+                        <p>5) Quel est le role de l'Internet Gateway ?</p>
+                        <label><input type="radio" name="vpc5" value="a"> Fournir un DNS aux instances</label>
+                        <label><input type="radio" name="vpc5" value="b"> Connecter un VPC a un autre VPC</label>
+                        <label><input type="radio" name="vpc5" value="c"> Permettre la communication entre le VPC et Internet</label>
+                        <label><input type="radio" name="vpc5" value="d"> Chiffrer le trafic sortant</label>
+                        <div class="feedback" id="fb-vpc5"></div>
+                    </div>
+                    <div class="question">
+                        <p>6) Quelle affirmation est correcte sur les Security Groups ?</p>
+                        <label><input type="radio" name="vpc6" value="a"> Ils supportent les regles DENY</label>
+                        <label><input type="radio" name="vpc6" value="b"> Ils sont evalues dans l'ordre numerique</label>
+                        <label><input type="radio" name="vpc6" value="c"> Ils ne supportent que les regles ALLOW</label>
+                        <label><input type="radio" name="vpc6" value="d"> Ils s'appliquent au niveau du sous-reseau</label>
+                        <div class="feedback" id="fb-vpc6"></div>
+                    </div>
+                    <div class="question">
+                        <p>7) Ou doit etre place le NAT Gateway ?</p>
+                        <label><input type="radio" name="vpc7" value="a"> Dans un sous-reseau prive</label>
+                        <label><input type="radio" name="vpc7" value="b"> Dans un sous-reseau public</label>
+                        <label><input type="radio" name="vpc7" value="c"> En dehors du VPC</label>
+                        <label><input type="radio" name="vpc7" value="d"> Dans n'importe quel sous-reseau</label>
+                        <div class="feedback" id="fb-vpc7"></div>
+                    </div>
+                    <div class="question">
+                        <p>8) Les NACLs evaluent les regles de quelle maniere ?</p>
+                        <label><input type="radio" name="vpc8" value="a"> Toutes les regles sont evaluees</label>
+                        <label><input type="radio" name="vpc8" value="b"> Ordre numerique, premiere correspondance gagne</label>
+                        <label><input type="radio" name="vpc8" value="c"> Regle la plus elevee a priorite</label>
+                        <label><input type="radio" name="vpc8" value="d"> Aleatoirement</label>
+                        <div class="feedback" id="fb-vpc8"></div>
+                    </div>
+                    <div class="question">
+                        <p>9) Quel port faut-il ouvrir en sortie dans une NACL pour les reponses HTTP ?</p>
+                        <label><input type="radio" name="vpc9" value="a"> Port 80</label>
+                        <label><input type="radio" name="vpc9" value="b"> Port 443</label>
+                        <label><input type="radio" name="vpc9" value="c"> Ports ephemeres 1024-65535</label>
+                        <label><input type="radio" name="vpc9" value="d"> Port 22</label>
+                        <div class="feedback" id="fb-vpc9"></div>
+                    </div>
+                    <div class="question">
+                        <p>10) Quel outil capture les metadonnees du trafic reseau dans un VPC ?</p>
+                        <label><input type="radio" name="vpc10" value="a"> CloudTrail</label>
+                        <label><input type="radio" name="vpc10" value="b"> VPC Flow Logs</label>
+                        <label><input type="radio" name="vpc10" value="c"> AWS Config</label>
+                        <label><input type="radio" name="vpc10" value="d"> Inspector</label>
+                        <div class="feedback" id="fb-vpc10"></div>
+                    </div>
+                    <div class="question">
+                        <p>11) Quelle est la plage CIDR minimale pour un VPC ?</p>
+                        <label><input type="radio" name="vpc11" value="a"> /8</label>
+                        <label><input type="radio" name="vpc11" value="b"> /16</label>
+                        <label><input type="radio" name="vpc11" value="c"> /24</label>
+                        <label><input type="radio" name="vpc11" value="d"> /28</label>
+                        <div class="feedback" id="fb-vpc11"></div>
+                    </div>
+                    <div class="question">
+                        <p>12) Quelle option DNS doit etre activee pour la resolution de noms dans un VPC ?</p>
+                        <label><input type="radio" name="vpc12" value="a"> enableDnsHostnames et enableDnsSupport</label>
+                        <label><input type="radio" name="vpc12" value="b"> enableRouting</label>
+                        <label><input type="radio" name="vpc12" value="c"> enableNAT</label>
+                        <label><input type="radio" name="vpc12" value="d"> enableFirewall</label>
+                        <div class="feedback" id="fb-vpc12"></div>
+                    </div>
+
+                    <div style="text-align:center; margin-top:20px;">
+                        <button class="btn btn-primary" onclick="checkAnswers('vpc')">Verifier mes reponses</button>
+                        <button class="btn btn-secondary" onclick="resetQuiz('vpc')">Recommencer</button>
+                    </div>
+                    <div class="score-display" id="score-vpc"></div>
+                </div>
+            </div>
+
+            <!-- ==================== VPC CONNECTIVITY ==================== -->
+            <div class="lesson" id="lesson-vpc-connect">
+                <div class="lesson-header">
+                    <div class="lesson-icon icon-vpc" style="font-size:1.4em;">&#128279;</div>
+                    <h2>Connectivite Amazon VPC</h2>
+                </div>
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchTab('vpc-connect','concepts')"><span class="tab-icon">&#128218;</span> Concepts</button>
+                    <button class="tab-btn" onclick="switchTab('vpc-connect','keypoints')"><span class="tab-icon">&#11088;</span> Points Cles</button>
+                    <button class="tab-btn" onclick="switchTab('vpc-connect','qcm')"><span class="tab-icon">&#9998;</span> QCM (10)</button>
+                </div>
+
+                <div class="tab-content active" id="vpc-connect-concepts">
+                    <div class="concept-card">
+                        <h4>Options de connexion VPC</h4>
+                        <table>
+                            <tr><th>Option</th><th>Description</th><th>Cas d'usage</th></tr>
+                            <tr><td><strong>VPC Peering</strong></td><td>Connexion privee entre 2 VPC</td><td>Communication inter-VPC</td></tr>
+                            <tr><td><strong>VPN Site-to-Site</strong></td><td>Tunnel IPSec via Internet</td><td>Connexion on-premises/AWS</td></tr>
+                            <tr><td><strong>Direct Connect</strong></td><td>Fibre dediee privee</td><td>Haut debit, faible latence</td></tr>
+                            <tr><td><strong>Transit Gateway</strong></td><td>Hub central reseau</td><td>Interconnexion multiple VPC</td></tr>
+                            <tr><td><strong>VPC Endpoints</strong></td><td>Acces prive aux services AWS</td><td>S3/DynamoDB sans Internet</td></tr>
+                            <tr><td><strong>PrivateLink</strong></td><td>Expose un service entre VPC</td><td>Partage de services</td></tr>
+                        </table>
+                    </div>
+                    <div class="concept-card">
+                        <h4>VPC Peering - Regles importantes</h4>
+                        <ul>
+                            <li><strong>Non transitif :</strong> A-B et B-C ne donne PAS A-C</li>
+                            <li>Les CIDR ne doivent pas se chevaucher</li>
+                            <li>Fonctionne entre comptes et entre Regions</li>
+                            <li>Le trafic reste sur le reseau prive AWS</li>
+                        </ul>
+                    </div>
+                    <div class="concept-card">
+                        <h4>VPC Endpoints : Gateway vs Interface</h4>
+                        <p><strong>Gateway Endpoint :</strong> S3 et DynamoDB uniquement. Gratuit. Configure dans la table de routage.</p>
+                        <p><strong>Interface Endpoint (PrivateLink) :</strong> Autres services. Cree une ENI. Payant (horaire + donnees).</p>
+                    </div>
+                    <div class="concept-card">
+                        <h4>Direct Connect vs VPN</h4>
+                        <p><strong>Direct Connect :</strong> Connexion physique dediee, bande passante constante, latence previsible. Mise en place en semaines.</p>
+                        <p><strong>VPN :</strong> Passe par Internet (chiffre IPSec), mise en place rapide, bande passante variable.</p>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="vpc-connect-keypoints">
+                    <div class="section-title">Points Cles Enrichis</div>
+                    <div class="key-point-card">
+                        <span class="star">&#11088;</span>
+                        <div class="kp-content">
+                            <div class="kp-title">VPC Peering = NON transitif</div>
+                            <div class="kp-desc">Chaque paire de VPC necessite sa propre connexion. Pour N VPC entierement connectes, il faut N*(N-1)/2 peerings.</div>
+                        </div>
+                    </div>
+                    <div class="key-point-card">
+                        <span class="star">&#11088;</span>
+                        <div class="kp-content">
+                            <div class="kp-title">Gateway Endpoint = gratuit (S3 + DynamoDB)</div>
+                            <div class="kp-desc">Se configure dans la table de routage. Interface Endpoint = payant, cree une ENI dans le sous-reseau.</div>
+                        </div>
+                    </div>
+                    <div class="key-point-card">
+                        <span class="star">&#11088;</span>
+                        <div class="kp-content">
+                            <div class="kp-title">Transit Gateway = hub central (hub-and-spoke)</div>
+                            <div class="kp-desc">Simplifie les architectures complexes. Evite le mesh complet de peering. Un seul point de gestion.</div>
+                        </div>
+                    </div>
+                    <div class="key-point-card">
+                        <span class="star">&#11088;</span>
+                        <div class="kp-content">
+                            <div class="kp-title">Direct Connect = semaines d'installation</div>
+                            <div class="kp-desc">Connexion physique (fibre). Bande passante 1 Gbps ou 10 Gbps. Pas chiffre par defaut (ajouter VPN par-dessus si besoin).</div>
+                        </div>
+                    </div>
+                    <div class="key-point-card">
+                        <span class="star">&#11088;</span>
+                        <div class="kp-content">
+                            <div class="kp-title">VPN = Virtual Private Gateway + Customer Gateway</div>
+                            <div class="kp-desc">Virtual Private Gateway cote AWS. Customer Gateway = votre equipement/logiciel on-premises. Deux tunnels pour la HA.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="vpc-connect-qcm">
+                    <div class="qcm-header">
+                        <h3>QCM - Connectivite VPC</h3>
+                        <span class="qcm-counter">10 questions</span>
+                    </div>
+                    <div class="progress-bar-container"><div class="progress-bar" id="progress-vpc-connect"></div></div>
+
+                    <div class="question">
+                        <p>1) Le VPC Peering est-il transitif ?</p>
+                        <label><input type="radio" name="vpcc1" value="a"> Oui, toujours</label>
+                        <label><input type="radio" name="vpcc1" value="b"> Non, jamais</label>
+                        <label><input type="radio" name="vpcc1" value="c"> Seulement dans la meme Region</label>
+                        <label><input type="radio" name="vpcc1" value="d"> Seulement avec Transit Gateway</label>
+                        <div class="feedback" id="fb-vpcc1"></div>
+                    </div>
+                    <div class="question">
+                        <p>2) Quel type de VPC Endpoint est utilise pour S3 ?</p>
+                        <label><input type="radio" name="vpcc2" value="a"> Interface Endpoint</label>
+                        <label><input type="radio" name="vpcc2" value="b"> Gateway Endpoint</label>
+                        <label><input type="radio" name="vpcc2" value="c"> PrivateLink</label>
+                        <label><input type="radio" name="vpcc2" value="d"> Direct Connect</label>
+                        <div class="feedback" id="fb-vpcc2"></div>
+                    </div>
+                    <div class="question">
+                        <p>3) Quel service fournit une connexion physique dediee vers AWS ?</p>
+                        <label><input type="radio" name="vpcc3" value="a"> VPN Site-to-Site</label>
+                        <label><input type="radio" name="vpcc3" value="b"> AWS Direct Connect</label>
+                        <label><input type="radio" name="vpcc3" value="c"> VPC Peering</label>
+                        <label><input type="radio" name="vpcc3" value="d"> Internet Gateway</label>
+                        <div class="feedback" id="fb-vpcc3"></div>
+                    </div>
+                    <div class="question">
+                        <p>4) Quelle est la fonction de Transit Gateway ?</p>
+                        <label><input type="radio" name="vpcc4" value="a"> Connecter un VPC a Internet</label>
+                        <label><input type="radio" name="vpcc4" value="b"> Hub central pour interconnecter plusieurs VPC</label>
+                        <label><input type="radio" name="vpcc4" value="c"> Chiffrer le trafic</label>
+                        <label><input type="radio" name="vpcc4" value="d"> Creer des sous-reseaux</label>
+                        <div class="feedback" id="fb-vpcc4"></div>
+                    </div>
+                    <div class="question">
+                        <p>5) Le Gateway Endpoint est-il payant ?</p>
+                        <label><input type="radio" name="vpcc5" value="a"> Oui, facturation horaire</label>
+                        <label><input type="radio" name="vpcc5" value="b"> Non, il est gratuit</label>
+                        <label><input type="radio" name="vpcc5" value="c"> Seulement pour DynamoDB</label>
+                        <label><input type="radio" name="vpcc5" value="d"> Oui, par Go transfere</label>
+                        <div class="feedback" id="fb-vpcc5"></div>
+                    </div>
+                    <div class="question">
+                        <p>6) Que faut-il pour que le VPC Peering fonctionne ?</p>
+                        <label><input type="radio" name="vpcc6" value="a"> Un IGW dans chaque VPC</label>
+                        <label><input type="radio" name="vpcc6" value="b"> Des routes dans les deux VPC + CIDR non chevauchants</label>
+                        <label><input type="radio" name="vpcc6" value="c"> Un NAT Gateway</label>
+                        <label><input type="radio" name="vpcc6" value="d"> Direct Connect active</label>
+                        <div class="feedback" id="fb-vpcc6"></div>
+                    </div>
+                    <div class="question">
+                        <p>7) Quelle composante cote client est necessaire pour un VPN Site-to-Site ?</p>
+                        <label><input type="radio" name="vpcc7" value="a"> Internet Gateway</label>
+                        <label><input type="radio" name="vpcc7" value="b"> Customer Gateway</label>
+                        <label><input type="radio" name="vpcc7" value="c"> NAT Gateway</label>
+                        <label><input type="radio" name="vpcc7" value="d"> Transit Gateway</label>
+                        <div class="feedback" id="fb-vpcc7"></div>
+                    </div>
+                    <div class="question">
+                        <p>8) Direct Connect est-il chiffre par defaut ?</p>
+                        <label><input type="radio" name="vpcc8" value="a"> Oui, toujours chiffre</label>
+                        <label><input type="radio" name="vpcc8" value="b"> Non, pas chiffre par defaut</label>
+                        <label><input type="radio" name="vpcc8" value="c"> Seulement en inter-Region</label>
+                        <label><input type="radio" name="vpcc8" value="d"> Seulement avec KMS</label>
+                        <div class="feedback" id="fb-vpcc8"></div>
+                    </div>
+                    <div class="question">
+                        <p>9) Combien de tunnels VPN sont crees par defaut pour la haute disponibilite ?</p>
+                        <label><input type="radio" name="vpcc9" value="a"> 1</label>
+                        <label><input type="radio" name="vpcc9" value="b"> 2</label>
+                        <label><input type="radio" name="vpcc9" value="c"> 3</label>
+                        <label><input type="radio" name="vpcc9" value="d"> 4</label>
+                        <div class="feedback" id="fb-vpcc9"></div>
+                    </div>
+                    <div class="question">
+                        <p>10) PrivateLink permet de :</p>
+                        <label><input type="radio" name="vpcc10" value="a"> Connecter un VPC a Internet</label>
+                        <label><input type="radio" name="vpcc10" value="b"> Exposer un service d'un VPC a d'autres VPC de maniere privee</label>
+                        <label><input type="radio" name="vpcc10" value="c"> Creer un peering automatique</label>
+                        <label><input type="radio" name="vpcc10" value="d"> Remplacer Direct Connect</label>
+                        <div class="feedback" id="fb-vpcc10"></div>
+                    </div>
+
+                    <div style="text-align:center; margin-top:20px;">
+                        <button class="btn btn-primary" onclick="checkAnswers('vpcc')">Verifier mes reponses</button>
+                        <button class="btn btn-secondary" onclick="resetQuiz('vpcc')">Recommencer</button>
+                    </div>
+                    <div class="score-display" id="score-vpcc"></div>
+                </div>
+            </div>
+
+            <!-- ==================== VPC SECURITY ==================== -->
+            <div class="lesson" id="lesson-vpc-security">
+                <div class="lesson-header">
+                    <div class="lesson-icon icon-vpc" style="font-size:1.4em;">&#128274;</div>
+                    <h2>Securite et Depannage Reseau</h2>
+                </div>
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchTab('vpc-security','concepts')"><span class="tab-icon">&#128218;</span> Concepts</button>
+                    <button class="tab-btn" onclick="switchTab('vpc-security','keypoints')"><span class="tab-icon">&#11088;</span> Points Cles</button>
+                    <button class="tab-btn" onclick="switchTab('vpc-security','qcm')"><span class="tab-icon">&#9998;</span> QCM (10)</button>
+                </div>
+
+                <div class="tab-content active" id="vpc-security-concepts">
+                    <div class="concept-card">
+                        <h4>Security Groups vs Network ACLs</h4>
+                        <table>
+                            <tr><th>Aspect</th><th>Security Group</th><th>NACL</th></tr>
+                            <tr><td>Niveau</td><td>Instance (ENI)</td><td>Sous-reseau</td></tr>
+                            <tr><td>Etat</td><td>Stateful</td><td>Stateless</td></tr>
+                            <tr><td>Regles</td><td>Allow uniquement</td><td>Allow ET Deny</td></tr>
+                            <tr><td>Evaluation</td><td>Toutes les regles</td><td>Ordre numerique</td></tr>
+                            <tr><td>Par defaut</td><td>Deny in / Allow out</td><td>Allow all</td></tr>
+                        </table>
+                    </div>
+                    <div class="concept-card">
+                        <h4>VPC Flow Logs</h4>
+                        <p>Capturent le trafic IP (metadonnees) des interfaces reseau.</p>
+                        <ul>
+                            <li>Activables au niveau VPC, sous-reseau ou ENI</li>
+                            <li>Publiables vers CloudWatch Logs ou S3</li>
+                            <li>Ne capturent PAS le contenu des paquets</li>
+                            <li>Montrent ACCEPT/REJECT pour diagnostiquer</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="vpc-security-keypoints">
+                    <div class="section-title">Points Cles Enrichis</div>
+                    <div class="key-point-card">
+                        <span class="star">&#11088;</span>
+                        <div class="kp-content">
+                            <div class="kp-title">SG peut referencer un autre SG</div>
+                            <div class="kp-desc">Au lieu de specifier une IP, on peut autoriser le trafic provenant d'instances ayant un certain Security Group.</div>
+                        </div>
+                    </div>
+                    <div class="key-point-card">
+                        <span class="star">&#11088;</span>
+                        <div class="kp-content">
+                            <div class="kp-title">NACL : premiere correspondance gagne</div>
+                            <div class="kp-desc">Les regles sont evaluees du numero le plus bas au plus haut. Regle 100 avant 200. Regle * (deny all) en dernier.</div>
+                        </div>
+                    </div>
+                    <div class="key-point-card">
+                        <span class="star">&#11088;</span>
+                        <div class="kp-content">
+                            <div class="kp-title">Flow Logs = diagnostic de connectivite</div>
+                            <div class="kp-desc">Permettent de voir quel trafic est accepte ou rejete. Utile pour trouver pourquoi une connexion echoue.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="vpc-security-qcm">
+                    <div class="qcm-header">
+                        <h3>QCM - Securite Reseau</h3>
+                        <span class="qcm-counter">10 questions</span>
+                    </div>
+                    <div class="progress-bar-container"><div class="progress-bar" id="progress-vpcs"></div></div>
+
+                    <div class="question">
+                        <p>1) Un Security Group supporte-t-il les regles DENY ?</p>
+                        <label><input type="radio" name="vpcs1" value="a"> Oui</label>
+                        <label><input type="radio" name="vpcs1" value="b"> Non, uniquement ALLOW</label>
+                        <label><input type="radio" name="vpcs1" value="c"> Seulement en inbound</label>
+                        <label><input type="radio" name="vpcs1" value="d"> Seulement en outbound</label>
+                        <div class="feedback" id="fb-vpcs1"></div>
+                    </div>
+                    <div class="question">
+                        <p>2) Si on autorise le port 80 en entree dans un SG, faut-il une regle sortante pour la reponse ?</p>
+                        <label><input type="radio" name="vpcs2" value="a"> Oui, obligatoire</label>
+                        <label><input type="radio" name="vpcs2" value="b"> Non, le SG est stateful</label>
+                        <label><input type="radio" name="vpcs2" value="c"> Seulement pour HTTPS</label>
+                        <label><input type="radio" name="vpcs2" value="d"> Seulement avec NACL</label>
+                        <div class="feedback" id="fb-vpcs2"></div>
+                    </div>
+                    <div class="question">
+                        <p>3) Quel est le comportement par defaut d'une NACL nouvellement creee ?</p>
+                        <label><input type="radio" name="vpcs3" value="a"> Deny all inbound et outbound</label>
+                        <label><input type="radio" name="vpcs3" value="b"> Allow all inbound et outbound</label>
+                        <label><input type="radio" name="vpcs3" value="c"> Allow inbound, Deny outbound</label>
+                        <label><input type="radio" name="vpcs3" value="d"> Deny inbound, Allow outbound</label>
+                        <div class="feedback" id="fb-vpcs3"></div>
+                    </div>
+                    <div class="question">
+                        <p>4) VPC Flow Logs capturent-ils le contenu des paquets ?</p>
+                        <label><input type="radio" name="vpcs4" value="a"> Oui, tout le contenu</label>
+                        <label><input type="radio" name="vpcs4" value="b"> Non, seulement les metadonnees</label>
+                        <label><input type="radio" name="vpcs4" value="c"> Seulement pour HTTP</label>
+                        <label><input type="radio" name="vpcs4" value="d"> Oui, si active</label>
+                        <div class="feedback" id="fb-vpcs4"></div>
+                    </div>
+                    <div class="question">
+                        <p>5) A quel niveau s'applique une NACL ?</p>
+                        <label><input type="radio" name="vpcs5" value="a"> Instance</label>
+                        <label><input type="radio" name="vpcs5" value="b"> Sous-reseau</label>
+                        <label><input type="radio" name="vpcs5" value="c"> VPC entier</label>
+                        <label><input type="radio" name="vpcs5" value="d"> Region</label>
+                        <div class="feedback" id="fb-vpcs5"></div>
+                    </div>
+                    <div class="question">
+                        <p>6) Dans une NACL, la regle numero 100 est evaluee avant la regle 200 ?</p>
+                        <label><input type="radio" name="vpcs6" value="a"> Oui, les regles de numero inferieur sont evaluees d'abord</label>
+                        <label><input type="radio" name="vpcs6" value="b"> Non, c'est l'inverse</label>
+                        <label><input type="radio" name="vpcs6" value="c"> L'ordre n'importe pas</label>
+                        <label><input type="radio" name="vpcs6" value="d"> Seulement pour les regles DENY</label>
+                        <div class="feedback" id="fb-vpcs6"></div>
+                    </div>
+                    <div class="question">
+                        <p>7) Ou peut-on publier les VPC Flow Logs ?</p>
+                        <label><input type="radio" name="vpcs7" value="a"> S3 et CloudWatch Logs</label>
+                        <label><input type="radio" name="vpcs7" value="b"> DynamoDB uniquement</label>
+                        <label><input type="radio" name="vpcs7" value="c"> EBS uniquement</label>
+                        <label><input type="radio" name="vpcs7" value="d"> RDS</label>
+                        <div class="feedback" id="fb-vpcs7"></div>
+                    </div>
+                    <div class="question">
+                        <p>8) Peut-on utiliser un Security Group comme source dans une regle d'un autre SG ?</p>
+                        <label><input type="radio" name="vpcs8" value="a"> Non, seulement des adresses IP</label>
+                        <label><input type="radio" name="vpcs8" value="b"> Oui, on peut referencer un autre SG</label>
+                        <label><input type="radio" name="vpcs8" value="c"> Seulement dans le meme sous-reseau</label>
+                        <label><input type="radio" name="vpcs8" value="d"> Seulement avec VPC Peering</label>
+                        <div class="feedback" id="fb-vpcs8"></div>
+                    </div>
+                    <div class="question">
+                        <p>9) Quelle NACL par defaut est associee au VPC par defaut ?</p>
+                        <label><input type="radio" name="vpcs9" value="a"> NACL qui bloque tout</label>
+                        <label><input type="radio" name="vpcs9" value="b"> NACL qui autorise tout (allow all in/out)</label>
+                        <label><input type="radio" name="vpcs9" value="c"> Pas de NACL</label>
+                        <label><input type="radio" name="vpcs9" value="d"> NACL avec port 80 seulement</label>
+                        <div class="feedback" id="fb-vpcs9"></div>
+                    </div>
+                    <div class="question">
+                        <p>10) Pour diagnostiquer un probleme de connectivite, quel est l'ordre de verification recommande ?</p>
+                        <label><input type="radio" name="vpcs10" value="a"> DNS -> Route Table -> NACL -> SG</label>
+                        <label><input type="radio" name="vpcs10" value="b"> SG -> NACL -> Route Table -> IP/DNS</label>
+                        <label><input type="radio" name="vpcs10" value="c"> Supprimer et recreer le VPC</label>
+                        <label><input type="radio" name="vpcs10" value="d"> Contacter le support AWS</label>
+                        <div class="feedback" id="fb-vpcs10"></div>
+                    </div>
+
+                    <div style="text-align:center; margin-top:20px;">
+                        <button class="btn btn-primary" onclick="checkAnswers('vpcs')">Verifier mes reponses</button>
+                        <button class="btn btn-secondary" onclick="resetQuiz('vpcs')">Recommencer</button>
+                    </div>
+                    <div class="score-display" id="score-vpcs"></div>
+                </div>
+            </div>
+
+            <!-- ==================== VPC TROUBLESHOOT ==================== -->
+            <div class="lesson" id="lesson-vpc-troubleshoot">
+                <div class="lesson-header">
+                    <div class="lesson-icon icon-vpc" style="font-size:1.4em;">&#128295;</div>
+                    <h2>Depannage d'un VPC</h2>
+                </div>
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchTab('vpc-troubleshoot','concepts')"><span class="tab-icon">&#128218;</span> Concepts</button>
+                    <button class="tab-btn" onclick="switchTab('vpc-troubleshoot','keypoints')"><span class="tab-icon">&#11088;</span> Points Cles</button>
+                    <button class="tab-btn" onclick="switchTab('vpc-troubleshoot','qcm')"><span class="tab-icon">&#9998;</span> QCM (10)</button>
+                </div>
+
+                <div class="tab-content active" id="vpc-troubleshoot-concepts">
+                    <div class="concept-card">
+                        <h4>Problemes courants et solutions</h4>
+                        <table>
+                            <tr><th>Probleme</th><th>Cause probable</th><th>Solution</th></tr>
+                            <tr><td>Instance ne peut pas acceder Internet</td><td>Pas de route IGW, pas d'IP publique</td><td>Verifier route + IP publique/EIP</td></tr>
+                            <tr><td>SSH impossible</td><td>Port 22 bloque (SG ou NACL)</td><td>Ouvrir port 22 inbound</td></tr>
+                            <tr><td>Instance privee sans Internet</td><td>NAT Gateway absent ou mal place</td><td>NAT GW dans subnet PUBLIC</td></tr>
+                            <tr><td>Peering ne fonctionne pas</td><td>Routes manquantes</td><td>Routes dans les DEUX VPC</td></tr>
+                        </table>
+                    </div>
+                    <div class="concept-card">
+                        <h4>Methodologie systematique</h4>
+                        <ul>
+                            <li>1. Verifier Security Groups (inbound/outbound)</li>
+                            <li>2. Verifier NACLs (regles + ordre)</li>
+                            <li>3. Verifier tables de routage (IGW, NAT, Peering)</li>
+                            <li>4. Verifier adressage IP (IP publique, EIP)</li>
+                            <li>5. Consulter VPC Flow Logs (ACCEPT/REJECT)</li>
+                            <li>6. Verifier DNS (enableDnsHostnames/Support)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="vpc-troubleshoot-keypoints">
+                    <div class="section-title">Points Cles Enrichis</div>
+                    <div class="key-point-card">
+                        <span class="star">&#11088;</span>
+                        <div class="kp-content">
+                            <div class="kp-title">NAT Gateway = sous-reseau PUBLIC obligatoire</div>
+                            <div class="kp-desc">Erreur la plus frequente : placer le NAT GW dans un sous-reseau prive. Il DOIT etre dans le public subnet avec route vers IGW.</div>
+                        </div>
+                    </div>
+                    <div class="key-point-card">
+                        <span class="star">&#11088;</span>
+                        <div class="kp-content">
+                            <div class="kp-title">Peering : routes dans LES DEUX VPC</div>
+                            <div class="kp-desc">Il faut ajouter une route vers le CIDR de l'autre VPC dans la table de routage de CHAQUE VPC.</div>
+                        </div>
+                    </div>
+                    <div class="key-point-card">
+                        <span class="star">&#11088;</span>
+                        <div class="kp-content">
+                            <div class="kp-title">SG ET NACL doivent autoriser le trafic</div>
+                            <div class="kp-desc">Le trafic doit passer les DEUX couches. Si l'un bloque, la connexion echoue meme si l'autre autorise.</div>
+                        </div>
+                    </div>
+                    <div class="key-point-card">
+                        <span class="star">&#11088;</span>
+                        <div class="kp-content">
+                            <div class="kp-title">Flow Logs : ACCEPT/REJECT pour diagnostiquer</div>
+                            <div class="kp-desc">Si vous voyez REJECT dans les Flow Logs, le trafic est bloque par un SG ou une NACL. Identifiez la source du blocage.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="vpc-troubleshoot-qcm">
+                    <div class="qcm-header">
+                        <h3>QCM - Depannage VPC</h3>
+                        <span class="qcm-counter">10 questions</span>
+                    </div>
+                    <div class="progress-bar-container"><div class="progress-bar" id="progress-vpct"></div></div>
+
+                    <div class="question">
+                        <p>1) Une instance dans un sous-reseau prive ne peut pas acceder a Internet. Quelle est la cause la plus probable ?</p>
+                        <label><input type="radio" name="vpct1" value="a"> Security Group bloque le port 80</label>
+                        <label><input type="radio" name="vpct1" value="b"> NAT Gateway absent ou pas de route vers le NAT GW</label>
+                        <label><input type="radio" name="vpct1" value="c"> L'instance n'a pas de role IAM</label>
+                        <label><input type="radio" name="vpct1" value="d"> Le VPC est trop petit</label>
+                        <div class="feedback" id="fb-vpct1"></div>
+                    </div>
+                    <div class="question">
+                        <p>2) Le VPC Peering est configure mais les instances ne communiquent pas. Que verifier en premier ?</p>
+                        <label><input type="radio" name="vpct2" value="a"> Les roles IAM</label>
+                        <label><input type="radio" name="vpct2" value="b"> Les routes dans les tables de routage des deux VPC</label>
+                        <label><input type="radio" name="vpct2" value="c"> La taille des instances</label>
+                        <label><input type="radio" name="vpct2" value="d"> Le type de stockage</label>
+                        <div class="feedback" id="fb-vpct2"></div>
+                    </div>
+                    <div class="question">
+                        <p>3) Vous voyez "REJECT" dans les VPC Flow Logs. Que cela signifie ?</p>
+                        <label><input type="radio" name="vpct3" value="a"> Le serveur de destination est eteint</label>
+                        <label><input type="radio" name="vpct3" value="b"> Un SG ou NACL bloque le trafic</label>
+                        <label><input type="radio" name="vpct3" value="c"> Le DNS ne fonctionne pas</label>
+                        <label><input type="radio" name="vpct3" value="d"> AWS a un probleme</label>
+                        <div class="feedback" id="fb-vpct3"></div>
+                    </div>
+                    <div class="question">
+                        <p>4) Ou le NAT Gateway doit-il se trouver ?</p>
+                        <label><input type="radio" name="vpct4" value="a"> Dans le sous-reseau prive des instances</label>
+                        <label><input type="radio" name="vpct4" value="b"> Dans un sous-reseau public avec route vers IGW</label>
+                        <label><input type="radio" name="vpct4" value="c"> Dans un autre VPC</label>
+                        <label><input type="radio" name="vpct4" value="d"> Peu importe</label>
+                        <div class="feedback" id="fb-vpct4"></div>
+                    </div>
+                    <div class="question">
+                        <p>5) SSH ne fonctionne pas vers une instance publique. Que verifier ?</p>
+                        <label><input type="radio" name="vpct5" value="a"> Port 22 ouvert dans le SG inbound + NACL</label>
+                        <label><input type="radio" name="vpct5" value="b"> La couleur de l'instance dans la console</label>
+                        <label><input type="radio" name="vpct5" value="c"> La version de Linux</label>
+                        <label><input type="radio" name="vpct5" value="d"> Le type d'EBS</label>
+                        <div class="feedback" id="fb-vpct5"></div>
+                    </div>
+                    <div class="question">
+                        <p>6) Pour activer la resolution DNS dans un VPC, quelles options activer ?</p>
+                        <label><input type="radio" name="vpct6" value="a"> enableDnsHostnames et enableDnsSupport</label>
+                        <label><input type="radio" name="vpct6" value="b"> enableRouting</label>
+                        <label><input type="radio" name="vpct6" value="c"> enableNAT</label>
+                        <label><input type="radio" name="vpct6" value="d"> enableSSH</label>
+                        <div class="feedback" id="fb-vpct6"></div>
+                    </div>
+                    <div class="question">
+                        <p>7) Les NACL bloquent le trafic retour HTTP. Que faut-il ajouter ?</p>
+                        <label><input type="radio" name="vpct7" value="a"> Regle outbound port 80</label>
+                        <label><input type="radio" name="vpct7" value="b"> Regle outbound ports ephemeres (1024-65535)</label>
+                        <label><input type="radio" name="vpct7" value="c"> Regle inbound port 443</label>
+                        <label><input type="radio" name="vpct7" value="d"> Aucune action necessaire</label>
+                        <div class="feedback" id="fb-vpct7"></div>
+                    </div>
+                    <div class="question">
+                        <p>8) Une instance publique a un SG ouvert mais n'est pas accessible. Que verifier ensuite ?</p>
+                        <label><input type="radio" name="vpct8" value="a"> La NACL du sous-reseau</label>
+                        <label><input type="radio" name="vpct8" value="b"> Le type d'instance</label>
+                        <label><input type="radio" name="vpct8" value="c"> La region AWS</label>
+                        <label><input type="radio" name="vpct8" value="d"> La facture AWS</label>
+                        <div class="feedback" id="fb-vpct8"></div>
+                    </div>
+                    <div class="question">
+                        <p>9) Faut-il configurer des routes dans les DEUX VPC pour le peering ?</p>
+                        <label><input type="radio" name="vpct9" value="a"> Non, une seule suffit</label>
+                        <label><input type="radio" name="vpct9" value="b"> Oui, des routes dans les deux VPC sont necessaires</label>
+                        <label><input type="radio" name="vpct9" value="c"> Les routes sont automatiques</label>
+                        <label><input type="radio" name="vpct9" value="d"> Seulement si inter-region</label>
+                        <div class="feedback" id="fb-vpct9"></div>
+                    </div>
+                    <div class="question">
+                        <p>10) Quel service AWS permet d'identifier rapidement les flux rejetes ?</p>
+                        <label><input type="radio" name="vpct10" value="a"> CloudTrail</label>
+                        <label><input type="radio" name="vpct10" value="b"> VPC Flow Logs</label>
+                        <label><input type="radio" name="vpct10" value="c"> S3 Access Logs</label>
+                        <label><input type="radio" name="vpct10" value="d"> ELB Logs</label>
+                        <div class="feedback" id="fb-vpct10"></div>
+                    </div>
+
+                    <div style="text-align:center; margin-top:20px;">
+                        <button class="btn btn-primary" onclick="checkAnswers('vpct')">Verifier mes reponses</button>
+                        <button class="btn btn-secondary" onclick="resetQuiz('vpct')">Recommencer</button>
+                    </div>
+                    <div class="score-display" id="score-vpct"></div>
+                </div>
+            </div>
+
+            <!-- ==================== EBS ==================== -->
+            <div class="lesson" id="lesson-ebs">
+                <div class="lesson-header">
+                    <div class="lesson-icon icon-storage" style="font-size:1.4em;">&#128190;</div>
+                    <h2>Amazon EBS</h2>
+                </div>
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchTab('ebs','concepts')"><span class="tab-icon">&#128218;</span> Concepts</button>
+                    <button class="tab-btn" onclick="switchTab('ebs','keypoints')"><span class="tab-icon">&#11088;</span> Points Cles</button>
+                    <button class="tab-btn" onclick="switchTab('ebs','qcm')"><span class="tab-icon">&#9998;</span> QCM (10)</button>
+                </div>
+
+                <div class="tab-content active" id="ebs-concepts">
+                    <div class="concept-card">
+                        <h4>Qu'est-ce qu'Amazon EBS ?</h4>
+                        <p>Service de stockage bloc persistant pour EC2. Les donnees persistent independamment de la vie de l'instance. Comme un disque dur virtuel attache a votre instance.</p>
+                    </div>
+                    <div class="concept-card">
+                        <h4>Types de volumes</h4>
+                        <table>
+                            <tr><th>Type</th><th>IOPS max</th><th>Cas d'usage</th></tr>
+                            <tr><td><strong>gp3/gp2</strong> (SSD)</td><td>16 000</td><td>Usage general, boot</td></tr>
+                            <tr><td><strong>io2/io1</strong> (SSD)</td><td>256 000</td><td>BDD critiques, I/O intensif</td></tr>
+                            <tr><td><strong>st1</strong> (HDD)</td><td>500</td><td>Big data, throughput</td></tr>
+                            <tr><td><strong>sc1</strong> (HDD)</td><td>250</td><td>Donnees froides</td></tr>
+                        </table>
+                    </div>
+                    <div class="concept-card">
+                        <h4>Snapshots</h4>
+                        <p>Sauvegardes incrementales stockees dans S3. Premier = copie complete, suivants = blocs modifies. Copiables entre Regions pour la DR.</p>
+                    </div>
+                    <div class="concept-card">
+                        <h4>Chiffrement</h4>
+                        <p>AWS KMS (AES-256). Chiffre donnees au repos + en transit + snapshots. Un volume non chiffre necessite : snapshot -> copie chiffree -> nouveau volume.</p>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="ebs-keypoints">
+                    <div class="section-title">Points Cles Enrichis</div>
+                    <div class="key-point-card"><span class="star">&#11088;</span><div class="kp-content"><div class="kp-title">EBS = lie a une AZ</div><div class="kp-desc">Pour deplacer un volume : snapshot (au niveau Region) puis recreer dans l'autre AZ.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#11088;</span><div class="kp-content"><div class="kp-title">gp3 > gp2 (meilleur rapport qualite/prix)</div><div class="kp-desc">gp3 permet de configurer IOPS et debit independamment. 20% moins cher que gp2 pour les memes perfs.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#11088;</span><div class="kp-content"><div class="kp-title">st1 et sc1 = PAS des volumes de boot</div><div class="kp-desc">Seuls les SSD (gp2/gp3, io1/io2) peuvent servir de volume de demarrage OS.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#11088;</span><div class="kp-content"><div class="kp-title">Multi-Attach = io1/io2 uniquement</div><div class="kp-desc">Permet a un volume d'etre attache a plusieurs instances dans la MEME AZ. Utile pour clusters.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#11088;</span><div class="kp-content"><div class="kp-title">DeleteOnTermination = actif par defaut pour root</div><div class="kp-desc">Le volume root est supprime quand l'instance est terminee. Les volumes supplementaires sont conserves par defaut.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#11088;</span><div class="kp-content"><div class="kp-title">Snapshots incrementaux mais autonomes</div><div class="kp-desc">Chaque snapshot est suffisant pour restaurer, meme si seuls les blocs modifies sont stockes.</div></div></div>
+                </div>
+
+                <div class="tab-content" id="ebs-qcm">
+                    <div class="qcm-header"><h3>QCM - Amazon EBS</h3><span class="qcm-counter">10 questions</span></div>
+                    <div class="progress-bar-container"><div class="progress-bar" id="progress-ebs"></div></div>
+
+                    <div class="question"><p>1) Quel type de volume offre les IOPS les plus elevees ?</p><label><input type="radio" name="ebs1" value="a"> gp3</label><label><input type="radio" name="ebs1" value="b"> io2 Block Express</label><label><input type="radio" name="ebs1" value="c"> st1</label><label><input type="radio" name="ebs1" value="d"> sc1</label><div class="feedback" id="fb-ebs1"></div></div>
+                    <div class="question"><p>2) EBS est lie a quelle portee ?</p><label><input type="radio" name="ebs2" value="a"> Global</label><label><input type="radio" name="ebs2" value="b"> Region</label><label><input type="radio" name="ebs2" value="c"> Zone de disponibilite (AZ)</label><label><input type="radio" name="ebs2" value="d"> VPC</label><div class="feedback" id="fb-ebs2"></div></div>
+                    <div class="question"><p>3) Quels volumes NE PEUVENT PAS etre des volumes de boot ?</p><label><input type="radio" name="ebs3" value="a"> gp2 et gp3</label><label><input type="radio" name="ebs3" value="b"> io1 et io2</label><label><input type="radio" name="ebs3" value="c"> st1 et sc1 (HDD)</label><label><input type="radio" name="ebs3" value="d"> Tous peuvent etre boot</label><div class="feedback" id="fb-ebs3"></div></div>
+                    <div class="question"><p>4) Comment deplacer un volume EBS vers une autre AZ ?</p><label><input type="radio" name="ebs4" value="a"> Detacher et rattacher</label><label><input type="radio" name="ebs4" value="b"> Creer un snapshot puis un nouveau volume dans l'autre AZ</label><label><input type="radio" name="ebs4" value="c"> Copier directement</label><label><input type="radio" name="ebs4" value="d"> Impossible</label><div class="feedback" id="fb-ebs4"></div></div>
+                    <div class="question"><p>5) Les snapshots EBS sont stockes dans quel service ?</p><label><input type="radio" name="ebs5" value="a"> EFS</label><label><input type="radio" name="ebs5" value="b"> S3 (gere par AWS)</label><label><input type="radio" name="ebs5" value="c"> Glacier</label><label><input type="radio" name="ebs5" value="d"> DynamoDB</label><div class="feedback" id="fb-ebs5"></div></div>
+                    <div class="question"><p>6) Le Multi-Attach est supporte par quels types ?</p><label><input type="radio" name="ebs6" value="a"> gp2/gp3</label><label><input type="radio" name="ebs6" value="b"> io1/io2 uniquement</label><label><input type="radio" name="ebs6" value="c"> st1/sc1</label><label><input type="radio" name="ebs6" value="d"> Tous</label><div class="feedback" id="fb-ebs6"></div></div>
+                    <div class="question"><p>7) Que se passe-t-il par defaut au volume root quand l'instance est terminee ?</p><label><input type="radio" name="ebs7" value="a"> Il est conserve</label><label><input type="radio" name="ebs7" value="b"> Il est supprime (DeleteOnTermination=true)</label><label><input type="radio" name="ebs7" value="c"> Il est archive dans Glacier</label><label><input type="radio" name="ebs7" value="d"> Il est detache</label><div class="feedback" id="fb-ebs7"></div></div>
+                    <div class="question"><p>8) Quel algorithme de chiffrement utilise EBS ?</p><label><input type="radio" name="ebs8" value="a"> RSA-2048</label><label><input type="radio" name="ebs8" value="b"> AES-256 via KMS</label><label><input type="radio" name="ebs8" value="c"> SHA-512</label><label><input type="radio" name="ebs8" value="d"> Blowfish</label><div class="feedback" id="fb-ebs8"></div></div>
+                    <div class="question"><p>9) gp3 est plus economique que gp2 ?</p><label><input type="radio" name="ebs9" value="a"> Non, gp3 est plus cher</label><label><input type="radio" name="ebs9" value="b"> Oui, environ 20% moins cher</label><label><input type="radio" name="ebs9" value="c"> Ils ont le meme prix</label><label><input type="radio" name="ebs9" value="d"> Depend de la region</label><div class="feedback" id="fb-ebs9"></div></div>
+                    <div class="question"><p>10) Quelle est la taille maximale d'un volume EBS ?</p><label><input type="radio" name="ebs10" value="a"> 16 TiB</label><label><input type="radio" name="ebs10" value="b"> 64 TiB</label><label><input type="radio" name="ebs10" value="c"> 1 PiB</label><label><input type="radio" name="ebs10" value="d"> 100 Go</label><div class="feedback" id="fb-ebs10"></div></div>
+
+                    <div style="text-align:center; margin-top:20px;"><button class="btn btn-primary" onclick="checkAnswers('ebs')">Verifier mes reponses</button><button class="btn btn-secondary" onclick="resetQuiz('ebs')">Recommencer</button></div>
+                    <div class="score-display" id="score-ebs"></div>
+                </div>
+            </div>
+
+            <!-- ==================== INSTANCE STORE ==================== -->
+            <div class="lesson" id="lesson-instance-store">
+                <div class="lesson-header">
+                    <div class="lesson-icon icon-storage" style="font-size:1.4em;">&#9889;</div>
+                    <h2>Instance Store</h2>
+                </div>
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchTab('instance-store','concepts')"><span class="tab-icon">&#128218;</span> Concepts</button>
+                    <button class="tab-btn" onclick="switchTab('instance-store','keypoints')"><span class="tab-icon">&#11088;</span> Points Cles</button>
+                    <button class="tab-btn" onclick="switchTab('instance-store','qcm')"><span class="tab-icon">&#9998;</span> QCM (10)</button>
+                </div>
+
+                <div class="tab-content active" id="instance-store-concepts">
+                    <div class="concept-card"><h4>Definition</h4><p>Stockage bloc temporaire physiquement attache au serveur hote. Donnees PERDUES a l'arret, terminaison ou defaillance materielle. Performance I/O tres elevee.</p></div>
+                    <div class="concept-card"><h4>Comparaison avec EBS</h4><table><tr><th>Aspect</th><th>Instance Store</th><th>EBS</th></tr><tr><td>Persistance</td><td>Ephemere</td><td>Persistant</td></tr><tr><td>Performance</td><td>Tres haute</td><td>Haute</td></tr><tr><td>Cout</td><td>Inclus</td><td>Separe</td></tr><tr><td>Snapshot</td><td>Non</td><td>Oui</td></tr></table></div>
+                </div>
+
+                <div class="tab-content" id="instance-store-keypoints">
+                    <div class="section-title">Points Cles Enrichis</div>
+                    <div class="key-point-card"><span class="star">&#11088;</span><div class="kp-content"><div class="kp-title">Ephemere = perdu au stop/terminate</div><div class="kp-desc">Les donnees survivent au REBOOT mais pas au STOP, TERMINATE ou defaillance hardware.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#11088;</span><div class="kp-content"><div class="kp-title">Ideal pour caches et donnees temporaires</div><div class="kp-desc">Buffers, fichiers scratch, donnees de calcul temporaires. Jamais pour des donnees critiques.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#11088;</span><div class="kp-content"><div class="kp-title">Pas de snapshot possible</div><div class="kp-desc">C'est votre responsabilite de repliquer les donnees si necessaire.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#11088;</span><div class="kp-content"><div class="kp-title">Performance superieure a EBS</div><div class="kp-desc">Disque physiquement sur le serveur, pas de latence reseau. Meilleur pour I/O intensif ephemere.</div></div></div>
+                </div>
+
+                <div class="tab-content" id="instance-store-qcm">
+                    <div class="qcm-header"><h3>QCM - Instance Store</h3><span class="qcm-counter">10 questions</span></div>
+                    <div class="progress-bar-container"><div class="progress-bar" id="progress-is"></div></div>
+
+                    <div class="question"><p>1) Que se passe-t-il aux donnees d'un Instance Store quand l'instance est arretee (stopped) ?</p><label><input type="radio" name="is1" value="a"> Conservees</label><label><input type="radio" name="is1" value="b"> Perdues</label><label><input type="radio" name="is1" value="c"> Sauvegardees dans S3</label><label><input type="radio" name="is1" value="d"> Compressees</label><div class="feedback" id="fb-is1"></div></div>
+                    <div class="question"><p>2) Les donnees survivent-elles a un reboot ?</p><label><input type="radio" name="is2" value="a"> Non</label><label><input type="radio" name="is2" value="b"> Oui</label><label><input type="radio" name="is2" value="c"> Seulement sur Linux</label><label><input type="radio" name="is2" value="d"> Seulement avec EBS</label><div class="feedback" id="fb-is2"></div></div>
+                    <div class="question"><p>3) Peut-on creer un snapshot d'un Instance Store ?</p><label><input type="radio" name="is3" value="a"> Oui</label><label><input type="radio" name="is3" value="b"> Non</label><label><input type="radio" name="is3" value="c"> Seulement vers S3</label><label><input type="radio" name="is3" value="d"> Avec un outil tiers</label><div class="feedback" id="fb-is3"></div></div>
+                    <div class="question"><p>4) Quel est le principal avantage de l'Instance Store ?</p><label><input type="radio" name="is4" value="a"> Persistance</label><label><input type="radio" name="is4" value="b"> Performance I/O tres elevee</label><label><input type="radio" name="is4" value="c"> Cout eleve</label><label><input type="radio" name="is4" value="d"> Facilite de backup</label><div class="feedback" id="fb-is4"></div></div>
+                    <div class="question"><p>5) Pour quel usage l'Instance Store est-il ideal ?</p><label><input type="radio" name="is5" value="a"> Base de donnees persistante</label><label><input type="radio" name="is5" value="b"> Caches, buffers, donnees temporaires</label><label><input type="radio" name="is5" value="c"> Archivage long terme</label><label><input type="radio" name="is5" value="d"> Stockage de sauvegardes</label><div class="feedback" id="fb-is5"></div></div>
+                    <div class="question"><p>6) L'Instance Store est-il facture separement ?</p><label><input type="radio" name="is6" value="a"> Oui, par Go</label><label><input type="radio" name="is6" value="b"> Non, inclus dans le prix de l'instance</label><label><input type="radio" name="is6" value="c"> Seulement a la creation</label><label><input type="radio" name="is6" value="d"> Facturation a l'IOPS</label><div class="feedback" id="fb-is6"></div></div>
+                    <div class="question"><p>7) Peut-on detacher un Instance Store et le rattacher a une autre instance ?</p><label><input type="radio" name="is7" value="a"> Oui</label><label><input type="radio" name="is7" value="b"> Non, impossible</label><label><input type="radio" name="is7" value="c"> Seulement dans la meme AZ</label><label><input type="radio" name="is7" value="d"> Avec EBS migration</label><div class="feedback" id="fb-is7"></div></div>
+                    <div class="question"><p>8) La taille d'un Instance Store depend de quoi ?</p><label><input type="radio" name="is8" value="a"> De la configuration utilisateur</label><label><input type="radio" name="is8" value="b"> Du type d'instance EC2</label><label><input type="radio" name="is8" value="c"> De la region</label><label><input type="radio" name="is8" value="d"> Du systeme d'exploitation</label><div class="feedback" id="fb-is8"></div></div>
+                    <div class="question"><p>9) Pourquoi l'Instance Store a de meilleures performances que EBS ?</p><label><input type="radio" name="is9" value="a"> Il utilise SSD</label><label><input type="radio" name="is9" value="b"> Il est physiquement attache au serveur (pas de latence reseau)</label><label><input type="radio" name="is9" value="c"> Il est plus grand</label><label><input type="radio" name="is9" value="d"> Il est plus recent</label><div class="feedback" id="fb-is9"></div></div>
+                    <div class="question"><p>10) Quelle est la responsabilite de l'utilisateur avec Instance Store ?</p><label><input type="radio" name="is10" value="a"> Gerer le chiffrement</label><label><input type="radio" name="is10" value="b"> Repliquer les donnees importantes ailleurs</label><label><input type="radio" name="is10" value="c"> Configurer les IOPS</label><label><input type="radio" name="is10" value="d"> Payer le stockage</label><div class="feedback" id="fb-is10"></div></div>
+
+                    <div style="text-align:center; margin-top:20px;"><button class="btn btn-primary" onclick="checkAnswers('is')">Verifier mes reponses</button><button class="btn btn-secondary" onclick="resetQuiz('is')">Recommencer</button></div>
+                    <div class="score-display" id="score-is"></div>
+                </div>
+            </div>
+
+            <!-- ==================== EFS ==================== -->
+            <div class="lesson" id="lesson-efs">
+                <div class="lesson-header"><div class="lesson-icon icon-storage" style="font-size:1.4em;">&#128193;</div><h2>Amazon EFS</h2></div>
+                <div class="tabs"><button class="tab-btn active" onclick="switchTab('efs','concepts')"><span class="tab-icon">&#128218;</span> Concepts</button><button class="tab-btn" onclick="switchTab('efs','keypoints')"><span class="tab-icon">&#11088;</span> Points Cles</button><button class="tab-btn" onclick="switchTab('efs','qcm')"><span class="tab-icon">&#9998;</span> QCM (10)</button></div>
+
+                <div class="tab-content active" id="efs-concepts">
+                    <div class="concept-card"><h4>Qu'est-ce qu'EFS ?</h4><p>Systeme de fichiers NFS elastique, monte simultanement par plusieurs instances EC2 Linux. S'adapte automatiquement en taille. Protocole NFSv4.1.</p></div>
+                    <div class="concept-card"><h4>Classes de stockage</h4><table><tr><th>Classe</th><th>Description</th></tr><tr><td><strong>Standard</strong></td><td>Multi-AZ, acces frequent</td></tr><tr><td><strong>Standard-IA</strong></td><td>Multi-AZ, acces rare</td></tr><tr><td><strong>One Zone</strong></td><td>1 AZ, acces frequent</td></tr><tr><td><strong>One Zone-IA</strong></td><td>1 AZ, acces rare</td></tr></table></div>
+                </div>
+
+                <div class="tab-content" id="efs-keypoints">
+                    <div class="section-title">Points Cles Enrichis</div>
+                    <div class="key-point-card"><span class="star">&#11088;</span><div class="kp-content"><div class="kp-title">EFS = multi-instances, multi-AZ, Linux</div><div class="kp-desc">Difference clef avec EBS (1 instance, 1 AZ). Pour Windows : FSx for Windows (SMB).</div></div></div>
+                    <div class="key-point-card"><span class="star">&#11088;</span><div class="kp-content"><div class="kp-title">Elastique = pas de provisionnement</div><div class="kp-desc">La taille croit/decroit automatiquement. Vous payez uniquement le stockage utilise.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#11088;</span><div class="kp-content"><div class="kp-title">Lifecycle management vers IA</div><div class="kp-desc">Deplace automatiquement les fichiers non accedes depuis X jours vers la classe IA (moins chere).</div></div></div>
+                    <div class="key-point-card"><span class="star">&#11088;</span><div class="kp-content"><div class="kp-title">Plus cher que EBS mais partage</div><div class="kp-desc">Le cout par Go est superieur a EBS, mais le partage entre instances justifie l'investissement.</div></div></div>
+                </div>
+
+                <div class="tab-content" id="efs-qcm">
+                    <div class="qcm-header"><h3>QCM - Amazon EFS</h3><span class="qcm-counter">10 questions</span></div>
+                    <div class="progress-bar-container"><div class="progress-bar" id="progress-efs"></div></div>
+
+                    <div class="question"><p>1) Quel protocole utilise EFS ?</p><label><input type="radio" name="efs1" value="a"> SMB</label><label><input type="radio" name="efs1" value="b"> NFSv4.1</label><label><input type="radio" name="efs1" value="c"> iSCSI</label><label><input type="radio" name="efs1" value="d"> CIFS</label><div class="feedback" id="fb-efs1"></div></div>
+                    <div class="question"><p>2) EFS est compatible avec quel OS ?</p><label><input type="radio" name="efs2" value="a"> Windows</label><label><input type="radio" name="efs2" value="b"> Linux uniquement</label><label><input type="radio" name="efs2" value="c"> Les deux</label><label><input type="radio" name="efs2" value="d"> macOS</label><div class="feedback" id="fb-efs2"></div></div>
+                    <div class="question"><p>3) Peut-on monter EFS sur plusieurs instances simultanement ?</p><label><input type="radio" name="efs3" value="a"> Non</label><label><input type="radio" name="efs3" value="b"> Oui</label><label><input type="radio" name="efs3" value="c"> Maximum 2</label><label><input type="radio" name="efs3" value="d"> Seulement dans la meme AZ</label><div class="feedback" id="fb-efs3"></div></div>
+                    <div class="question"><p>4) Faut-il provisionner la taille d'EFS a l'avance ?</p><label><input type="radio" name="efs4" value="a"> Oui, obligatoire</label><label><input type="radio" name="efs4" value="b"> Non, elastique et automatique</label><label><input type="radio" name="efs4" value="c"> Seulement en One Zone</label><label><input type="radio" name="efs4" value="d"> Minimum 100 Go</label><div class="feedback" id="fb-efs4"></div></div>
+                    <div class="question"><p>5) Pour un partage de fichiers Windows, quel service utiliser ?</p><label><input type="radio" name="efs5" value="a"> EFS</label><label><input type="radio" name="efs5" value="b"> FSx for Windows File Server</label><label><input type="radio" name="efs5" value="c"> S3</label><label><input type="radio" name="efs5" value="d"> EBS</label><div class="feedback" id="fb-efs5"></div></div>
+                    <div class="question"><p>6) Que fait le Lifecycle Management d'EFS ?</p><label><input type="radio" name="efs6" value="a"> Supprime les fichiers anciens</label><label><input type="radio" name="efs6" value="b"> Deplace les fichiers non accedes vers la classe IA</label><label><input type="radio" name="efs6" value="c"> Compresse les fichiers</label><label><input type="radio" name="efs6" value="d"> Chiffre les fichiers</label><div class="feedback" id="fb-efs6"></div></div>
+                    <div class="question"><p>7) EFS Standard stocke les donnees sur combien d'AZ ?</p><label><input type="radio" name="efs7" value="a"> 1 AZ</label><label><input type="radio" name="efs7" value="b"> Toutes les AZ de la Region (multi-AZ)</label><label><input type="radio" name="efs7" value="c"> 2 AZ</label><label><input type="radio" name="efs7" value="d"> Selon la configuration</label><div class="feedback" id="fb-efs7"></div></div>
+                    <div class="question"><p>8) EFS supporte le chiffrement ?</p><label><input type="radio" name="efs8" value="a"> Non</label><label><input type="radio" name="efs8" value="b"> Oui, au repos (KMS) et en transit (TLS)</label><label><input type="radio" name="efs8" value="c"> Seulement en transit</label><label><input type="radio" name="efs8" value="d"> Seulement au repos</label><div class="feedback" id="fb-efs8"></div></div>
+                    <div class="question"><p>9) Quel mode de performance pour un acces parallele massif ?</p><label><input type="radio" name="efs9" value="a"> General Purpose</label><label><input type="radio" name="efs9" value="b"> Max I/O</label><label><input type="radio" name="efs9" value="c"> Bursting</label><label><input type="radio" name="efs9" value="d"> Provisioned</label><div class="feedback" id="fb-efs9"></div></div>
+                    <div class="question"><p>10) EFS est plus cher que EBS par Go ?</p><label><input type="radio" name="efs10" value="a"> Non, moins cher</label><label><input type="radio" name="efs10" value="b"> Oui, mais justifie par le partage multi-instances</label><label><input type="radio" name="efs10" value="c"> Meme prix</label><label><input type="radio" name="efs10" value="d"> Gratuit</label><div class="feedback" id="fb-efs10"></div></div>
+
+                    <div style="text-align:center; margin-top:20px;"><button class="btn btn-primary" onclick="checkAnswers('efs')">Verifier mes reponses</button><button class="btn btn-secondary" onclick="resetQuiz('efs')">Recommencer</button></div>
+                    <div class="score-display" id="score-efs"></div>
+                </div>
+            </div>
+
+            <!-- ==================== S3 ==================== -->
+            <div class="lesson" id="lesson-s3">
+                <div class="lesson-header"><div class="lesson-icon icon-storage" style="font-size:1.4em;">&#128230;</div><h2>Amazon S3</h2></div>
+                <div class="tabs"><button class="tab-btn active" onclick="switchTab('s3','concepts')"><span class="tab-icon">&#128218;</span> Concepts</button><button class="tab-btn" onclick="switchTab('s3','keypoints')"><span class="tab-icon">&#11088;</span> Points Cles</button><button class="tab-btn" onclick="switchTab('s3','qcm')"><span class="tab-icon">&#9998;</span> QCM (12)</button></div>
+
+                <div class="tab-content active" id="s3-concepts">
+                    <div class="concept-card"><h4>Stockage objet</h4><p>Durabilite 99,999999999% (11 neufs). Objets dans des buckets. Acces HTTP/HTTPS. Taille max objet : 5 To. Noms de buckets globalement uniques.</p></div>
+                    <div class="concept-card"><h4>Classes de stockage</h4><table><tr><th>Classe</th><th>Disponibilite</th><th>Usage</th></tr><tr><td>Standard</td><td>99,99%</td><td>Acces frequent</td></tr><tr><td>Standard-IA</td><td>99,9%</td><td>Peu frequent, acces rapide</td></tr><tr><td>One Zone-IA</td><td>99,5%</td><td>Reproductible, peu accede</td></tr><tr><td>Intelligent-Tiering</td><td>99,9%</td><td>Patterns imprevisibles</td></tr><tr><td>Glacier Instant</td><td>99,9%</td><td>Archive, acces ms</td></tr><tr><td>Glacier Flexible</td><td>99,99%</td><td>Archive, minutes/heures</td></tr><tr><td>Glacier Deep Archive</td><td>99,99%</td><td>Archive, 12-48h</td></tr></table></div>
+                    <div class="concept-card"><h4>Fonctionnalites cles</h4><p><strong>Versioning :</strong> Conserve toutes les versions. <strong>Lifecycle :</strong> Transition auto entre classes. <strong>Replication :</strong> CRR/SRR. <strong>Chiffrement :</strong> SSE-S3, SSE-KMS, SSE-C. <strong>Presigned URL :</strong> Acces temporaire.</p></div>
+                </div>
+
+                <div class="tab-content" id="s3-keypoints">
+                    <div class="section-title">Points Cles Enrichis</div>
+                    <div class="key-point-card"><span class="star">&#11088;</span><div class="kp-content"><div class="kp-title">11 neufs de durabilite</div><div class="kp-desc">99,999999999%. Perdre 1 objet sur 10 millions en 10 000 ans. Quasi impossible de perdre des donnees.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#11088;</span><div class="kp-content"><div class="kp-title">S3 n'est PAS un systeme de fichiers</div><div class="kp-desc">Stockage objet acces via API HTTP. Ne peut PAS etre monte sur une instance comme un disque.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#11088;</span><div class="kp-content"><div class="kp-title">Noms de buckets = globalement uniques</div><div class="kp-desc">Pas juste unique dans votre compte mais dans TOUT AWS. Choisissez des noms descriptifs et specifiques.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#11088;</span><div class="kp-content"><div class="kp-title">Upload > 5 Go = Multipart Upload obligatoire</div><div class="kp-desc">Single PUT limite a 5 Go. Multipart Upload pour les objets plus gros (max 5 To).</div></div></div>
+                    <div class="key-point-card"><span class="star">&#11088;</span><div class="kp-content"><div class="kp-title">Versioning : actif, ne peut etre que suspendu</div><div class="kp-desc">Une fois active, on ne peut pas desactiver le versioning, seulement le suspendre.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#11088;</span><div class="kp-content"><div class="kp-title">Tous les buckets sont PRIVES par defaut</div><div class="kp-desc">Block Public Access active par defaut. Il faut explicitement rendre un bucket public.</div></div></div>
+                </div>
+
+                <div class="tab-content" id="s3-qcm">
+                    <div class="qcm-header"><h3>QCM - Amazon S3</h3><span class="qcm-counter">12 questions</span></div>
+                    <div class="progress-bar-container"><div class="progress-bar" id="progress-s3"></div></div>
+
+                    <div class="question"><p>1) Quelle est la taille max d'un objet S3 ?</p><label><input type="radio" name="s31" value="a"> 5 Go</label><label><input type="radio" name="s31" value="b"> 5 To</label><label><input type="radio" name="s31" value="c"> Illimite</label><label><input type="radio" name="s31" value="d"> 1 To</label><div class="feedback" id="fb-s31"></div></div>
+                    <div class="question"><p>2) La durabilite de S3 est de combien ?</p><label><input type="radio" name="s32" value="a"> 99,99%</label><label><input type="radio" name="s32" value="b"> 99,999%</label><label><input type="radio" name="s32" value="c"> 99,999999999%</label><label><input type="radio" name="s32" value="d"> 100%</label><div class="feedback" id="fb-s32"></div></div>
+                    <div class="question"><p>3) Peut-on monter S3 comme un systeme de fichiers ?</p><label><input type="radio" name="s33" value="a"> Oui</label><label><input type="radio" name="s33" value="b"> Non, c'est du stockage objet (acces API)</label><label><input type="radio" name="s33" value="c"> Avec NFS</label><label><input type="radio" name="s33" value="d"> Avec SMB</label><div class="feedback" id="fb-s33"></div></div>
+                    <div class="question"><p>4) Les noms de buckets sont uniques a quel niveau ?</p><label><input type="radio" name="s34" value="a"> Compte AWS</label><label><input type="radio" name="s34" value="b"> Region</label><label><input type="radio" name="s34" value="c"> Globalement (tout AWS)</label><label><input type="radio" name="s34" value="d"> VPC</label><div class="feedback" id="fb-s34"></div></div>
+                    <div class="question"><p>5) Quelle classe est la moins chere pour le stockage ?</p><label><input type="radio" name="s35" value="a"> Standard</label><label><input type="radio" name="s35" value="b"> Standard-IA</label><label><input type="radio" name="s35" value="c"> Glacier Deep Archive</label><label><input type="radio" name="s35" value="d"> One Zone-IA</label><div class="feedback" id="fb-s35"></div></div>
+                    <div class="question"><p>6) Le versioning peut-il etre desactive une fois active ?</p><label><input type="radio" name="s36" value="a"> Oui</label><label><input type="radio" name="s36" value="b"> Non, seulement suspendu</label><label><input type="radio" name="s36" value="c"> Apres 30 jours</label><label><input type="radio" name="s36" value="d"> Avec support AWS</label><div class="feedback" id="fb-s36"></div></div>
+                    <div class="question"><p>7) A partir de quelle taille le Multipart Upload est obligatoire ?</p><label><input type="radio" name="s37" value="a"> 100 Mo</label><label><input type="radio" name="s37" value="b"> 1 Go</label><label><input type="radio" name="s37" value="c"> 5 Go</label><label><input type="radio" name="s37" value="d"> 5 To</label><div class="feedback" id="fb-s37"></div></div>
+                    <div class="question"><p>8) Quel type de chiffrement utilise des cles gerees par S3 ?</p><label><input type="radio" name="s38" value="a"> SSE-S3</label><label><input type="radio" name="s38" value="b"> SSE-KMS</label><label><input type="radio" name="s38" value="c"> SSE-C</label><label><input type="radio" name="s38" value="d"> Client-side</label><div class="feedback" id="fb-s38"></div></div>
+                    <div class="question"><p>9) Les buckets sont publics ou prives par defaut ?</p><label><input type="radio" name="s39" value="a"> Publics</label><label><input type="radio" name="s39" value="b"> Prives</label><label><input type="radio" name="s39" value="c"> Depend de la region</label><label><input type="radio" name="s39" value="d"> Semi-publics</label><div class="feedback" id="fb-s39"></div></div>
+                    <div class="question"><p>10) S3 Transfer Acceleration utilise quelle infrastructure ?</p><label><input type="radio" name="s310" value="a"> Direct Connect</label><label><input type="radio" name="s310" value="b"> Les edge locations CloudFront</label><label><input type="radio" name="s310" value="c"> VPN</label><label><input type="radio" name="s310" value="d"> Snow Family</label><div class="feedback" id="fb-s310"></div></div>
+                    <div class="question"><p>11) Que fait une Lifecycle Policy ?</p><label><input type="radio" name="s311" value="a"> Chiffre les objets</label><label><input type="radio" name="s311" value="b"> Transite automatiquement entre classes et expire les objets</label><label><input type="radio" name="s311" value="c"> Replique entre regions</label><label><input type="radio" name="s311" value="d"> Versionne les objets</label><div class="feedback" id="fb-s311"></div></div>
+                    <div class="question"><p>12) CRR signifie quoi ?</p><label><input type="radio" name="s312" value="a"> Cache Region Replication</label><label><input type="radio" name="s312" value="b"> Cross-Region Replication</label><label><input type="radio" name="s312" value="c"> Central Resource Repository</label><label><input type="radio" name="s312" value="d"> Cloud Recovery Replica</label><div class="feedback" id="fb-s312"></div></div>
+
+                    <div style="text-align:center; margin-top:20px;"><button class="btn btn-primary" onclick="checkAnswers('s3')">Verifier mes reponses</button><button class="btn btn-secondary" onclick="resetQuiz('s3')">Recommencer</button></div>
+                    <div class="score-display" id="score-s3"></div>
+                </div>
+            </div>
+
+            <!-- ==================== GLACIER ==================== -->
+            <div class="lesson" id="lesson-glacier">
+                <div class="lesson-header"><div class="lesson-icon icon-storage" style="font-size:1.4em;">&#10052;</div><h2>Amazon Glacier</h2></div>
+                <div class="tabs"><button class="tab-btn active" onclick="switchTab('glacier','concepts')"><span class="tab-icon">&#128218;</span> Concepts</button><button class="tab-btn" onclick="switchTab('glacier','keypoints')"><span class="tab-icon">&#11088;</span> Points Cles</button><button class="tab-btn" onclick="switchTab('glacier','qcm')"><span class="tab-icon">&#9998;</span> QCM (10)</button></div>
+
+                <div class="tab-content active" id="glacier-concepts">
+                    <div class="concept-card"><h4>Archivage a tres bas cout</h4><p>Pour donnees rarement accedees, conservees longtemps. Cout stockage tres bas, recuperation a delai et cout.</p></div>
+                    <div class="concept-card"><h4>Delais de recuperation</h4><table><tr><th>Classe</th><th>Expedited</th><th>Standard</th><th>Bulk</th></tr><tr><td>Instant Retrieval</td><td colspan="3">Millisecondes</td></tr><tr><td>Flexible Retrieval</td><td>1-5 min</td><td>3-5h</td><td>5-12h</td></tr><tr><td>Deep Archive</td><td>N/A</td><td>12h</td><td>48h</td></tr></table></div>
+                    <div class="concept-card"><h4>Vault Lock (WORM)</h4><p>Politique immuable Write Once Read Many. Impossible de modifier/supprimer. Duree min : 90 jours (Flexible) / 180 jours (Deep Archive).</p></div>
+                </div>
+
+                <div class="tab-content" id="glacier-keypoints">
+                    <div class="section-title">Points Cles Enrichis</div>
+                    <div class="key-point-card"><span class="star">&#11088;</span><div class="kp-content"><div class="kp-title">Deep Archive = le moins cher d'AWS</div><div class="kp-desc">~0.00099$/Go/mois. Mais recuperation en 12-48h. Ideal pour conformite 7-10+ ans.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#11088;</span><div class="kp-content"><div class="kp-title">Vault Lock = conformite immuable</div><div class="kp-desc">WORM : une fois verrouille, personne (meme root) ne peut supprimer/modifier avant l'expiration.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#11088;</span><div class="kp-content"><div class="kp-title">Frais de suppression anticipee</div><div class="kp-desc">Si vous supprimez avant 90j (Flexible) ou 180j (Deep Archive), des frais s'appliquent.</div></div></div>
+                </div>
+
+                <div class="tab-content" id="glacier-qcm">
+                    <div class="qcm-header"><h3>QCM - Glacier</h3><span class="qcm-counter">10 questions</span></div>
+                    <div class="progress-bar-container"><div class="progress-bar" id="progress-glacier"></div></div>
+
+                    <div class="question"><p>1) Quel est le delai standard pour Glacier Flexible Retrieval ?</p><label><input type="radio" name="gl1" value="a"> Immediat</label><label><input type="radio" name="gl1" value="b"> 3-5 heures</label><label><input type="radio" name="gl1" value="c"> 12 heures</label><label><input type="radio" name="gl1" value="d"> 48 heures</label><div class="feedback" id="fb-gl1"></div></div>
+                    <div class="question"><p>2) Glacier Deep Archive a un delai de recuperation standard de ?</p><label><input type="radio" name="gl2" value="a"> 1-5 minutes</label><label><input type="radio" name="gl2" value="b"> 3-5 heures</label><label><input type="radio" name="gl2" value="c"> 12 heures</label><label><input type="radio" name="gl2" value="d"> 48 heures</label><div class="feedback" id="fb-gl2"></div></div>
+                    <div class="question"><p>3) Que garantit Vault Lock ?</p><label><input type="radio" name="gl3" value="a"> Le chiffrement</label><label><input type="radio" name="gl3" value="b"> L'immutabilite (WORM)</label><label><input type="radio" name="gl3" value="c"> La replication</label><label><input type="radio" name="gl3" value="d"> La haute disponibilite</label><div class="feedback" id="fb-gl3"></div></div>
+                    <div class="question"><p>4) Duree minimum de stockage pour Glacier Deep Archive ?</p><label><input type="radio" name="gl4" value="a"> 30 jours</label><label><input type="radio" name="gl4" value="b"> 90 jours</label><label><input type="radio" name="gl4" value="c"> 180 jours</label><label><input type="radio" name="gl4" value="d"> 365 jours</label><div class="feedback" id="fb-gl4"></div></div>
+                    <div class="question"><p>5) Quelle classe Glacier offre un acces en millisecondes ?</p><label><input type="radio" name="gl5" value="a"> Flexible Retrieval</label><label><input type="radio" name="gl5" value="b"> Deep Archive</label><label><input type="radio" name="gl5" value="c"> Instant Retrieval</label><label><input type="radio" name="gl5" value="d"> Aucune</label><div class="feedback" id="fb-gl5"></div></div>
+                    <div class="question"><p>6) Comment integrer Glacier avec S3 ?</p><label><input type="radio" name="gl6" value="a"> Via VPC Peering</label><label><input type="radio" name="gl6" value="b"> Via S3 Lifecycle Policies</label><label><input type="radio" name="gl6" value="c"> Via Direct Connect</label><label><input type="radio" name="gl6" value="d"> Impossible</label><div class="feedback" id="fb-gl6"></div></div>
+                    <div class="question"><p>7) Glacier est la solution la moins chere pour quel besoin ?</p><label><input type="radio" name="gl7" value="a"> Bases de donnees actives</label><label><input type="radio" name="gl7" value="b"> Archivage long terme</label><label><input type="radio" name="gl7" value="c"> Streaming video</label><label><input type="radio" name="gl7" value="d"> Caches applicatifs</label><div class="feedback" id="fb-gl7"></div></div>
+                    <div class="question"><p>8) L'option "Expedited" pour Glacier Flexible prend combien de temps ?</p><label><input type="radio" name="gl8" value="a"> 1-5 minutes</label><label><input type="radio" name="gl8" value="b"> 1 heure</label><label><input type="radio" name="gl8" value="c"> 3-5 heures</label><label><input type="radio" name="gl8" value="d"> 12 heures</label><div class="feedback" id="fb-gl8"></div></div>
+                    <div class="question"><p>9) Que se passe-t-il si on supprime une archive avant la duree minimum ?</p><label><input type="radio" name="gl9" value="a"> Rien</label><label><input type="radio" name="gl9" value="b"> Des frais de suppression anticipee s'appliquent</label><label><input type="radio" name="gl9" value="c"> Impossible de supprimer</label><label><input type="radio" name="gl9" value="d"> L'archive est deplacee vers S3</label><div class="feedback" id="fb-gl9"></div></div>
+                    <div class="question"><p>10) Un "Vault" dans Glacier correspond a quoi dans S3 ?</p><label><input type="radio" name="gl10" value="a"> Un objet</label><label><input type="radio" name="gl10" value="b"> Un bucket</label><label><input type="radio" name="gl10" value="c"> Une classe de stockage</label><label><input type="radio" name="gl10" value="d"> Une politique</label><div class="feedback" id="fb-gl10"></div></div>
+
+                    <div style="text-align:center; margin-top:20px;"><button class="btn btn-primary" onclick="checkAnswers('gl')">Verifier mes reponses</button><button class="btn btn-secondary" onclick="resetQuiz('gl')">Recommencer</button></div>
+                    <div class="score-display" id="score-gl"></div>
+                </div>
+            </div>
+
+            <!-- ==================== STORAGE GATEWAY ==================== -->
+            <div class="lesson" id="lesson-storage-gw">
+                <div class="lesson-header"><div class="lesson-icon icon-storage" style="font-size:1.4em;">&#128259;</div><h2>Storage Gateway & Transfer</h2></div>
+                <div class="tabs"><button class="tab-btn active" onclick="switchTab('storage-gw','concepts')"><span class="tab-icon">&#128218;</span> Concepts</button><button class="tab-btn" onclick="switchTab('storage-gw','keypoints')"><span class="tab-icon">&#11088;</span> Points Cles</button><button class="tab-btn" onclick="switchTab('storage-gw','qcm')"><span class="tab-icon">&#9998;</span> QCM (10)</button></div>
+
+                <div class="tab-content active" id="storage-gw-concepts">
+                    <div class="concept-card"><h4>Storage Gateway</h4><p>Service hybride connectant on-premises au cloud AWS. Integration transparente.</p><table><tr><th>Type</th><th>Interface</th><th>Backend</th></tr><tr><td>S3 File GW</td><td>NFS/SMB</td><td>S3</td></tr><tr><td>Volume Cached</td><td>iSCSI</td><td>S3 (cache local)</td></tr><tr><td>Volume Stored</td><td>iSCSI</td><td>Local (backup S3)</td></tr><tr><td>Tape Gateway</td><td>VTL</td><td>S3/Glacier</td></tr></table></div>
+                    <div class="concept-card"><h4>Services de transfert</h4><table><tr><th>Service</th><th>Usage</th></tr><tr><td><strong>DataSync</strong></td><td>Transfert automatise on-prem/AWS</td></tr><tr><td><strong>Snow Family</strong></td><td>Transfert physique (8 To a 100 Po)</td></tr><tr><td><strong>Transfer Family</strong></td><td>SFTP/FTP vers S3/EFS</td></tr><tr><td><strong>S3 Transfer Accel</strong></td><td>Upload rapide via CloudFront</td></tr></table></div>
+                </div>
+
+                <div class="tab-content" id="storage-gw-keypoints">
+                    <div class="section-title">Points Cles Enrichis</div>
+                    <div class="key-point-card"><span class="star">&#11088;</span><div class="kp-content"><div class="kp-title">Volume Stored = donnees locales + backup S3</div><div class="kp-desc">Donnees principales en local, snapshots asynchrones vers S3. Latence locale.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#11088;</span><div class="kp-content"><div class="kp-title">Volume Cached = donnees S3 + cache local</div><div class="kp-desc">Donnees dans S3, seules les plus accedees en cache local. Economise l'espace local.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#11088;</span><div class="kp-content"><div class="kp-title">Snow Family = si transfert > 1 semaine par reseau</div><div class="kp-desc">Snowcone (8 To), Snowball Edge (80 To), Snowmobile (100 Po = camion !).</div></div></div>
+                    <div class="key-point-card"><span class="star">&#11088;</span><div class="kp-content"><div class="kp-title">Tape Gateway remplace les bandes physiques</div><div class="kp-desc">Bandes virtuelles (VTL) stockees dans S3/Glacier. Compatible avec logiciels de backup existants.</div></div></div>
+                </div>
+
+                <div class="tab-content" id="storage-gw-qcm">
+                    <div class="qcm-header"><h3>QCM - Storage Gateway & Transfer</h3><span class="qcm-counter">10 questions</span></div>
+                    <div class="progress-bar-container"><div class="progress-bar" id="progress-sgw"></div></div>
+
+                    <div class="question"><p>1) Quel type garde les donnees principales en local avec backup S3 ?</p><label><input type="radio" name="sgw1" value="a"> Volume Cached</label><label><input type="radio" name="sgw1" value="b"> Volume Stored</label><label><input type="radio" name="sgw1" value="c"> File Gateway</label><label><input type="radio" name="sgw1" value="d"> Tape Gateway</label><div class="feedback" id="fb-sgw1"></div></div>
+                    <div class="question"><p>2) Pour transferer 50 To physiquement, quel service ?</p><label><input type="radio" name="sgw2" value="a"> DataSync</label><label><input type="radio" name="sgw2" value="b"> Snowball Edge</label><label><input type="radio" name="sgw2" value="c"> Transfer Acceleration</label><label><input type="radio" name="sgw2" value="d"> VPN</label><div class="feedback" id="fb-sgw2"></div></div>
+                    <div class="question"><p>3) Tape Gateway remplace quoi ?</p><label><input type="radio" name="sgw3" value="a"> Les disques EBS</label><label><input type="radio" name="sgw3" value="b"> Les bandes de sauvegarde physiques</label><label><input type="radio" name="sgw3" value="c"> Les partages NFS</label><label><input type="radio" name="sgw3" value="d"> Les instances EC2</label><div class="feedback" id="fb-sgw3"></div></div>
+                    <div class="question"><p>4) Quelle est la capacite d'un Snowmobile ?</p><label><input type="radio" name="sgw4" value="a"> 80 To</label><label><input type="radio" name="sgw4" value="b"> 8 To</label><label><input type="radio" name="sgw4" value="c"> 100 Po</label><label><input type="radio" name="sgw4" value="d"> 1 Eo</label><div class="feedback" id="fb-sgw4"></div></div>
+                    <div class="question"><p>5) File Gateway presente quelle interface aux applications ?</p><label><input type="radio" name="sgw5" value="a"> iSCSI</label><label><input type="radio" name="sgw5" value="b"> NFS ou SMB</label><label><input type="radio" name="sgw5" value="c"> HTTP</label><label><input type="radio" name="sgw5" value="d"> FTP</label><div class="feedback" id="fb-sgw5"></div></div>
+                    <div class="question"><p>6) DataSync est un agent logiciel ou materiel ?</p><label><input type="radio" name="sgw6" value="a"> Materiel uniquement</label><label><input type="radio" name="sgw6" value="b"> Logiciel</label><label><input type="radio" name="sgw6" value="c"> Service cloud sans agent</label><label><input type="radio" name="sgw6" value="d"> VM dediee</label><div class="feedback" id="fb-sgw6"></div></div>
+                    <div class="question"><p>7) Snowcone a quelle capacite ?</p><label><input type="radio" name="sgw7" value="a"> 80 To</label><label><input type="radio" name="sgw7" value="b"> 8 To</label><label><input type="radio" name="sgw7" value="c"> 42 To</label><label><input type="radio" name="sgw7" value="d"> 100 Po</label><div class="feedback" id="fb-sgw7"></div></div>
+                    <div class="question"><p>8) Quand utiliser Snow Family plutot que DataSync ?</p><label><input type="radio" name="sgw8" value="a"> Quand le transfert est petit</label><label><input type="radio" name="sgw8" value="b"> Quand le transfert par reseau prendrait plus d'une semaine</label><label><input type="radio" name="sgw8" value="c"> Pour les fichiers texte</label><label><input type="radio" name="sgw8" value="d"> Jamais</label><div class="feedback" id="fb-sgw8"></div></div>
+                    <div class="question"><p>9) AWS Transfer Family supporte quels protocoles ?</p><label><input type="radio" name="sgw9" value="a"> HTTP/HTTPS</label><label><input type="radio" name="sgw9" value="b"> SFTP, FTPS, FTP</label><label><input type="radio" name="sgw9" value="c"> NFS/SMB</label><label><input type="radio" name="sgw9" value="d"> iSCSI</label><div class="feedback" id="fb-sgw9"></div></div>
+                    <div class="question"><p>10) Storage Gateway necessite quoi dans votre datacenter ?</p><label><input type="radio" name="sgw10" value="a"> Rien</label><label><input type="radio" name="sgw10" value="b"> Une VM ou appliance physique deployee localement</label><label><input type="radio" name="sgw10" value="c"> Un serveur AWS Outpost</label><label><input type="radio" name="sgw10" value="d"> Direct Connect</label><div class="feedback" id="fb-sgw10"></div></div>
+
+                    <div style="text-align:center; margin-top:20px;"><button class="btn btn-primary" onclick="checkAnswers('sgw')">Verifier mes reponses</button><button class="btn btn-secondary" onclick="resetQuiz('sgw')">Recommencer</button></div>
+                    <div class="score-display" id="score-sgw"></div>
+                </div>
+            </div>
+
+            <!-- ==================== CLOUDWATCH ==================== -->
+            <div class="lesson" id="lesson-cloudwatch">
+                <div class="lesson-header"><div class="lesson-icon icon-monitoring" style="font-size:1.4em;">&#128200;</div><h2>Amazon CloudWatch</h2></div>
+                <div class="tabs"><button class="tab-btn active" onclick="switchTab('cloudwatch','concepts')"><span class="tab-icon">&#128218;</span> Concepts</button><button class="tab-btn" onclick="switchTab('cloudwatch','keypoints')"><span class="tab-icon">&#11088;</span> Points Cles</button><button class="tab-btn" onclick="switchTab('cloudwatch','qcm')"><span class="tab-icon">&#9998;</span> QCM (10)</button></div>
+
+                <div class="tab-content active" id="cloudwatch-concepts">
+                    <div class="concept-card"><h4>Service de surveillance et observabilite</h4><p>Collecte metriques, logs et evenements. Permet de surveiller, alerter et reagir automatiquement.</p></div>
+                    <div class="concept-card"><h4>Composants</h4><table><tr><th>Composant</th><th>Role</th></tr><tr><td>Metriques</td><td>Donnees numeriques (CPU, reseau)</td></tr><tr><td>Alarmes</td><td>Declenchent actions si seuil depasse</td></tr><tr><td>Logs</td><td>Collecte centralisee des logs</td></tr><tr><td>Events</td><td>Reagit aux changements d'etat</td></tr><tr><td>Dashboards</td><td>Visualisations</td></tr></table></div>
+                    <div class="concept-card"><h4>Metriques Standard vs Custom</h4><p><strong>Standard (5 min) :</strong> CPU, Network, DiskOps - gratuites.</p><p><strong>Custom (agent) :</strong> RAM, espace disque, connexions. Necessitent l'agent CloudWatch.</p><p><strong>Important :</strong> RAM et disque = PAS standard !</p></div>
+                </div>
+
+                <div class="tab-content" id="cloudwatch-keypoints">
+                    <div class="section-title">Points Cles Enrichis</div>
+                    <div class="key-point-card"><span class="star">&#11088;</span><div class="kp-content"><div class="kp-title">RAM et disque = metriques CUSTOM</div><div class="kp-desc">CloudWatch par defaut ne voit PAS la memoire RAM ni l'espace disque. Agent CloudWatch necessaire.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#11088;</span><div class="kp-content"><div class="kp-title">Standard = 5 min | Detailed = 1 min (payant)</div><div class="kp-desc">Par defaut metriques toutes les 5 min. Detailed monitoring active la collecte toutes les minutes.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#11088;</span><div class="kp-content"><div class="kp-title">Alarme -> SNS + Auto Scaling + EC2 action</div><div class="kp-desc">3 etats : OK, ALARM, INSUFFICIENT_DATA. Peut envoyer notification, scaler, ou arreter/redemarrer.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#11088;</span><div class="kp-content"><div class="kp-title">Logs : Log Groups -> Log Streams -> Events</div><div class="kp-desc">Hierarchie de logs. Retention configurable de 1 jour a indefini. Necessite agent sur l'instance.</div></div></div>
+                </div>
+
+                <div class="tab-content" id="cloudwatch-qcm">
+                    <div class="qcm-header"><h3>QCM - CloudWatch</h3><span class="qcm-counter">10 questions</span></div>
+                    <div class="progress-bar-container"><div class="progress-bar" id="progress-cw"></div></div>
+
+                    <div class="question"><p>1) La RAM est-elle une metrique standard CloudWatch ?</p><label><input type="radio" name="cw1" value="a"> Oui</label><label><input type="radio" name="cw1" value="b"> Non, c'est une metrique custom</label><label><input type="radio" name="cw1" value="c"> Seulement en detailed monitoring</label><label><input type="radio" name="cw1" value="d"> Seulement sur Linux</label><div class="feedback" id="fb-cw1"></div></div>
+                    <div class="question"><p>2) Quel est l'intervalle par defaut des metriques ?</p><label><input type="radio" name="cw2" value="a"> 1 minute</label><label><input type="radio" name="cw2" value="b"> 5 minutes</label><label><input type="radio" name="cw2" value="c"> 10 minutes</label><label><input type="radio" name="cw2" value="d"> 30 secondes</label><div class="feedback" id="fb-cw2"></div></div>
+                    <div class="question"><p>3) Quels sont les etats d'une alarme CloudWatch ?</p><label><input type="radio" name="cw3" value="a"> On/Off</label><label><input type="radio" name="cw3" value="b"> OK, ALARM, INSUFFICIENT_DATA</label><label><input type="radio" name="cw3" value="c"> Green, Yellow, Red</label><label><input type="radio" name="cw3" value="d"> Active, Inactive</label><div class="feedback" id="fb-cw3"></div></div>
+                    <div class="question"><p>4) Que faut-il installer pour collecter la RAM ?</p><label><input type="radio" name="cw4" value="a"> AWS CLI</label><label><input type="radio" name="cw4" value="b"> Agent CloudWatch</label><label><input type="radio" name="cw4" value="c"> SSM Agent</label><label><input type="radio" name="cw4" value="d"> Docker</label><div class="feedback" id="fb-cw4"></div></div>
+                    <div class="question"><p>5) Une alarme peut declencher quelle action ?</p><label><input type="radio" name="cw5" value="a"> Modifier un Security Group</label><label><input type="radio" name="cw5" value="b"> SNS notification + Auto Scaling</label><label><input type="radio" name="cw5" value="c"> Creer un VPC</label><label><input type="radio" name="cw5" value="d"> Supprimer un bucket S3</label><div class="feedback" id="fb-cw5"></div></div>
+                    <div class="question"><p>6) Le Detailed Monitoring collecte toutes les ?</p><label><input type="radio" name="cw6" value="a"> 30 secondes</label><label><input type="radio" name="cw6" value="b"> 1 minute</label><label><input type="radio" name="cw6" value="c"> 5 minutes</label><label><input type="radio" name="cw6" value="d"> 10 minutes</label><div class="feedback" id="fb-cw6"></div></div>
+                    <div class="question"><p>7) CloudWatch Logs necessite quoi sur l'instance ?</p><label><input type="radio" name="cw7" value="a"> Rien</label><label><input type="radio" name="cw7" value="b"> L'agent CloudWatch</label><label><input type="radio" name="cw7" value="c"> Un volume EBS</label><label><input type="radio" name="cw7" value="d"> Un role S3</label><div class="feedback" id="fb-cw7"></div></div>
+                    <div class="question"><p>8) La hierarchie des logs est ?</p><label><input type="radio" name="cw8" value="a"> Buckets -> Objects</label><label><input type="radio" name="cw8" value="b"> Log Groups -> Log Streams -> Log Events</label><label><input type="radio" name="cw8" value="c"> Tables -> Rows</label><label><input type="radio" name="cw8" value="d"> Volumes -> Files</label><div class="feedback" id="fb-cw8"></div></div>
+                    <div class="question"><p>9) CloudWatch surveille le CONTENU des instances ?</p><label><input type="radio" name="cw9" value="a"> Oui, par defaut</label><label><input type="radio" name="cw9" value="b"> Non, seulement les metriques de l'hyperviseur (agent pour le reste)</label><label><input type="radio" name="cw9" value="c"> Seulement avec SSM</label><label><input type="radio" name="cw9" value="d"> Seulement sur Windows</label><div class="feedback" id="fb-cw9"></div></div>
+                    <div class="question"><p>10) La retention des logs est configurable ?</p><label><input type="radio" name="cw10" value="a"> Non, toujours 90 jours</label><label><input type="radio" name="cw10" value="b"> Oui, de 1 jour a indefini</label><label><input type="radio" name="cw10" value="c"> Maximum 30 jours</label><label><input type="radio" name="cw10" value="d"> Non modifiable</label><div class="feedback" id="fb-cw10"></div></div>
+
+                    <div style="text-align:center; margin-top:20px;"><button class="btn btn-primary" onclick="checkAnswers('cw')">Verifier mes reponses</button><button class="btn btn-secondary" onclick="resetQuiz('cw')">Recommencer</button></div>
+                    <div class="score-display" id="score-cw"></div>
+                </div>
+            </div>
+
+            <!-- ==================== CLOUDTRAIL ==================== -->
+            <div class="lesson" id="lesson-cloudtrail">
+                <div class="lesson-header"><div class="lesson-icon icon-monitoring" style="font-size:1.4em;">&#128065;</div><h2>AWS CloudTrail</h2></div>
+                <div class="tabs"><button class="tab-btn active" onclick="switchTab('cloudtrail','concepts')"><span class="tab-icon">&#128218;</span> Concepts</button><button class="tab-btn" onclick="switchTab('cloudtrail','keypoints')"><span class="tab-icon">&#11088;</span> Points Cles</button><button class="tab-btn" onclick="switchTab('cloudtrail','qcm')"><span class="tab-icon">&#9998;</span> QCM (10)</button></div>
+
+                <div class="tab-content active" id="cloudtrail-concepts">
+                    <div class="concept-card"><h4>Journal d'audit AWS</h4><p>Enregistre TOUTES les actions (appels API). Repond a : QUI a fait QUOI, QUAND, DEPUIS OU ?</p></div>
+                    <div class="concept-card"><h4>CloudWatch vs CloudTrail</h4><table><tr><th></th><th>CloudWatch</th><th>CloudTrail</th></tr><tr><td>Question</td><td>Comment ca PERFORME ?</td><td>QUI a fait QUOI ?</td></tr><tr><td>Focus</td><td>Metriques/Perf</td><td>Audit/Gouvernance</td></tr><tr><td>Exemple</td><td>CPU 95%</td><td>User X deleted i-123</td></tr></table></div>
+                    <div class="concept-card"><h4>Types d'evenements</h4><p><strong>Management Events :</strong> Operations sur ressources (actives par defaut). <strong>Data Events :</strong> Operations sur donnees (non actives - volume eleve). <strong>Insights :</strong> Detection d'anomalies.</p></div>
+                </div>
+
+                <div class="tab-content" id="cloudtrail-keypoints">
+                    <div class="section-title">Points Cles Enrichis</div>
+                    <div class="key-point-card"><span class="star">&#11088;</span><div class="kp-content"><div class="kp-title">CloudTrail = audit | CloudWatch = monitoring</div><div class="kp-desc">"Qui a fait quoi" vs "Comment ca va". Ne les confondez JAMAIS a l'examen.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#11088;</span><div class="kp-content"><div class="kp-title">90 jours gratuits dans la console</div><div class="kp-desc">Pour plus long terme : creer un Trail qui stocke dans S3. Analysable avec Athena.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#11088;</span><div class="kp-content"><div class="kp-title">Management events = par defaut | Data events = non</div><div class="kp-desc">Data events (GetObject S3, Invoke Lambda) generent un volume enorme, d'ou leur desactivation par defaut.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#11088;</span><div class="kp-content"><div class="kp-title">Trail multi-region recommande</div><div class="kp-desc">Capture les evenements de TOUTES les regions. Indispensable pour une vue complete de la securite.</div></div></div>
+                </div>
+
+                <div class="tab-content" id="cloudtrail-qcm">
+                    <div class="qcm-header"><h3>QCM - CloudTrail</h3><span class="qcm-counter">10 questions</span></div>
+                    <div class="progress-bar-container"><div class="progress-bar" id="progress-ct"></div></div>
+
+                    <div class="question"><p>1) CloudTrail repond a quelle question ?</p><label><input type="radio" name="ct1" value="a"> Quelle est la charge CPU ?</label><label><input type="radio" name="ct1" value="b"> Qui a fait quoi dans mon compte ?</label><label><input type="radio" name="ct1" value="c"> Combien coute mon infrastructure ?</label><label><input type="radio" name="ct1" value="d"> Quelle est la latence ?</label><div class="feedback" id="fb-ct1"></div></div>
+                    <div class="question"><p>2) Combien de jours d'historique gratuit dans la console ?</p><label><input type="radio" name="ct2" value="a"> 30</label><label><input type="radio" name="ct2" value="b"> 60</label><label><input type="radio" name="ct2" value="c"> 90</label><label><input type="radio" name="ct2" value="d"> 365</label><div class="feedback" id="fb-ct2"></div></div>
+                    <div class="question"><p>3) Les Data Events sont actives par defaut ?</p><label><input type="radio" name="ct3" value="a"> Oui</label><label><input type="radio" name="ct3" value="b"> Non</label><label><input type="radio" name="ct3" value="c"> Seulement pour S3</label><label><input type="radio" name="ct3" value="d"> Seulement pour Lambda</label><div class="feedback" id="fb-ct3"></div></div>
+                    <div class="question"><p>4) Ou CloudTrail stocke les logs a long terme ?</p><label><input type="radio" name="ct4" value="a"> EBS</label><label><input type="radio" name="ct4" value="b"> S3</label><label><input type="radio" name="ct4" value="c"> RDS</label><label><input type="radio" name="ct4" value="d"> EFS</label><div class="feedback" id="fb-ct4"></div></div>
+                    <div class="question"><p>5) Quel service permet d'analyser les logs CloudTrail avec SQL ?</p><label><input type="radio" name="ct5" value="a"> RDS</label><label><input type="radio" name="ct5" value="b"> Athena</label><label><input type="radio" name="ct5" value="c"> Redshift</label><label><input type="radio" name="ct5" value="d"> DynamoDB</label><div class="feedback" id="fb-ct5"></div></div>
+                    <div class="question"><p>6) Un trail multi-region capture les evenements de ?</p><label><input type="radio" name="ct6" value="a"> La region actuelle</label><label><input type="radio" name="ct6" value="b"> Toutes les regions</label><label><input type="radio" name="ct6" value="c"> 2 regions</label><label><input type="radio" name="ct6" value="d"> La region + une backup</label><div class="feedback" id="fb-ct6"></div></div>
+                    <div class="question"><p>7) Management Events = ?</p><label><input type="radio" name="ct7" value="a"> GetObject S3</label><label><input type="radio" name="ct7" value="b"> Operations sur les ressources (CreateBucket, RunInstances)</label><label><input type="radio" name="ct7" value="c"> Metriques de performance</label><label><input type="radio" name="ct7" value="d"> Logs applicatifs</label><div class="feedback" id="fb-ct7"></div></div>
+                    <div class="question"><p>8) Pour detecter qui a modifie un Security Group, quel service ?</p><label><input type="radio" name="ct8" value="a"> CloudWatch</label><label><input type="radio" name="ct8" value="b"> CloudTrail</label><label><input type="radio" name="ct8" value="c"> VPC Flow Logs</label><label><input type="radio" name="ct8" value="d"> Inspector</label><div class="feedback" id="fb-ct8"></div></div>
+                    <div class="question"><p>9) CloudTrail Insights detecte quoi ?</p><label><input type="radio" name="ct9" value="a"> Les virus</label><label><input type="radio" name="ct9" value="b"> Les activites API inhabituelles (anomalies)</label><label><input type="radio" name="ct9" value="c"> Les metriques CPU</label><label><input type="radio" name="ct9" value="d"> Les couts excessifs</label><div class="feedback" id="fb-ct9"></div></div>
+                    <div class="question"><p>10) La validation d'integrite des logs permet de ?</p><label><input type="radio" name="ct10" value="a"> Chiffrer les logs</label><label><input type="radio" name="ct10" value="b"> Detecter si un log a ete modifie/falsifie</label><label><input type="radio" name="ct10" value="c"> Compresser les logs</label><label><input type="radio" name="ct10" value="d"> Supprimer les doublons</label><div class="feedback" id="fb-ct10"></div></div>
+
+                    <div style="text-align:center; margin-top:20px;"><button class="btn btn-primary" onclick="checkAnswers('ct')">Verifier mes reponses</button><button class="btn btn-secondary" onclick="resetQuiz('ct')">Recommencer</button></div>
+                    <div class="score-display" id="score-ct"></div>
+                </div>
+            </div>
+
+            <!-- ==================== ATHENA ==================== -->
+            <div class="lesson" id="lesson-athena">
+                <div class="lesson-header"><div class="lesson-icon icon-monitoring" style="font-size:1.4em;">&#128270;</div><h2>Athena Integration</h2></div>
+                <div class="tabs"><button class="tab-btn active" onclick="switchTab('athena','concepts')"><span class="tab-icon">&#128218;</span> Concepts</button><button class="tab-btn" onclick="switchTab('athena','keypoints')"><span class="tab-icon">&#11088;</span> Points Cles</button><button class="tab-btn" onclick="switchTab('athena','qcm')"><span class="tab-icon">&#9998;</span> QCM (10)</button></div>
+
+                <div class="tab-content active" id="athena-concepts">
+                    <div class="concept-card"><h4>SQL serverless sur S3</h4><p>Requetes SQL directement sur des fichiers dans S3. Pas de serveur. Paiement par quantite de donnees scannees (~5$/To).</p></div>
+                    <div class="concept-card"><h4>Integration CloudTrail + Athena</h4><p>CloudTrail stocke dans S3. Athena interroge avec SQL pour trouver : qui a modifie quoi, patterns d'acces, anomalies. Aussi pour VPC Flow Logs, ALB Logs.</p></div>
+                </div>
+
+                <div class="tab-content" id="athena-keypoints">
+                    <div class="section-title">Points Cles Enrichis</div>
+                    <div class="key-point-card"><span class="star">&#11088;</span><div class="kp-content"><div class="kp-title">Athena = serverless, paiement au scan</div><div class="kp-desc">~5$/To scanne. Pas d'infrastructure. Ideal pour analyses ad-hoc et ponctuelles.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#11088;</span><div class="kp-content"><div class="kp-title">Formats colonne = economies majeures</div><div class="kp-desc">Parquet/ORC : ne scanne que les colonnes utiles. Reduit les couts de 30-90% vs CSV/JSON.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#11088;</span><div class="kp-content"><div class="kp-title">Cas d'usage : CloudTrail + Athena = audit SQL</div><div class="kp-desc">Requetez "Qui a supprime le bucket X ?" directement en SQL sur les logs S3.</div></div></div>
+                </div>
+
+                <div class="tab-content" id="athena-qcm">
+                    <div class="qcm-header"><h3>QCM - Athena</h3><span class="qcm-counter">10 questions</span></div>
+                    <div class="progress-bar-container"><div class="progress-bar" id="progress-ath"></div></div>
+
+                    <div class="question"><p>1) Athena est serverless ?</p><label><input type="radio" name="ath1" value="a"> Non</label><label><input type="radio" name="ath1" value="b"> Oui</label><label><input type="radio" name="ath1" value="c"> Necessite un cluster</label><label><input type="radio" name="ath1" value="d"> Necessite EC2</label><div class="feedback" id="fb-ath1"></div></div>
+                    <div class="question"><p>2) Athena facture en fonction de ?</p><label><input type="radio" name="ath2" value="a"> Nombre de requetes</label><label><input type="radio" name="ath2" value="b"> Donnees scannees (par To)</label><label><input type="radio" name="ath2" value="c"> Temps d'execution</label><label><input type="radio" name="ath2" value="d"> Nombre de tables</label><div class="feedback" id="fb-ath2"></div></div>
+                    <div class="question"><p>3) Quel format reduit les couts Athena ?</p><label><input type="radio" name="ath3" value="a"> CSV</label><label><input type="radio" name="ath3" value="b"> JSON</label><label><input type="radio" name="ath3" value="c"> Parquet (format colonne)</label><label><input type="radio" name="ath3" value="d"> XML</label><div class="feedback" id="fb-ath3"></div></div>
+                    <div class="question"><p>4) Athena interroge directement les donnees dans ?</p><label><input type="radio" name="ath4" value="a"> RDS</label><label><input type="radio" name="ath4" value="b"> S3</label><label><input type="radio" name="ath4" value="c"> DynamoDB</label><label><input type="radio" name="ath4" value="d"> EBS</label><div class="feedback" id="fb-ath4"></div></div>
+                    <div class="question"><p>5) Faut-il charger les donnees dans Athena avant de les interroger ?</p><label><input type="radio" name="ath5" value="a"> Oui, ETL obligatoire</label><label><input type="radio" name="ath5" value="b"> Non, interroge directement S3</label><label><input type="radio" name="ath5" value="c"> Oui, dans une base interne</label><label><input type="radio" name="ath5" value="d"> Depend du format</label><div class="feedback" id="fb-ath5"></div></div>
+                    <div class="question"><p>6) Athena + CloudTrail permet de ?</p><label><input type="radio" name="ath6" value="a"> Surveiller la CPU</label><label><input type="radio" name="ath6" value="b"> Requeter les logs d'audit avec SQL</label><label><input type="radio" name="ath6" value="c"> Creer des alarmes</label><label><input type="radio" name="ath6" value="d"> Scanner les vulnerabilites</label><div class="feedback" id="fb-ath6"></div></div>
+                    <div class="question"><p>7) Athena est base sur quel moteur ?</p><label><input type="radio" name="ath7" value="a"> MySQL</label><label><input type="radio" name="ath7" value="b"> Presto/Trino</label><label><input type="radio" name="ath7" value="c"> PostgreSQL</label><label><input type="radio" name="ath7" value="d"> MongoDB</label><div class="feedback" id="fb-ath7"></div></div>
+                    <div class="question"><p>8) Quel cout approximatif par To scanne ?</p><label><input type="radio" name="ath8" value="a"> 0.5$</label><label><input type="radio" name="ath8" value="b"> 5$</label><label><input type="radio" name="ath8" value="c"> 50$</label><label><input type="radio" name="ath8" value="d"> 500$</label><div class="feedback" id="fb-ath8"></div></div>
+                    <div class="question"><p>9) Athena peut analyser les VPC Flow Logs ?</p><label><input type="radio" name="ath9" value="a"> Non</label><label><input type="radio" name="ath9" value="b"> Oui, s'ils sont dans S3</label><label><input type="radio" name="ath9" value="c"> Seulement avec Redshift</label><label><input type="radio" name="ath9" value="d"> Seulement en temps reel</label><div class="feedback" id="fb-ath9"></div></div>
+                    <div class="question"><p>10) Pour la visualisation des resultats Athena, quel service AWS ?</p><label><input type="radio" name="ath10" value="a"> CloudWatch Dashboards</label><label><input type="radio" name="ath10" value="b"> Amazon QuickSight</label><label><input type="radio" name="ath10" value="c"> S3 Static Website</label><label><input type="radio" name="ath10" value="d"> EC2</label><div class="feedback" id="fb-ath10"></div></div>
+
+                    <div style="text-align:center; margin-top:20px;"><button class="btn btn-primary" onclick="checkAnswers('ath')">Verifier mes reponses</button><button class="btn btn-secondary" onclick="resetQuiz('ath')">Recommencer</button></div>
+                    <div class="score-display" id="score-ath"></div>
+                </div>
+            </div>
+
+            <!-- ==================== BONUS ==================== -->
+            <div class="lesson" id="lesson-bonus">
+                <div class="lesson-header"><div class="lesson-icon icon-bonus" style="font-size:1.4em;">&#127942;</div><h2>Bonus - Approfondissement</h2></div>
+                <div class="tabs"><button class="tab-btn active" onclick="switchTab('bonus','concepts')"><span class="tab-icon">&#128218;</span> Synthese</button><button class="tab-btn" onclick="switchTab('bonus','keypoints')"><span class="tab-icon">&#11088;</span> Scenarios</button><button class="tab-btn" onclick="switchTab('bonus','qcm')"><span class="tab-icon">&#9998;</span> Pieges</button></div>
+
+                <div class="tab-content active" id="bonus-concepts">
+                    <div class="section-title">Arbres de decision</div>
+
+                    <div class="bonus-card"><h4>&#128190; Arbre de decision Stockage</h4><p>Monter un FS sur 1 instance ? -> <strong>EBS</strong><br>Monter un FS sur N instances Linux ? -> <strong>EFS</strong><br>Monter un FS sur N instances Windows ? -> <strong>FSx for Windows</strong><br>HPC / calcul haute performance ? -> <strong>FSx for Lustre</strong><br>Acces API HTTP, frequent ? -> <strong>S3 Standard</strong><br>Acces rare (1x/trimestre) ? -> <strong>S3 Glacier Flexible Retrieval</strong><br>Archive long terme (7+ ans) ? -> <strong>Glacier Deep Archive</strong><br>I/O extreme + ephemere ? -> <strong>Instance Store</strong><br>Base de donnees IOPS elevees ? -> <strong>EBS io2 Block Express</strong><br>Fichiers temporaires/cache ? -> <strong>Instance Store ou EBS gp3</strong></p></div>
+
+                    <div class="bonus-card"><h4>&#128279; Arbre de decision Connectivite</h4><p>Connexion VPC a VPC (2 VPC) ? -> <strong>VPC Peering</strong><br>Connexion VPC a VPC (5+ VPC) ? -> <strong>Transit Gateway</strong><br>Acces prive a S3/DynamoDB ? -> <strong>Gateway Endpoint (gratuit)</strong><br>Acces prive a un autre service AWS ? -> <strong>Interface Endpoint (PrivateLink)</strong><br>Connexion dediee on-premises ? -> <strong>Direct Connect</strong><br>Connexion rapide et chiffree on-premises ? -> <strong>VPN Site-to-Site</strong><br>Exposer un service a un autre VPC ? -> <strong>PrivateLink</strong><br>Connexion Direct Connect + chiffrement ? -> <strong>Direct Connect + VPN par-dessus</strong><br>DNS resolution cross-VPC ? -> <strong>Route 53 Resolver</strong></p></div>
+
+                    <div class="bonus-card"><h4>&#128274; Arbre de decision Securite</h4><p>Bloquer une IP specifique ? -> <strong>NACL (deny rule)</strong><br>Autoriser un port pour une instance ? -> <strong>Security Group</strong><br>Qui a modifie une ressource ? -> <strong>CloudTrail</strong><br>Detecter une activite suspecte ? -> <strong>GuardDuty</strong><br>Verifier la conformite d'une config ? -> <strong>AWS Config</strong><br>Chiffrer un volume EBS ? -> <strong>AWS KMS</strong><br>Gerer les secrets (API keys, DB passwords) ? -> <strong>AWS Secrets Manager</strong><br>Rotation automatique des credentials ? -> <strong>Secrets Manager (rotation Lambda)</strong><br>Proteger contre les DDoS ? -> <strong>AWS Shield (Standard gratuit, Advanced payant)</strong><br>Filtrer le trafic HTTP (XSS, SQL injection) ? -> <strong>AWS WAF</strong></p></div>
+
+                    <div class="section-title">Tableaux comparatifs</div>
+
+                    <div class="bonus-card"><h4>&#128200; Comparatif Surveillance et Audit</h4><table><tr><th>Service</th><th>Question cle</th><th>Donnees</th><th>Usage typique</th></tr><tr><td><strong>CloudWatch</strong></td><td>Comment ca performe ?</td><td>Metriques, Logs, Alarmes</td><td>CPU > 80% -> alerte SNS</td></tr><tr><td><strong>CloudTrail</strong></td><td>Qui a fait quoi ?</td><td>Evenements API</td><td>Audit suppression S3</td></tr><tr><td><strong>AWS Config</strong></td><td>Conforme aux regles ?</td><td>Config resources</td><td>SG ouvert au monde ?</td></tr><tr><td><strong>GuardDuty</strong></td><td>Activite malveillante ?</td><td>ML sur Flow Logs/DNS/CT</td><td>Crypto-mining detecte</td></tr><tr><td><strong>Athena</strong></td><td>Que montrent les logs ?</td><td>SQL sur fichiers S3</td><td>Requeter CT logs</td></tr><tr><td><strong>Inspector</strong></td><td>Vulnerabilites ?</td><td>Scan EC2/ECR</td><td>CVE detectees sur instance</td></tr><tr><td><strong>Macie</strong></td><td>Donnees sensibles dans S3 ?</td><td>ML sur contenu S3</td><td>PII/cartes credit exposees</td></tr></table></div>
+
+                    <div class="bonus-card"><h4>&#128190; Comparatif Classes de Stockage S3</h4><table><tr><th>Classe</th><th>Acces</th><th>Duree min</th><th>Cout/Go/mois</th><th>Cas d'usage</th></tr><tr><td><strong>Standard</strong></td><td>Immediat</td><td>Aucune</td><td>~$0.023</td><td>Donnees actives</td></tr><tr><td><strong>Intelligent-Tiering</strong></td><td>Immediat</td><td>Aucune</td><td>Variable</td><td>Acces imprevisible</td></tr><tr><td><strong>Standard-IA</strong></td><td>Immediat</td><td>30 jours</td><td>~$0.0125</td><td>Backup, DR</td></tr><tr><td><strong>One Zone-IA</strong></td><td>Immediat</td><td>30 jours</td><td>~$0.01</td><td>Donnees reproductibles</td></tr><tr><td><strong>Glacier Instant</strong></td><td>Millisecondes</td><td>90 jours</td><td>~$0.004</td><td>Archives acces rapide</td></tr><tr><td><strong>Glacier Flexible</strong></td><td>1min - 12h</td><td>90 jours</td><td>~$0.0036</td><td>Archives standard</td></tr><tr><td><strong>Glacier Deep Archive</strong></td><td>12h - 48h</td><td>180 jours</td><td>~$0.00099</td><td>Conformite 7+ ans</td></tr></table></div>
+
+                    <div class="bonus-card"><h4>&#9889; Comparatif Types de Volumes EBS</h4><table><tr><th>Type</th><th>Categorie</th><th>IOPS max</th><th>Debit max</th><th>Cas d'usage</th></tr><tr><td><strong>gp3</strong></td><td>SSD GP</td><td>16 000</td><td>1 000 Mo/s</td><td>Usage general (recommande)</td></tr><tr><td><strong>gp2</strong></td><td>SSD GP</td><td>16 000</td><td>250 Mo/s</td><td>Legacy (preferer gp3)</td></tr><tr><td><strong>io2 Block Express</strong></td><td>SSD PIOPS</td><td>256 000</td><td>4 000 Mo/s</td><td>BDD critiques</td></tr><tr><td><strong>io1</strong></td><td>SSD PIOPS</td><td>64 000</td><td>1 000 Mo/s</td><td>BDD I/O intensif</td></tr><tr><td><strong>st1</strong></td><td>HDD Throughput</td><td>500</td><td>500 Mo/s</td><td>Big data, logs</td></tr><tr><td><strong>sc1</strong></td><td>HDD Cold</td><td>250</td><td>250 Mo/s</td><td>Archivage, acces rare</td></tr></table></div>
+
+                    <div class="bonus-card"><h4>&#128279; Comparatif Connectivite Hybride</h4><table><tr><th>Service</th><th>Bande passante</th><th>Chiffrement</th><th>Delai mise en place</th><th>Cout</th></tr><tr><td><strong>VPN Site-to-Site</strong></td><td>~1.25 Gbps</td><td>IPsec natif</td><td>Minutes</td><td>Faible</td></tr><tr><td><strong>Direct Connect</strong></td><td>1-100 Gbps</td><td>Non (ajouter VPN)</td><td>Semaines/mois</td><td>Eleve</td></tr><tr><td><strong>Direct Connect + VPN</strong></td><td>1-100 Gbps</td><td>IPsec</td><td>Semaines/mois</td><td>Tres eleve</td></tr><tr><td><strong>Transit Gateway</strong></td><td>50 Gbps/attach</td><td>VPN attachments</td><td>Minutes</td><td>Moyen</td></tr></table></div>
+
+                    <div class="section-title">Architectures de reference</div>
+
+                    <div class="bonus-card"><h4>&#127959; Architecture 3 Tiers VPC</h4><p><strong>Tier 1 - Public (DMZ) :</strong> ALB/NLB recoit le trafic via IGW. Bastion Host pour acces SSH admin.<br><strong>Tier 2 - Prive App :</strong> EC2/ECS/Lambda, accessible uniquement via ALB. NAT GW pour updates/patches.<br><strong>Tier 3 - Prive Data :</strong> RDS (Multi-AZ), ElastiCache, accessible uniquement depuis Tier 2.<br><br><strong>Regles cles :</strong><br>- Chaque tier n'accepte le trafic QUE du tier precedent (SG references)<br>- Sous-reseaux dans 2+ AZ pour la haute disponibilite<br>- VPC Flow Logs actives sur tous les sous-reseaux<br>- S3 Gateway Endpoint pour eviter le trafic Internet vers S3</p></div>
+
+                    <div class="bonus-card"><h4>&#127757; Architecture Multi-Region DR</h4><p><strong>Region primaire :</strong> VPC + infrastructure complete (EC2, RDS, ALB)<br><strong>Region secondaire :</strong> Infrastructure stand-by ou pilot light<br><br><strong>Strategies DR (RTO croissant) :</strong><br>1. <strong>Multi-Site Active/Active</strong> - RTO ~0, cout tres eleve<br>2. <strong>Warm Standby</strong> - Infrastructure reduite active, RTO minutes<br>3. <strong>Pilot Light</strong> - Services core uniquement (RDS replica), RTO dizaines de min<br>4. <strong>Backup & Restore</strong> - Snapshots + AMI cross-region, RTO heures<br><br><strong>Services cles :</strong> Route 53 failover, S3 CRR, RDS Read Replica cross-region, AMI copy</p></div>
+
+                    <div class="bonus-card"><h4>&#128272; Architecture Zero Trust VPC</h4><p><strong>Principes :</strong><br>- Jamais faire confiance, toujours verifier<br>- Moindre privilege sur tous les SG/NACL/IAM<br>- Micro-segmentation : 1 SG par role applicatif<br><br><strong>Implementation :</strong><br>1. SG referencant d'autres SG (pas de CIDR larges)<br>2. NACLs avec deny explicites sur IP malveillantes<br>3. VPC Endpoints pour eviter le transit Internet<br>4. PrivateLink pour les communications inter-services<br>5. Flow Logs + GuardDuty pour la detection<br>6. AWS Network Firewall pour inspection deep packet</p></div>
+
+                    <div class="section-title">Formules et calculs</div>
+
+                    <div class="bonus-card"><h4>&#129518; Calculs CIDR essentiels</h4><p><strong>Nombre d'IP = 2^(32 - prefix)</strong><br><br>/16 = 2^16 = 65 536 IP (max VPC)<br>/20 = 2^12 = 4 096 IP<br>/24 = 2^8 = 256 IP (IP disponibles : 256 - 5 = 251)<br>/28 = 2^4 = 16 IP (min sous-reseau, IP disponibles : 11)<br><br><strong>Calcul rapide :</strong> Pour un /24, chaque bit de difference = x2 ou /2<br>/23 = 512 IP, /25 = 128 IP, /26 = 64 IP, /27 = 32 IP<br><br><strong>Regle AWS :</strong> Toujours soustraire 5 IP reservees par sous-reseau<br><strong>Attention :</strong> Les CIDR de VPC ne doivent JAMAIS se chevaucher pour le peering</p></div>
+
+                    <div class="bonus-card"><h4>&#128176; Estimation des couts stockage</h4><p><strong>Cout mensuel = Volume (Go) x Prix/Go/mois</strong><br><br><strong>EBS gp3 :</strong> 1 To = 1024 x $0.08 = ~$82/mois<br><strong>EBS io2 :</strong> 1 To + 10000 IOPS = ~$145/mois<br><strong>S3 Standard :</strong> 1 To = ~$23/mois<br><strong>S3 Glacier DA :</strong> 1 To = ~$1/mois<br><strong>EFS Standard :</strong> 1 To = ~$300/mois<br><br><strong>Optimisations :</strong><br>- EBS : gp3 > gp2 (20% moins cher, IOPS configurables)<br>- S3 : Lifecycle Policies pour descendre en classe automatiquement<br>- EFS : Lifecycle vers IA (jusqu'a 92% d'economie sur fichiers inactifs)<br>- Snapshots : supprimer les anciens, utiliser DLM (Data Lifecycle Manager)</p></div>
+                </div>
+
+                <div class="tab-content" id="bonus-keypoints">
+                    <div class="section-title">Scenarios d'examen typiques - Reseau</div>
+                    <div class="key-point-card"><span class="star">&#127919;</span><div class="kp-content"><div class="kp-title">Instance privee sans acces Internet ?</div><div class="kp-desc">-> NAT Gateway dans un sous-reseau PUBLIC + route 0.0.0.0/0 -> NAT GW dans la table de routage privee. Le NAT GW lui-meme a besoin d'une route vers l'IGW.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#127919;</span><div class="kp-content"><div class="kp-title">Connecter 15 VPC entre eux ?</div><div class="kp-desc">-> AWS Transit Gateway (hub-and-spoke). Evite n(n-1)/2 = 105 peerings. Supporte aussi les connexions VPN et Direct Connect.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#127919;</span><div class="kp-content"><div class="kp-title">Acceder a S3 depuis un sous-reseau prive sans Internet ?</div><div class="kp-desc">-> S3 Gateway Endpoint (gratuit). Ajoute une route dans la table de routage. Trafic reste dans le reseau AWS.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#127919;</span><div class="kp-content"><div class="kp-title">Connexion hybride fiable et a haute bande passante ?</div><div class="kp-desc">-> AWS Direct Connect (1-100 Gbps). Pour chiffrement : ajouter VPN par-dessus. Pour redondance : 2 connexions DX dans 2 locations.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#127919;</span><div class="kp-content"><div class="kp-title">Bloquer une IP specifique qui attaque ?</div><div class="kp-desc">-> NACL avec une regle DENY sur cette IP (numero de regle bas pour priorite). Les SG ne supportent PAS les deny.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#127919;</span><div class="kp-content"><div class="kp-title">Resoudre le DNS d'un VPC peere ?</div><div class="kp-desc">-> Activer DNS resolution dans le peering + Route 53 Resolver (inbound/outbound endpoints) pour les queries cross-VPC.</div></div></div>
+
+                    <div class="section-title">Scenarios d'examen typiques - Stockage</div>
+                    <div class="key-point-card"><span class="star">&#127919;</span><div class="kp-content"><div class="kp-title">Fichiers partages entre 10 serveurs Linux ?</div><div class="kp-desc">-> Amazon EFS (NFS, multi-instance, multi-AZ, Linux). Mode General Purpose pour latence, Max I/O pour parallelisme massif.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#127919;</span><div class="kp-content"><div class="kp-title">Logs conformite 7 ans au moindre cout ?</div><div class="kp-desc">-> S3 Glacier Deep Archive + Vault Lock (WORM). Lifecycle Policy : Standard -> IA (30j) -> Glacier (90j) -> Deep Archive (365j).</div></div></div>
+                    <div class="key-point-card"><span class="star">&#127919;</span><div class="kp-content"><div class="kp-title">Base de donnees avec 100 000+ IOPS ?</div><div class="kp-desc">-> EBS io2 Block Express (jusqu'a 256 000 IOPS, 64 TiB). Alternative extreme : Instance Store (latence microseconde).</div></div></div>
+                    <div class="key-point-card"><span class="star">&#127919;</span><div class="kp-content"><div class="kp-title">Transferer 80 To sans saturer le reseau ?</div><div class="kp-desc">-> AWS Snowball Edge (80 To). Regle : si transfert reseau > 1 semaine, utiliser Snow Family. 100+ Po = Snowmobile.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#127919;</span><div class="kp-content"><div class="kp-title">Volume EBS a deplacer vers une autre AZ ?</div><div class="kp-desc">-> Snapshot EBS (stocke dans S3, niveau Region) -> Creer nouveau volume depuis le snapshot dans la nouvelle AZ.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#127919;</span><div class="kp-content"><div class="kp-title">Partager des fichiers entre instances Windows ?</div><div class="kp-desc">-> FSx for Windows File Server (protocole SMB). Supporte Active Directory, DFS, quotas. EFS = Linux only (NFS).</div></div></div>
+                    <div class="key-point-card"><span class="star">&#127919;</span><div class="kp-content"><div class="kp-title">Acces aleatoire et imprevisible a S3 ?</div><div class="kp-desc">-> S3 Intelligent-Tiering. Deplace automatiquement entre tiers (frequent, infrequent, archive) sans frais de recuperation.</div></div></div>
+
+                    <div class="section-title">Scenarios d'examen typiques - Surveillance</div>
+                    <div class="key-point-card"><span class="star">&#127919;</span><div class="kp-content"><div class="kp-title">Qui a supprime un bucket S3 ?</div><div class="kp-desc">-> CloudTrail (audit API) + Athena (requete SQL sur les logs dans S3). Chercher l'evenement DeleteBucket avec l'identite IAM.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#127919;</span><div class="kp-content"><div class="kp-title">Alarme quand CPU > 80% pendant 5 minutes ?</div><div class="kp-desc">-> CloudWatch Alarm : metrique CPUUtilization, period 60s, evaluation 5 datapoints, threshold 80, action SNS + Auto Scaling.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#127919;</span><div class="kp-content"><div class="kp-title">Monitorer la memoire RAM des instances ?</div><div class="kp-desc">-> Installer l'agent CloudWatch sur chaque instance. RAM n'est PAS une metrique standard (l'hyperviseur ne la voit pas).</div></div></div>
+                    <div class="key-point-card"><span class="star">&#127919;</span><div class="kp-content"><div class="kp-title">Detecter un pic anormal d'appels API ?</div><div class="kp-desc">-> CloudTrail Insights (detecte automatiquement les anomalies dans le volume d'appels API via machine learning).</div></div></div>
+                    <div class="key-point-card"><span class="star">&#127919;</span><div class="kp-content"><div class="kp-title">Analyser 6 mois de Flow Logs a moindre cout ?</div><div class="kp-desc">-> Flow Logs vers S3 (format Parquet) + Athena. Serverless, pay-per-query, pas d'infra a gerer.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#127919;</span><div class="kp-content"><div class="kp-title">Verifier que tous les SG sont conformes ?</div><div class="kp-desc">-> AWS Config + regle managed "restricted-ssh". Detection automatique si port 22 ouvert a 0.0.0.0/0. Remediation auto possible.</div></div></div>
+
+                    <div class="section-title">Scenarios d'examen typiques - Haute Disponibilite</div>
+                    <div class="key-point-card"><span class="star">&#127919;</span><div class="kp-content"><div class="kp-title">Application web hautement disponible ?</div><div class="kp-desc">-> ALB + Auto Scaling Group (min 2 instances) + Multi-AZ. RDS Multi-AZ pour la BDD. Route 53 health checks.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#127919;</span><div class="kp-content"><div class="kp-title">Failover automatique en cas de panne AZ ?</div><div class="kp-desc">-> Deployer dans 2+ AZ. ALB distribue le trafic. ASG remplace les instances defaillantes. RDS failover automatique (Multi-AZ).</div></div></div>
+                    <div class="key-point-card"><span class="star">&#127919;</span><div class="kp-content"><div class="kp-title">NAT Gateway hautement disponible ?</div><div class="kp-desc">-> Deployer 1 NAT GW par AZ (chacun dans son sous-reseau public). Chaque sous-reseau prive route vers le NAT GW de sa propre AZ.</div></div></div>
+                </div>
+
+                <div class="tab-content" id="bonus-qcm">
+                    <div class="section-title">Pieges frequents - Reseau et Securite</div>
+                    <div class="key-point-card"><span class="star">&#9888;</span><div class="kp-content"><div class="kp-title">SG vs NACL - Le piege #1 de l'examen</div><div class="kp-desc">SG = stateful (pas de regle retour necessaire) / NACL = stateless (regles IN et OUT obligatoires + ports ephemeres 1024-65535). SG = ALLOW only / NACL = ALLOW + DENY.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#9888;</span><div class="kp-content"><div class="kp-title">NAT Gateway = sous-reseau PUBLIC obligatoirement</div><div class="kp-desc">Jamais dans le prive ! Il a besoin d'une route vers l'IGW pour fonctionner. Route dans le sous-reseau PRIVE : 0.0.0.0/0 -> NAT GW.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#9888;</span><div class="kp-content"><div class="kp-title">VPC Peering = NON transitif</div><div class="kp-desc">A-B et B-C ne donne PAS A-C. Chaque paire necessite son propre peering + routes dans les DEUX tables de routage. CIDR ne doivent PAS se chevaucher.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#9888;</span><div class="kp-content"><div class="kp-title">Direct Connect ≠ chiffre par defaut</div><div class="kp-desc">C'est une connexion PRIVEE mais pas chiffree. Pour le chiffrement, ajouter un VPN IPsec par-dessus la connexion DX.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#9888;</span><div class="kp-content"><div class="kp-title">Gateway Endpoint vs Interface Endpoint</div><div class="kp-desc">Gateway = S3 et DynamoDB UNIQUEMENT, GRATUIT, modifie la route table. Interface = tous les autres services, PAYANT, cree une ENI dans votre sous-reseau.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#9888;</span><div class="kp-content"><div class="kp-title">SG par defaut du VPC par defaut</div><div class="kp-desc">Autorise TOUT le trafic sortant et tout le trafic entrant DEPUIS le meme SG. Pas depuis l'exterieur ! Un SG custom refuse tout par defaut (in et out).</div></div></div>
+
+                    <div class="section-title">Pieges frequents - Stockage</div>
+                    <div class="key-point-card"><span class="star">&#9888;</span><div class="kp-content"><div class="kp-title">EBS vs EFS - Ne JAMAIS confondre</div><div class="kp-desc">EBS = 1 instance, 1 AZ, block storage / EFS = multi-instances, multi-AZ, LINUX ONLY (NFS). EFS est elastique (pas de provisionnement), EBS a une taille fixe.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#9888;</span><div class="kp-content"><div class="kp-title">S3 n'est PAS un filesystem</div><div class="kp-desc">Stockage OBJET via API HTTP. On ne peut PAS le monter sur une instance comme un disque. Pour un FS : EBS, EFS ou FSx.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#9888;</span><div class="kp-content"><div class="kp-title">Instance Store = EPHEMERE (donnees perdues !)</div><div class="kp-desc">Perdu au STOP, TERMINATE, ou defaillance hardware. Survit UNIQUEMENT au reboot. Jamais pour donnees critiques.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#9888;</span><div class="kp-content"><div class="kp-title">HDD (st1/sc1) ne peuvent PAS etre boot volumes</div><div class="kp-desc">Seuls les SSD (gp2, gp3, io1, io2) peuvent etre des volumes de demarrage. st1/sc1 = donnees uniquement.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#9888;</span><div class="kp-content"><div class="kp-title">EBS Multi-Attach = io1/io2 UNIQUEMENT + meme AZ</div><div class="kp-desc">Pas de multi-attach sur gp2/gp3. Les instances DOIVENT etre dans la meme AZ. Max 16 instances. Application doit gerer la concurrence.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#9888;</span><div class="kp-content"><div class="kp-title">Versioning S3 : suspendu ≠ desactive</div><div class="kp-desc">Une fois active, le versioning ne peut JAMAIS etre completement desactive. Seulement suspendu. Les versions existantes restent.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#9888;</span><div class="kp-content"><div class="kp-title">Suppression anticipee = frais !</div><div class="kp-desc">Glacier Flexible : min 90 jours. Deep Archive : min 180 jours. Supprimer avant = payer le reste de la periode minimum.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#9888;</span><div class="kp-content"><div class="kp-title">DeleteOnTermination = true par defaut (root volume)</div><div class="kp-desc">Le volume root EBS est SUPPRIME quand l'instance est terminee. Mettre a false pour conserver. Les volumes additionnels = false par defaut.</div></div></div>
+
+                    <div class="section-title">Pieges frequents - Surveillance</div>
+                    <div class="key-point-card"><span class="star">&#9888;</span><div class="kp-content"><div class="kp-title">CloudWatch vs CloudTrail - Ne JAMAIS confondre</div><div class="kp-desc">CloudWatch = PERFORMANCES (metriques, logs, alarmes). CloudTrail = AUDIT (qui a fait quoi, quand, depuis ou). 2 services completement differents.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#9888;</span><div class="kp-content"><div class="kp-title">RAM = PAS une metrique standard CloudWatch</div><div class="kp-desc">L'hyperviseur ne voit pas la memoire de l'instance. Necessite l'agent CloudWatch installe DANS l'instance. Piege classique #1.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#9888;</span><div class="kp-content"><div class="kp-title">CloudTrail Data Events = desactives par defaut</div><div class="kp-desc">GetObject S3, Invoke Lambda = Data Events, non loggues par defaut (trop de volume). A activer explicitement dans le Trail.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#9888;</span><div class="kp-content"><div class="kp-title">VPC Flow Logs = metadonnees UNIQUEMENT</div><div class="kp-desc">Capturent IP source/dest, port, protocole, ACCEPT/REJECT. JAMAIS le contenu des paquets. Pour le contenu : inspection deep packet.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#9888;</span><div class="kp-content"><div class="kp-title">Detailed Monitoring = 1 min (PAYANT)</div><div class="kp-desc">Par defaut : Basic Monitoring = 5 min (gratuit). Detailed = 1 min mais payant. A activer explicitement sur chaque instance.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#9888;</span><div class="kp-content"><div class="kp-title">Athena = pay per scan, pas per query</div><div class="kp-desc">Facture au volume de donnees SCANNEES (~$5/To). Utiliser Parquet/ORC (colonne) pour reduire 30-90%. Partitionner les donnees !</div></div></div>
+
+                    <div class="section-title">Mnemoniques pour l'examen</div>
+                    <div class="key-point-card"><span class="star">&#128161;</span><div class="kp-content"><div class="kp-title">NACL = "Network Access Control List"</div><div class="kp-desc"><strong>N</strong>umero de regle (ordre), <strong>A</strong>llow + Deny, <strong>C</strong>ouche sous-reseau, <strong>L</strong>ess context (stateless). Retenir : "NACL = Numbered, Allow/Deny, subnet-level, stateLess"</div></div></div>
+                    <div class="key-point-card"><span class="star">&#128161;</span><div class="kp-content"><div class="kp-title">5 IP reservees = "RRDRF"</div><div class="kp-desc"><strong>R</strong>eseau (.0), <strong>R</strong>outeur (.1), <strong>D</strong>NS (.2), <strong>R</strong>eserve (.3), <strong>F</strong>in/broadcast (derniere). Mnemonique : "RRouDReF" = 5 IP perdues par sous-reseau.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#128161;</span><div class="kp-content"><div class="kp-title">S3 Durabilite = "11 neufs"</div><div class="kp-desc">99.999999999% = si vous stockez 10 millions d'objets, vous pouvez en perdre 1 tous les 10 000 ans. Retenir : "S3 = quasi-indestructible".</div></div></div>
+                    <div class="key-point-card"><span class="star">&#128161;</span><div class="kp-content"><div class="kp-title">Snow Family = "CSE" par taille</div><div class="kp-desc"><strong>C</strong>one = 8 To, <strong>S</strong>nowball = 80 To, Snowball <strong>E</strong>dge = 80 To + compute. Snowmobile = 100 Po (le camion). Regle : > 1 semaine de transfert = Snow.</div></div></div>
+                    <div class="key-point-card"><span class="star">&#128161;</span><div class="kp-content"><div class="kp-title">Chiffrement EBS = "AAAA"</div><div class="kp-desc"><strong>A</strong>t rest (AES-256), <strong>A</strong>WS KMS, <strong>A</strong>utomatique en transit (EBS<->EC2), <strong>A</strong>pplique aux snapshots aussi. Un volume chiffre = tout chiffre.</div></div></div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+    // All answers
+    const answers = {
+        vpc: {1:{correct:'b',exp:"NAT Gateway permet aux instances PRIVEES d'acceder a Internet (sortant). IGW est pour les sous-reseaux publics."},2:{correct:'b',exp:"SG est STATEFUL (reponse auto). NACL est STATELESS (regles in ET out necessaires)."},3:{correct:'c',exp:"AWS reserve 5 IP par sous-reseau : .0 (reseau), .1 (routeur), .2 (DNS), .3 (reserve), derniere (broadcast)."},4:{correct:'b',exp:"Un sous-reseau est TOUJOURS dans une seule AZ. Le VPC s'etend sur plusieurs AZ, pas le sous-reseau."},5:{correct:'c',exp:"L'IGW permet la communication entre le VPC et Internet. C'est la porte de sortie/entree du VPC."},6:{correct:'c',exp:"Les SG ne supportent que les regles ALLOW. Pour DENY, il faut utiliser les NACLs."},7:{correct:'b',exp:"Le NAT GW DOIT etre dans un sous-reseau PUBLIC (avec route vers IGW) pour fonctionner."},8:{correct:'b',exp:"NACLs evaluent dans l'ordre numerique croissant. Premiere correspondance gagne (regle 100 avant 200)."},9:{correct:'c',exp:"Ports ephemeres 1024-65535 necessaires en sortie dans les NACLs (stateless) pour les reponses."},10:{correct:'b',exp:"VPC Flow Logs capturent les metadonnees du trafic IP (source, dest, port, accept/reject)."},11:{correct:'d',exp:"/28 = 16 adresses, c'est le plus petit sous-reseau possible. /16 est le plus grand VPC (65536 IP)."},12:{correct:'a',exp:"enableDnsHostnames et enableDnsSupport doivent etre actives pour la resolution DNS dans un VPC."}},
+        vpcc: {1:{correct:'b',exp:"Le VPC Peering n'est JAMAIS transitif. A peere avec B et B peere avec C ne donne pas A-C."},2:{correct:'b',exp:"Gateway Endpoint pour S3 (et DynamoDB) - gratuit, configure dans la table de routage."},3:{correct:'b',exp:"Direct Connect = fibre physique dediee. Bande passante constante, latence previsible."},4:{correct:'b',exp:"Transit Gateway = hub central interconnectant plusieurs VPC et reseaux on-premises (hub-and-spoke)."},5:{correct:'b',exp:"Gateway Endpoint (S3/DynamoDB) est GRATUIT. Interface Endpoint est payant."},6:{correct:'b',exp:"Pour le peering : routes DANS LES DEUX VPC vers le CIDR de l'autre + CIDR non chevauchants."},7:{correct:'b',exp:"Customer Gateway = votre equipement/logiciel cote on-premises pour le VPN Site-to-Site."},8:{correct:'b',exp:"Direct Connect n'est PAS chiffre par defaut (connexion privee). Pour chiffrer, ajouter un VPN par-dessus."},9:{correct:'b',exp:"AWS cree 2 tunnels VPN par defaut pour la haute disponibilite (redondance)."},10:{correct:'b',exp:"PrivateLink expose un service d'un VPC a d'autres VPC de maniere privee sans passer par Internet."}},
+        vpcs: {1:{correct:'b',exp:"Security Group ne supporte que ALLOW. Tout ce qui n'est pas explicitement autorise est refuse par defaut."},2:{correct:'b',exp:"SG est STATEFUL : si entrant autorise, sortant retour est automatique. Pas de regle sortante necessaire."},3:{correct:'a',exp:"Une NACL CUSTOM nouvellement creee refuse tout (deny all) par defaut. La NACL par defaut du VPC par defaut autorise tout."},4:{correct:'b',exp:"Flow Logs capturent uniquement les metadonnees (IP, port, protocole, action). Jamais le contenu."},5:{correct:'b',exp:"NACL s'applique au niveau du sous-reseau. SG s'applique au niveau de l'instance."},6:{correct:'a',exp:"Oui, les NACLs evaluent dans l'ordre numerique croissant. Regle 100 est evaluee AVANT regle 200."},7:{correct:'a',exp:"VPC Flow Logs publiables vers S3 et/ou CloudWatch Logs."},8:{correct:'b',exp:"Oui, on peut referencer un autre SG comme source. Ex: autoriser le trafic depuis toutes les instances du SG 'web'."},9:{correct:'b',exp:"La NACL par defaut du VPC par defaut autorise tout le trafic (allow all inbound et outbound)."},10:{correct:'b',exp:"Methodologie : SG -> NACL -> Route Table -> IP/DNS. Verifier couche par couche du plus specifique au plus general."}},
+        vpct: {1:{correct:'b',exp:"Cause #1 : NAT Gateway absent ou pas de route 0.0.0.0/0 -> NAT GW dans la table de routage du sous-reseau prive."},2:{correct:'b',exp:"Premiere chose a verifier : les routes dans les tables de routage des DEUX VPC (vers le CIDR de l'autre)."},3:{correct:'b',exp:"REJECT dans Flow Logs = trafic bloque par un Security Group ou une NACL. Identifiez lequel bloque."},4:{correct:'b',exp:"NAT GW DOIT etre dans un sous-reseau PUBLIC avec une route vers l'IGW pour transmettre le trafic."},5:{correct:'a',exp:"Verifier : port 22 ouvert dans SG inbound + NACL inbound port 22 + NACL outbound ports ephemeres."},6:{correct:'a',exp:"enableDnsHostnames + enableDnsSupport doivent etre actives pour la resolution DNS."},7:{correct:'b',exp:"NACL stateless : ajouter une regle outbound ports ephemeres 1024-65535 pour les reponses HTTP."},8:{correct:'a',exp:"Si SG est OK, verifier la NACL du sous-reseau. Les deux doivent autoriser le trafic."},9:{correct:'b',exp:"Oui, routes necessaires dans les DEUX VPC. Chaque VPC doit avoir une route vers le CIDR de l'autre via le peering."},10:{correct:'b',exp:"VPC Flow Logs montrent ACCEPT/REJECT pour chaque flux, permettant d'identifier les blocages."}},
+        ebs: {1:{correct:'b',exp:"io2 Block Express offre jusqu'a 256 000 IOPS. Le plus performant pour les BDD critiques."},2:{correct:'c',exp:"EBS est lie a une Zone de Disponibilite. Snapshot pour changer d'AZ ou Region."},3:{correct:'c',exp:"HDD (st1, sc1) ne peuvent PAS etre des volumes de boot. Seuls les SSD le peuvent."},4:{correct:'b',exp:"Creer un snapshot (stocke au niveau Region dans S3) puis recreer un volume dans la nouvelle AZ."},5:{correct:'b',exp:"Snapshots EBS sont stockes dans S3 de maniere transparente (gere par AWS, pas visible dans votre bucket)."},6:{correct:'b',exp:"Multi-Attach est supporte uniquement par io1/io2 (volumes dans la meme AZ)."},7:{correct:'b',exp:"DeleteOnTermination=true par defaut pour le volume root. Le volume est supprime avec l'instance."},8:{correct:'b',exp:"EBS utilise AES-256 via AWS KMS pour le chiffrement au repos et en transit."},9:{correct:'b',exp:"gp3 est ~20% moins cher que gp2 et permet de configurer IOPS/debit independamment."},10:{correct:'b',exp:"64 TiB est la taille max d'un volume EBS (io2 Block Express)."}},
+        is: {1:{correct:'b',exp:"Instance Store est EPHEMERE. Donnees perdues au stop, terminate ou defaillance hardware."},2:{correct:'b',exp:"Les donnees survivent a un REBOOT mais pas a un STOP ou TERMINATE."},3:{correct:'b',exp:"Pas de snapshot possible pour Instance Store. Pas de mecanisme de backup integre."},4:{correct:'b',exp:"Performance I/O tres elevee car physiquement attache au serveur (pas de latence reseau)."},5:{correct:'b',exp:"Ideal pour caches, buffers, donnees temporaires, fichiers scratch. Jamais pour donnees critiques."},6:{correct:'b',exp:"Inclus dans le prix de l'instance. Pas de facturation separee."},7:{correct:'b',exp:"Impossible de detacher/rattacher. Lie physiquement au serveur hote."},8:{correct:'b',exp:"La taille est fixe et depend du type d'instance EC2 choisi."},9:{correct:'b',exp:"Attache physiquement au serveur hote = pas de latence reseau contrairement a EBS (via le reseau)."},10:{correct:'b',exp:"Responsabilite de l'utilisateur de repliquer/sauvegarder les donnees importantes ailleurs (EBS, S3)."}},
+        efs: {1:{correct:'b',exp:"EFS utilise NFSv4.1 (Network File System). C'est pourquoi il est Linux only."},2:{correct:'b',exp:"EFS = Linux uniquement (NFS). Pour Windows : FSx for Windows (SMB)."},3:{correct:'b',exp:"Oui, EFS peut etre monte par PLUSIEURS instances simultanement (c'est son avantage principal vs EBS)."},4:{correct:'b',exp:"Non, EFS est elastique. La taille s'adapte automatiquement. Pas de provisionnement."},5:{correct:'b',exp:"FSx for Windows File Server utilise SMB, compatible Windows. EFS = NFS = Linux only."},6:{correct:'b',exp:"Lifecycle management deplace automatiquement les fichiers non accedes vers la classe Infrequent Access."},7:{correct:'b',exp:"EFS Standard stocke les donnees dans toutes les AZ de la Region (multi-AZ) pour la durabilite."},8:{correct:'b',exp:"EFS supporte le chiffrement au repos (KMS) ET en transit (TLS)."},9:{correct:'b',exp:"Max I/O est optimise pour les acces paralleles massifs (milliers de clients). General Purpose pour la latence."},10:{correct:'b',exp:"Plus cher par Go que EBS mais justifie par le partage multi-instances et l'elasticite."}},
+        s3: {1:{correct:'b',exp:"5 To max par objet. Single PUT limite a 5 Go (multipart upload au-dela)."},2:{correct:'c',exp:"99,999999999% (11 neufs) de durabilite. Quasi impossible de perdre un objet."},3:{correct:'b',exp:"S3 = stockage objet via API HTTP. Pas un systeme de fichiers, pas montable sur une instance."},4:{correct:'c',exp:"Noms de buckets GLOBALEMENT uniques dans tout AWS, pas juste votre compte."},5:{correct:'c',exp:"Glacier Deep Archive = moins cher (~0.00099$/Go/mois) mais recuperation 12-48h."},6:{correct:'b',exp:"Versioning actif ne peut etre que SUSPENDU, jamais desactive completement."},7:{correct:'c',exp:"Au-dela de 5 Go, Multipart Upload est OBLIGATOIRE. Recommande a partir de 100 Mo."},8:{correct:'a',exp:"SSE-S3 = cles gerees entierement par S3/AWS. SSE-KMS = cles KMS (plus de controle). SSE-C = vos propres cles."},9:{correct:'b',exp:"Tous les buckets sont PRIVES par defaut. Block Public Access active par defaut."},10:{correct:'b',exp:"S3 Transfer Acceleration utilise les edge locations CloudFront pour accelerer les uploads."},11:{correct:'b',exp:"Lifecycle Policy = transition automatique entre classes de stockage + expiration des objets."},12:{correct:'b',exp:"CRR = Cross-Region Replication. Replique les objets vers un bucket dans une autre Region."}},
+        gl: {1:{correct:'b',exp:"Glacier Flexible Retrieval standard = 3-5 heures. Expedited = 1-5 min. Bulk = 5-12h."},2:{correct:'c',exp:"Deep Archive standard = 12 heures. Bulk = 48 heures. Pas d'option Expedited."},3:{correct:'b',exp:"Vault Lock = politique WORM immuable. Personne ne peut modifier/supprimer avant expiration."},4:{correct:'c',exp:"Deep Archive : duree minimum 180 jours. Flexible : 90 jours. Frais si suppression anticipee."},5:{correct:'c',exp:"Glacier Instant Retrieval offre un acces en millisecondes, comme S3 Standard (mais moins cher en stockage)."},6:{correct:'b',exp:"S3 Lifecycle Policies permettent la transition automatique Standard -> IA -> Glacier."},7:{correct:'b',exp:"Glacier = archivage long terme au moindre cout. Pas pour les donnees actives."},8:{correct:'a',exp:"Expedited = 1-5 minutes pour Glacier Flexible Retrieval. Le plus rapide (mais le plus cher)."},9:{correct:'b',exp:"Des frais de suppression anticipee s'appliquent si supprime avant 90j (Flexible) ou 180j (Deep Archive)."},10:{correct:'b',exp:"Un Vault dans Glacier = un Bucket dans S3. C'est le conteneur de niveau superieur."}},
+        sgw: {1:{correct:'b',exp:"Volume Stored = donnees principales en LOCAL + backup asynchrone vers S3 (snapshots)."},2:{correct:'b',exp:"50 To = Snowball Edge (80 To de capacite). Transfert physique pour gros volumes."},3:{correct:'b',exp:"Tape Gateway remplace les bandes physiques par des bandes virtuelles (VTL) dans S3/Glacier."},4:{correct:'c',exp:"Snowmobile = 100 Po (petaoctets). C'est un camion pour les migrations massives."},5:{correct:'b',exp:"File Gateway presente une interface NFS ou SMB aux applications, donnees stockees dans S3."},6:{correct:'b',exp:"DataSync utilise un agent logiciel installe dans votre environnement pour le transfert."},7:{correct:'b',exp:"Snowcone = 8 To. Le plus petit et portable de la Snow Family."},8:{correct:'b',exp:"Regle : si transfert par reseau > 1 semaine, utiliser Snow Family (transfert physique)."},9:{correct:'b',exp:"AWS Transfer Family supporte SFTP, FTPS et FTP vers S3 ou EFS."},10:{correct:'b',exp:"Storage Gateway necessite une VM (VMware, Hyper-V, KVM) ou appliance physique dans votre datacenter."}},
+        cw: {1:{correct:'b',exp:"RAM = metrique CUSTOM. CloudWatch standard ne voit pas la memoire. Agent CloudWatch necessaire."},2:{correct:'b',exp:"5 minutes par defaut (gratuit). Detailed monitoring = 1 minute (payant)."},3:{correct:'b',exp:"3 etats : OK, ALARM, INSUFFICIENT_DATA. Actions declenchees au passage a ALARM."},4:{correct:'b',exp:"Agent CloudWatch installe sur l'instance pour RAM, disque et logs."},5:{correct:'b',exp:"Alarme peut declencher : SNS notification + Auto Scaling action + EC2 action (stop/terminate/reboot)."},6:{correct:'b',exp:"Detailed Monitoring = collecte toutes les 1 minute (payant, a activer explicitement)."},7:{correct:'b',exp:"L'agent CloudWatch doit etre installe pour pousser les logs vers CloudWatch Logs."},8:{correct:'b',exp:"Hierarchie : Log Groups -> Log Streams -> Log Events."},9:{correct:'b',exp:"Sans agent, CloudWatch ne voit que les metriques de l'hyperviseur (CPU, network). Agent pour le reste."},10:{correct:'b',exp:"Retention configurable de 1 jour a indefini (never expire)."}},
+        ct: {1:{correct:'b',exp:"CloudTrail = journal d'audit. QUI a fait QUOI, QUAND, DEPUIS OU (IP source)."},2:{correct:'c',exp:"90 jours d'historique gratuit dans la console. Trail S3 pour plus long."},3:{correct:'b',exp:"Data Events (GetObject, Invoke) ne sont PAS actives par defaut (volume trop eleve)."},4:{correct:'b',exp:"CloudTrail stocke ses logs dans Amazon S3 pour retention long terme."},5:{correct:'b',exp:"Athena permet de requeter les logs CloudTrail (dans S3) avec du SQL."},6:{correct:'b',exp:"Trail multi-region capture les evenements de TOUTES les regions AWS."},7:{correct:'b',exp:"Management Events = operations sur les ressources AWS (create, delete, modify)."},8:{correct:'b',exp:"CloudTrail pour l'audit des actions (qui a modifie le SG). CloudWatch = metriques."},9:{correct:'b',exp:"CloudTrail Insights detecte les activites API inhabituelles (anomalies, pics)."},10:{correct:'b',exp:"Validation d'integrite detecte si un fichier log a ete modifie ou falsifie apres sa creation."}},
+        ath: {1:{correct:'b',exp:"Athena est 100% serverless. Pas de serveur, pas d'infra a gerer."},2:{correct:'b',exp:"Facturation par quantite de donnees scannees (~5$/To). Formats colonne reduisent ce cout."},3:{correct:'c',exp:"Parquet (format colonne) ne scanne que les colonnes necessaires. Reduit les couts 30-90%."},4:{correct:'b',exp:"Athena interroge directement les fichiers dans S3 (CSV, JSON, Parquet, ORC, etc)."},5:{correct:'b',exp:"Non, pas d'ETL. Athena interroge directement les fichiers dans S3 sans chargement."},6:{correct:'b',exp:"CloudTrail logs dans S3 + Athena SQL = audit complet en requetant les logs."},7:{correct:'b',exp:"Athena est base sur Presto/Trino (moteur de requetes SQL distribue open source)."},8:{correct:'b',exp:"~5$ par To de donnees scannees. Parquet peut reduire ca de 30-90%."},9:{correct:'b',exp:"Oui, Athena peut analyser VPC Flow Logs, ALB Logs, S3 access logs s'ils sont dans S3."},10:{correct:'b',exp:"Amazon QuickSight est le service de BI/visualisation qui s'integre avec Athena."}}
+    };
+
+    // Show lesson
+    function showLesson(id) {
+        document.querySelectorAll('.lesson').forEach(l => l.classList.remove('active'));
+        document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+        document.getElementById('lesson-' + id).classList.add('active');
+        document.getElementById('nav-' + id).classList.add('active');
+        // Reset tabs to first
+        const lesson = document.getElementById('lesson-' + id);
+        lesson.querySelectorAll('.tab-btn').forEach((btn, i) => btn.classList.toggle('active', i === 0));
+        lesson.querySelectorAll('.tab-content').forEach((tc, i) => tc.classList.toggle('active', i === 0));
+        window.scrollTo(0, 0);
+    }
+
+    // Switch tab
+    function switchTab(lessonId, tabName) {
+        const lesson = document.getElementById('lesson-' + lessonId);
+        const tabs = lesson.querySelectorAll('.tab-btn');
+        const contents = lesson.querySelectorAll('.tab-content');
+        tabs.forEach(t => t.classList.remove('active'));
+        contents.forEach(c => c.classList.remove('active'));
+        const tabMap = {'concepts': 0, 'keypoints': 1, 'qcm': 2};
+        tabs[tabMap[tabName]].classList.add('active');
+        contents[tabMap[tabName]].classList.add('active');
+    }
+
+    // Check answers
+    function checkAnswers(section) {
+        const sectionAnswers = answers[section];
+        let correct = 0;
+        const total = Object.keys(sectionAnswers).length;
+
+        for (let i = 1; i <= total; i++) {
+            const selected = document.querySelector(`input[name="${section}${i}"]:checked`);
+            const fb = document.getElementById(`fb-${section}${i}`);
+            if (selected && selected.value === sectionAnswers[i].correct) {
+                correct++;
+                fb.className = 'feedback correct';
+                fb.innerHTML = `<strong>Correct !</strong><div class="explanation">${sectionAnswers[i].exp}</div>`;
+            } else {
+                fb.className = 'feedback incorrect';
+                fb.innerHTML = `<strong>Incorrect.</strong> Reponse : <strong>${sectionAnswers[i].correct.toUpperCase()}</strong><div class="explanation">${sectionAnswers[i].exp}</div>`;
+            }
+        }
+
+        const pct = Math.round((correct/total)*100);
+        const scoreEl = document.getElementById(`score-${section}`);
+        scoreEl.style.display = 'block';
+        scoreEl.innerHTML = `Score : <span>${correct}/${total}</span> (${pct}%)<br><small>${pct>=80?'Excellent !':pct>=60?'Bon travail, revoyez les erreurs.':'Continuez a reviser !'}</small>`;
+        const bar = document.getElementById(`progress-${section}`);
+        bar.style.width = pct + '%';
+        bar.style.background = pct>=80?'#16a34a':pct>=60?'linear-gradient(90deg, #2563eb, #60a5fa)':'#dc2626';
+    }
+
+    // Reset quiz
+    function resetQuiz(section) {
+        const total = Object.keys(answers[section]).length;
+        for (let i = 1; i <= total; i++) {
+            document.querySelectorAll(`input[name="${section}${i}"]`).forEach(r => r.checked = false);
+            const fb = document.getElementById(`fb-${section}${i}`);
+            fb.className = 'feedback'; fb.innerHTML = '';
+        }
+        document.getElementById(`score-${section}`).style.display = 'none';
+        document.getElementById(`progress-${section}`).style.width = '0%';
+    }
+
+    // Search
+    function searchLesson() {
+        const query = document.getElementById('searchInput').value.toLowerCase();
+        document.querySelectorAll('.sidebar a').forEach(link => {
+            link.style.display = link.textContent.toLowerCase().includes(query) ? 'flex' : 'none';
+        });
+    }
+    </script>
+</body>
+</html>
