@@ -99,15 +99,40 @@
         }
 
         /* Responsive */
+        /* Navigation Menu */
+        .nav-menu {
+            background: rgba(15,12,41,0.95); border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 12px 30px; margin-bottom: 20px; display: flex; gap: 20px;
+            flex-wrap: wrap; align-items: center; font-size: 0.9em;
+            position: sticky; top: 0; z-index: 50;
+        }
+        .nav-menu a {
+            color: rgba(255,255,255,0.8); text-decoration: none;
+            padding: 6px 12px; border-radius: 6px; transition: all 0.3s;
+        }
+        .nav-menu a:hover { color: #64ffda; background: rgba(100,255,218,0.1); }
+        .nav-menu a.active { color: #64ffda; background: rgba(100,255,218,0.15); font-weight: 600; }
         @media (max-width: 768px) {
             body { padding: 15px; }
             .header h1 { font-size: 1.5em; }
             .tech-grid { grid-template-columns: 1fr; }
             .global-stats { grid-template-columns: repeat(2, 1fr); }
+            .nav-menu { padding: 10px 15px; gap: 10px; font-size: 0.8em; }
         }
     </style>
 </head>
 <body>
+    <div class="nav-menu">
+        <a href="Dashboard_Revision_DevOps.html" class="active">📊 Dashboard</a>
+        <a href="AWS_Revision_Partie3.html">☁️ AWS</a>
+        <a href="Jenkins_Revision_Plateforme_Modou_NDIAYE.html">⚙️ Jenkins</a>
+        <a href="Kubernetes_Revision_Plateforme.html">☸️ Kubernetes</a>
+        <a href="Prometheus_Grafana_Revision_Plateforme.html">📈 Prometheus</a>
+        <a href="SonarQube_Revision_Plateforme.html">🔍 SonarQube</a>
+        <a href="Terraform_Revision_Plateforme.html">🏗️ Terraform</a>
+        <a href="Trivy_Revision_Plateforme.html">🛡️ Trivy</a>
+        <a href="IA_DevOps_Revision_Plateforme.html">🤖 IA DevOps</a>
+    </div>
     <div class="header">
         <h1>Plateforme de Revision DevOps</h1>
         <p>Formation complete CI/CD, Infrastructure as Code, Monitoring & IA</p>

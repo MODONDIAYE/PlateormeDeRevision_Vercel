@@ -48,6 +48,19 @@
             font-size: 0.75em; padding: 1px 7px; border-radius: 10px;
         }
         .sidebar ul li.hidden { display: none; }
+
+        /* Navigation Menu */
+        .nav-menu {
+            background: rgba(25,4,218,0.95); border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 12px 20px; margin-left: 270px; display: flex; gap: 15px; flex-wrap: wrap;
+            align-items: center; font-size: 0.85em; position: sticky; top: 0; z-index: 40;
+        }
+        .nav-menu a {
+            color: rgba(255,255,255,0.8); text-decoration: none;
+            padding: 6px 12px; border-radius: 6px; transition: all 0.3s;
+        }
+        .nav-menu a:hover { color: #64ffda; background: rgba(100,255,218,0.1); }
+        .nav-menu a.active { color: #64ffda; background: rgba(100,255,218,0.15); font-weight: 600; }
         .sidebar::-webkit-scrollbar { width: 6px; }
         .sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
 
@@ -241,6 +254,18 @@
         </ul>
         <button class="btn-start-exam" onclick="startExam()">Mode Examen (10 min)</button>
     </nav>
+
+    <div class="nav-menu">
+        <a href="Dashboard_Revision_DevOps.html">📊 Dashboard</a>
+        <a href="AWS_Revision_Partie3.html">☁️ AWS</a>
+        <a href="Jenkins_Revision_Plateforme_Modou_NDIAYE.html">⚙️ Jenkins</a>
+        <a href="Kubernetes_Revision_Plateforme.html">☸️ Kubernetes</a>
+        <a href="Prometheus_Grafana_Revision_Plateforme.html">📈 Prometheus</a>
+        <a href="SonarQube_Revision_Plateforme.html">🔍 SonarQube</a>
+        <a href="Terraform_Revision_Plateforme.html">🏗️ Terraform</a>
+        <a href="Trivy_Revision_Plateforme.html" class="active">🛡️ Trivy</a>
+        <a href="IA_DevOps_Revision_Plateforme.html">🤖 IA DevOps</a>
+    </div>
 
     <div class="main-content">
 
