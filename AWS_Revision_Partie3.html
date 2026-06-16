@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ue, pour la <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -476,19 +476,39 @@
             .sidebar { width: 230px; }
             .main-content { margin-left: 230px; padding: 20px; }
         }
+
         @media (max-width: 700px) {
-            .sidebar {
-                transform: translateX(-100%);
-                transition: transform 0.3s ease;
+            /* Navbar gauche en menu burger */
+            .menu-toggle {
+                display: flex !important;
+                align-items: center;
+                justify-content: center;
+                width: 42px;
+                height: 42px;
+                border-radius: 12px;
+                border: 1px solid rgba(96, 165, 250, 0.35);
+                background: rgba(255,255,255,0.08);
+                color: #fff;
+                cursor: pointer;
+                flex-shrink: 0;
             }
-            .sidebar.open { transform: translateX(0); }
-            .main-content { margin-left: 0; padding: 15px; }
+
+            .layout { margin-top: 120px; }
             .top-header { padding: 12px 15px; height: auto; flex-wrap: wrap; gap: 10px; }
             .search-bar { width: 100%; order: 3; }
             .search-bar:focus { width: 100%; }
-            .layout { margin-top: 120px; }
-            .sidebar { top: 120px; }
-            .menu-toggle { display: block; }
+
+            /* Sidebar drawer */
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+                width: 280px;
+                top: 120px;
+            }
+            .sidebar.open { transform: translateX(0); }
+
+            /* Main */
+            .main-content { margin-left: 0; padding: 15px; }
         }
 
         /* ===== SCROLLBAR ===== */
@@ -499,18 +519,53 @@
 
         /* ===== SELECTION ===== */
         ::selection { background: #bfdbfe; color: #1e3a5f; }
-    </style>
+    
+        .back-dashboard-btn {
+            position: fixed;
+            right: 18px;
+            bottom: 18px;
+            z-index: 2000;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 11px 16px;
+            border-radius: 10px;
+            background: #111827;
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.9rem;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.22);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+        }
+        .back-dashboard-btn:hover {
+            transform: translateY(-2px);
+            background: #0f172a;
+            box-shadow: 0 14px 30px rgba(15, 23, 42, 0.28);
+        }
+        @media (max-width: 640px) {
+            .back-dashboard-btn {
+                right: 12px;
+                bottom: 12px;
+                padding: 10px 13px;
+                font-size: 0.82rem;
+            }
+        }
+</style>
 </head>
 <body>
 
-    <!-- TOP HEADER -->
-    <div class="top-header">
+    <a class="back-dashboard-btn" href="Dashboard_Revision_DevOps.html" aria-label="Retour au menu principal">&larr; Menu principal</a>
+<!-- TOP HEADER -->
+        <div class="top-header">
         <div class="logo">&#9729;</div>
         <div class="header-info">
             <h1>Plateforme de Revision AWS - Partie 3</h1>
             <div class="subtitle">11 lecons &middot; Concepts &middot; Points Cles Enrichis &middot; 10+ QCM/lecon avec Justifications</div>
             <div class="author">Modou NDIAYE</div>
         </div>
+        <button class="menu-toggle" type="button" aria-label="Ouvrir le menu" onclick="toggleSidebar()">☰</button>
         <input type="text" class="search-bar" placeholder="&#128269; Rechercher une lecon..." id="searchInput" onkeyup="searchLesson()">
     </div>
 
@@ -1507,7 +1562,7 @@
 
                 <div class="tab-content" id="glacier-qcm">
                     <div class="qcm-header"><h3>QCM - Glacier</h3><span class="qcm-counter">10 questions</span></div>
-                    <div class="progress-bar-container"><div class="progress-bar" id="progress-glacier"></div></div>
+                    <div class="progress-bar-container"><div class="progress-bar" id="progress-gl"></div></div>
 
                     <div class="question"><p>1) Quel est le delai standard pour Glacier Flexible Retrieval ?</p><label><input type="radio" name="gl1" value="a"> Immediat</label><label><input type="radio" name="gl1" value="b"> 3-5 heures</label><label><input type="radio" name="gl1" value="c"> 12 heures</label><label><input type="radio" name="gl1" value="d"> 48 heures</label><div class="feedback" id="fb-gl1"></div></div>
                     <div class="question"><p>2) Glacier Deep Archive a un delai de recuperation standard de ?</p><label><input type="radio" name="gl2" value="a"> 1-5 minutes</label><label><input type="radio" name="gl2" value="b"> 3-5 heures</label><label><input type="radio" name="gl2" value="c"> 12 heures</label><label><input type="radio" name="gl2" value="d"> 48 heures</label><div class="feedback" id="fb-gl2"></div></div>
@@ -1817,6 +1872,9 @@
         lesson.querySelectorAll('.tab-btn').forEach((btn, i) => btn.classList.toggle('active', i === 0));
         lesson.querySelectorAll('.tab-content').forEach((tc, i) => tc.classList.toggle('active', i === 0));
         window.scrollTo(0, 0);
+
+        const s = document.getElementById('sidebar');
+        if (s && s.classList.contains('open')) s.classList.remove('open');
     }
 
     // Switch tab
@@ -1831,7 +1889,36 @@
         contents[tabMap[tabName]].classList.add('active');
     }
 
-    // Check answers
+    function getQuestionFromInputName(inputName) {
+        const section = Object.keys(answers)
+            .sort((a, b) => b.length - a.length)
+            .find(key => inputName.startsWith(key) && /^\d+$/.test(inputName.slice(key.length)));
+
+        if (!section) return null;
+
+        return {
+            section,
+            qIndex: Number(inputName.slice(section.length))
+        };
+    }
+
+    function showAnswerFeedback(section, qIndex) {
+        const sectionAnswers = answers[section];
+        if (!sectionAnswers || !sectionAnswers[qIndex]) return;
+
+        const selected = document.querySelector(`input[name="${section}${qIndex}"]:checked`);
+        const fb = document.getElementById(`fb-${section}${qIndex}`);
+        if (!selected || !fb) return;
+
+        const answer = sectionAnswers[qIndex];
+        const isCorrect = selected.value === answer.correct;
+        fb.className = 'feedback ' + (isCorrect ? 'correct' : 'incorrect');
+        fb.innerHTML = isCorrect
+            ? `<strong>Correct</strong><div class="explanation">${answer.exp}</div>`
+            : `<strong>Faux</strong><div class="explanation">Bonne reponse : <strong>${answer.correct.toUpperCase()}</strong><br>${answer.exp}</div>`;
+    }
+
+    // Check answers (score final)
     function checkAnswers(section) {
         const sectionAnswers = answers[section];
         let correct = 0;
@@ -1839,15 +1926,9 @@
 
         for (let i = 1; i <= total; i++) {
             const selected = document.querySelector(`input[name="${section}${i}"]:checked`);
-            const fb = document.getElementById(`fb-${section}${i}`);
-            if (selected && selected.value === sectionAnswers[i].correct) {
-                correct++;
-                fb.className = 'feedback correct';
-                fb.innerHTML = `<strong>Correct !</strong><div class="explanation">${sectionAnswers[i].exp}</div>`;
-            } else {
-                fb.className = 'feedback incorrect';
-                fb.innerHTML = `<strong>Incorrect.</strong> Reponse : <strong>${sectionAnswers[i].correct.toUpperCase()}</strong><div class="explanation">${sectionAnswers[i].exp}</div>`;
-            }
+            if (selected && selected.value === sectionAnswers[i].correct) correct++;
+            // met aussi la justification à jour
+            showAnswerFeedback(section, i);
         }
 
         const pct = Math.round((correct/total)*100);
@@ -1869,6 +1950,39 @@
         }
         document.getElementById(`score-${section}`).style.display = 'none';
         document.getElementById(`progress-${section}`).style.width = '0%';
+    }
+
+    document.addEventListener('change', function(event) {
+        const target = event.target;
+        if (!target.matches('input[type="radio"]')) return;
+
+        const question = getQuestionFromInputName(target.name);
+        if (!question) return;
+
+        showAnswerFeedback(question.section, question.qIndex);
+    });
+
+    // Sidebar burger (mobile)
+    function toggleSidebar() {
+        const s = document.getElementById('sidebar');
+        if (!s) return;
+        s.classList.toggle('open');
+    }
+
+    // Ferme le menu quand on clique sur une lecon (mobile)
+    function showLesson(id) {
+        document.querySelectorAll('.lesson').forEach(l => l.classList.remove('active'));
+        document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+        document.getElementById('lesson-' + id).classList.add('active');
+        document.getElementById('nav-' + id).classList.add('active');
+        // Reset tabs to first
+        const lesson = document.getElementById('lesson-' + id);
+        lesson.querySelectorAll('.tab-btn').forEach((btn, i) => btn.classList.toggle('active', i === 0));
+        lesson.querySelectorAll('.tab-content').forEach((tc, i) => tc.classList.toggle('active', i === 0));
+        window.scrollTo(0, 0);
+
+        const s = document.getElementById('sidebar');
+        if (s && s.classList.contains('open')) s.classList.remove('open');
     }
 
     // Search
