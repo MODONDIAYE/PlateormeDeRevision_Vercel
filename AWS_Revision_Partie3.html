@@ -101,6 +101,11 @@ ue, pour la <!DOCTYPE html>
             min-height: calc(100vh - 80px);
         }
 
+        /* ===== NAV MENU RIGHT FIX ===== */
+        /* Make sure the top-right vertical nav stays visible */
+        .nav-menu { top: 50%; }
+
+
         /* ===== SIDEBAR ===== */
         .sidebar {
             width: 270px;
@@ -115,6 +120,8 @@ ue, pour la <!DOCTYPE html>
             z-index: 500;
             box-shadow: 2px 0 12px rgba(15, 23, 42, 0.04);
         }
+
+
         .sidebar-section-title {
             font-size: 0.7em;
             font-weight: 700;
@@ -623,18 +630,7 @@ ue, pour la <!DOCTYPE html>
             </a>
         </nav>
 
-        <div class="nav-menu">
-            <a href="Dashboard_Revision_DevOps.html" title="Dashboard">📊</a>
-            <a href="aws-revision_Partie2_ModouNDIAYE.html" title="AWS P2">☁️</a>
-            <a href="AWS_Revision_Partie3.html" class="active" title="AWS P3">⛅</a>
-            <a href="Jenkins_Revision_Plateforme_Modou_NDIAYE.html" title="Jenkins">⚙️</a>
-            <a href="Kubernetes_Revision_Plateforme.html" title="Kubernetes">☸️</a>
-            <a href="Prometheus_Grafana_Revision_Plateforme.html" title="Prometheus">📈</a>
-            <a href="SonarQube_Revision_Plateforme.html" title="SonarQube">🔍</a>
-            <a href="Terraform_Revision_Plateforme.html" title="Terraform">🏗️</a>
-            <a href="Trivy_Revision_Plateforme.html" title="Trivy">🛡️</a>
-            <a href="IA_DevOps_Revision_Plateforme.html" title="IA DevOps">🤖</a>
-        </div>
+        <!-- nav-menu RIGHT supprimé (masqué) : garder le markup en commentaire -->
 
         <!-- MAIN CONTENT -->
         <main class="main-content">
